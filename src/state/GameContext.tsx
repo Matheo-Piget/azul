@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import { GameState, TileColor, Tile } from "../models/types";
 import { initializeGame, distributeFactoryTiles } from "../game-logic/setup";
 import { canSelectTiles, canPlaceTiles } from "../game-logic/moves";
+import { getAIMove, AIDifficulty } from '../game-logic/ai/aiPlayer';
 import {
   calculateRoundScores,
   calculateFinalScores,
@@ -13,6 +14,10 @@ interface GameContextType {
   placeTiles: (patternLineIndex: number) => void;
   startNewGame: (playerCount: number) => void;
   selectedTiles: Tile[];
+  aiPlayers: Record<string, AIDifficulty>;
+  addAIPlayer: (playerId: string, difficulty: AIDifficulty) => void;
+  removeAIPlayer: (playerId: string) => void;
+  executeAITurn: () => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -26,6 +31,24 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     factoryId: number | null;
     color: TileColor;
   } | null>(null);
+  const [aiPlayers, setAIPlayers] = useState<Record<string, AIDifficulty>>({});
+
+  const addAIPlayer = useCallback((playerId: string, difficulty: AIDifficulty) => {
+    setAIPlayers(prev => ({
+      ...prev,
+      [playerId]: difficulty
+    }));
+  }, []);
+
+  const removeAIPlayer = useCallback((playerId: string) => {
+    setAIPlayers(prev => {
+      const newAIPlayers = { ...prev };
+      delete newAIPlayers[playerId];
+      return newAIPlayers;
+    });
+  }, []);
+
+  
 
   const startNewGame = useCallback((playerCount: number) => {
     const newGameState = initializeGame(playerCount);
@@ -181,12 +204,56 @@ const placeTiles = useCallback(
     [gameState, selectedTiles, selectedSource]
   );
 
+  const executeAITurn = useCallback(() => {
+    if (!gameState) return;
+
+    const currentPlayerId = gameState.currentPlayer;
+    
+    // Vérifier si le joueur actuel est une IA
+    if (aiPlayers[currentPlayerId]) {
+      try {
+        const difficulty = aiPlayers[currentPlayerId];
+        const aiDecision = getAIMove(gameState, difficulty);
+        
+        // Exécuter le mouvement de l'IA
+        selectTiles(aiDecision.factoryId, aiDecision.color);
+        
+        // Utiliser setTimeout pour simuler un délai de réflexion
+        setTimeout(() => {
+          placeTiles(aiDecision.patternLineIndex);
+        }, 1000);
+      } catch (error) {
+        console.error("Erreur lors du tour de l'IA:", error);
+      }
+    }
+  }, [gameState, aiPlayers, selectTiles, placeTiles]);
+
+
+  useEffect(() => {
+    if (!gameState) return;
+    
+    const currentPlayerId = gameState.currentPlayer;
+    
+    if (aiPlayers[currentPlayerId]) {
+      // Petit délai pour que l'IA semble réfléchir
+      const timer = setTimeout(() => {
+        executeAITurn();
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [gameState?.currentPlayer, aiPlayers, executeAITurn]);
+
   const value = {
     gameState: gameState as GameState,
     selectTiles,
     placeTiles,
     startNewGame,
     selectedTiles,
+    aiPlayers,
+    addAIPlayer,
+    removeAIPlayer,
+    executeAITurn
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

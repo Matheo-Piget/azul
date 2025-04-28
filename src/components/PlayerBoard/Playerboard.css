@@ -24,6 +24,19 @@
   align-items: stretch; /* Change from flex-start to stretch */
 }
 
+/* Ajouter ce style à la fin de Playerboard.css */
+.ai-badge {
+  font-size: 12px;
+  background-color: #1a3c5b;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 /* Pattern lines styling */
 .pattern-lines {
   display: flex;

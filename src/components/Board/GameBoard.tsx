@@ -4,6 +4,7 @@ import PlayerBoard from '../PlayerBoard/PlayerBoard';
 import Center from '../Center/Center';
 import { useGame } from '../../state/GameContext';
 import './Gameboard.css';
+import AIPlayerConfig from '../AI/AIPlayerConfig';
 
 const GameBoard: React.FC = () => {
   const { gameState, startNewGame } = useGame();
@@ -89,6 +90,7 @@ const GameBoard: React.FC = () => {
         </div>
         
         <div className="players-area">
+          <AIPlayerConfig />
           <h2>Plateaux des joueurs</h2>
           <div className="players-container">
             {gameState.players.map(player => (

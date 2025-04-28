@@ -9,7 +9,7 @@ interface PlayerBoardProps {
 }
 
 const PlayerBoard: React.FC<PlayerBoardProps> = ({ playerId }) => {
-  const { gameState, placeTiles, selectedTiles } = useGame();
+  const { gameState, selectedTiles, placeTiles, aiPlayers } = useGame();
   const [mustUseFloorLine, setMustUseFloorLine] = useState(false);
   
   const player = gameState.players.find(p => p.id === playerId);
@@ -44,8 +44,14 @@ const PlayerBoard: React.FC<PlayerBoardProps> = ({ playerId }) => {
   
   return (
     <div className={`player-board ${isCurrentPlayer ? 'current-player' : ''}`}>
-      <h3 className="player-name">{player.name} ({player.board.score} pts)</h3>
-      
+      <h3 className="player-name">
+        {player.name} ({player.board.score} pts)
+        {aiPlayers[player.id] && (
+          <span className="ai-badge" title={`IA - Niveau ${aiPlayers[player.id]}`}>
+            🤖 {aiPlayers[player.id] === 'easy' ? 'I' : aiPlayers[player.id] === 'medium' ? 'II' : 'III'}
+          </span>
+        )}
+      </h3>
       <div className="board-content">
         <div className="pattern-lines">
           {player.board.patternLines.map((line, index) => {
