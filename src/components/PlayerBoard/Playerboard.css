@@ -21,14 +21,15 @@
   display: flex;
   gap: 20px;
   position: relative;
+  align-items: stretch; /* Change from flex-start to stretch */
 }
 
 /* Pattern lines styling */
 .pattern-lines {
   display: flex;
   flex-direction: column;
-  gap: 8px;
   position: relative;
+  justify-content: flex-end; /* Align contents to the bottom */
 }
 
 .pattern-line {
@@ -70,13 +71,19 @@
 .wall {
   display: flex;
   flex-direction: column;
-  gap: 8px;
   position: relative;
+  justify-content: flex-start; /* Ensure it starts from top */
 }
 
 .wall-row {
   display: flex;
-  gap: 6px;
+  height: 40px; /* Match height of pattern-line */
+  align-items: center;
+}
+
+.wall-row, .pattern-line {
+  height: 40px;
+  box-sizing: border-box;
 }
 
 .wall-space {
@@ -87,6 +94,19 @@
   border: 1px dashed rgba(0, 0, 0, 0.08);
   position: relative;
   transition: all 0.3s;
+}
+
+.tile-space, .wall-space {
+  width: 28px;
+  height: 28px;
+  margin: 0 2px;
+  box-sizing: border-box;
+}
+
+.pattern-lines, .wall {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .wall-space::before {
@@ -183,6 +203,29 @@
 
 .current-player .tile-space {
   background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Ajouter à la fin du fichier */
+
+.must-use-floor {
+  background-color: rgba(229, 57, 53, 0.2);
+  box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.5);
+  cursor: pointer;
+  animation: pulse-warning 2s infinite;
+}
+
+.floor-line-hint {
+  position: absolute;
+  right: 10px;
+  color: #e53935;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@keyframes pulse-warning {
+  0% { box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.5); }
+  70% { box-shadow: 0 0 0 6px rgba(229, 57, 53, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(229, 57, 53, 0); }
 }
 
 /* Responsive adjustments */

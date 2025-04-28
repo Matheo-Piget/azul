@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Tile from '../Tile/Tile';
 import { useGame } from '../../state/GameContext';
+import { mustPlaceInFloorLine } from '../../game-logic/moves';
 import './Playerboard.css';
 
 interface PlayerBoardProps {
@@ -9,20 +10,36 @@ interface PlayerBoardProps {
 
 const PlayerBoard: React.FC<PlayerBoardProps> = ({ playerId }) => {
   const { gameState, placeTiles, selectedTiles } = useGame();
+  const [mustUseFloorLine, setMustUseFloorLine] = useState(false);
   
   const player = gameState.players.find(p => p.id === playerId);
+  const isCurrentPlayer = player ? gameState.currentPlayer === playerId : false;
+  const canPlace = isCurrentPlayer && selectedTiles.length > 0 && gameState.gamePhase === 'drafting';
+  
+  // Vérifier si les tuiles doivent obligatoirement aller dans la ligne de plancher
+  // Hook placé avant tout return pour éviter l'erreur
+  useEffect(() => {
+    if (player && canPlace && selectedTiles.length > 0) {
+      setMustUseFloorLine(mustPlaceInFloorLine(gameState, selectedTiles));
+    } else {
+      setMustUseFloorLine(false);
+    }
+  }, [gameState, selectedTiles, canPlace, player]);
   
   if (!player) {
     return <div>Joueur non trouvé</div>;
   }
   
-  const isCurrentPlayer = gameState.currentPlayer === playerId;
-  const canPlace = isCurrentPlayer && selectedTiles.length > 0 && gameState.gamePhase === 'drafting';
-  
   const handlePatternLineClick = (lineIndex: number) => {
-    if (canPlace) {
-      placeTiles(lineIndex);
+    if (!canPlace) return;
+    
+    // Si les tuiles doivent aller dans la ligne de plancher, empêcher de les placer ailleurs
+    if (mustUseFloorLine && lineIndex !== -1) {
+      alert("Ces tuiles doivent être placées dans la ligne de plancher car aucune ligne de motif ne peut les accueillir.");
+      return;
     }
+    
+    placeTiles(lineIndex);
   };
   
   return (
@@ -31,30 +48,40 @@ const PlayerBoard: React.FC<PlayerBoardProps> = ({ playerId }) => {
       
       <div className="board-content">
         <div className="pattern-lines">
-          {player.board.patternLines.map((line, index) => (
-            <div 
-              key={`line-${index}`} 
-              className="pattern-line"
-              onClick={() => handlePatternLineClick(index)}
-            >
-              {/* Espaces vides */}
-              {Array(line.spaces - line.tiles.length).fill(0).map((_, i) => (
-                <div 
-                  key={`empty-${i}`} 
-                  className={`tile-space ${canPlace && line.color === null ? 'available' : ''}`}
-                />
-              ))}
-              
-              {/* Tuiles placées */}
-              {line.tiles.map((tile, i) => (
-                <Tile 
-                  key={`tile-${i}`}
-                  color={tile.color}
-                  size="small"
-                />
-              ))}
-            </div>
-          ))}
+          {player.board.patternLines.map((line, index) => {
+            // Déterminer si cette ligne est disponible pour la couleur sélectionnée
+            const lineAvailable = canPlace && 
+              line.tiles.length < line.spaces && 
+              (line.color === null || line.color === selectedTiles[0]?.color) &&
+              !player.board.wall[index].some(space => 
+                space.color === selectedTiles[0]?.color && space.filled
+              );
+            
+            return (
+              <div 
+                key={`line-${index}`} 
+                className="pattern-line"
+                onClick={() => handlePatternLineClick(index)}
+              >
+                {/* Espaces vides */}
+                {Array(line.spaces - line.tiles.length).fill(0).map((_, i) => (
+                  <div 
+                    key={`empty-${i}`} 
+                    className={`tile-space ${lineAvailable && !mustUseFloorLine ? 'available' : ''}`}
+                  />
+                ))}
+                
+                {/* Tuiles placées */}
+                {line.tiles.map((tile, i) => (
+                  <Tile 
+                    key={`tile-${i}`}
+                    color={tile.color}
+                    size="small"
+                  />
+                ))}
+              </div>
+            );
+          })}
         </div>
         
         <div className="wall">
@@ -72,7 +99,10 @@ const PlayerBoard: React.FC<PlayerBoardProps> = ({ playerId }) => {
         </div>
       </div>
       
-      <div className="floor-line">
+      <div 
+        className={`floor-line ${mustUseFloorLine && canPlace ? 'must-use-floor' : ''}`}
+        onClick={() => canPlace && handlePatternLineClick(-1)}
+      >
         {player.board.floorLine.map((tile, index) => (
           <Tile 
             key={`floor-${index}`}
@@ -80,6 +110,9 @@ const PlayerBoard: React.FC<PlayerBoardProps> = ({ playerId }) => {
             size="small"
           />
         ))}
+        {mustUseFloorLine && canPlace && (
+          <div className="floor-line-hint">Vous devez placer ici!</div>
+        )}
       </div>
     </div>
   );

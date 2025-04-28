@@ -86,22 +86,31 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     [gameState]
   );
 
-  const placeTiles = useCallback(
-    (patternLineIndex: number) => {
-      if (!gameState || selectedTiles.length === 0 || !selectedSource) return;
+  // Partie de la fonction placeTiles à modifier
 
-      if (!canPlaceTiles(gameState, patternLineIndex, selectedTiles)) { // Pass selectedTiles as parameter
-        console.log("Placement de tuiles invalide");
-        return;
-      }
+const placeTiles = useCallback(
+  (patternLineIndex: number) => {
+    if (!gameState || selectedTiles.length === 0 || !selectedSource) return;
 
-      // Logique pour placer les tuiles sélectionnées
-      let newGameState = { ...gameState };
-      const currentPlayer = newGameState.players.find(
-        (p) => p.id === newGameState.currentPlayer
-      );
-      if (!currentPlayer) return;
+    // Si patternLineIndex est -1, cela signifie de placer dans la ligne de plancher
+    const isFloorLine = patternLineIndex === -1;
 
+    if (!isFloorLine && !canPlaceTiles(gameState, patternLineIndex, selectedTiles)) {
+      console.log("Placement de tuiles invalide");
+      return;
+    }
+
+    // Logique pour placer les tuiles sélectionnées
+    let newGameState = { ...gameState };
+    const currentPlayer = newGameState.players.find(
+      (p) => p.id === newGameState.currentPlayer
+    );
+    if (!currentPlayer) return;
+
+    if (isFloorLine) {
+      // Placer toutes les tuiles dans la ligne de plancher
+      currentPlayer.board.floorLine = [...currentPlayer.board.floorLine, ...selectedTiles];
+    } else {
       // Placer les tuiles sur la ligne de motif
       const patternLine = currentPlayer.board.patternLines[patternLineIndex];
       const color = selectedTiles[0].color;
@@ -120,14 +129,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
         ...currentPlayer.board.floorLine,
         ...excessTiles,
       ];
+    }
 
-      // Passer au joueur suivant
-      const currentPlayerIndex = newGameState.players.findIndex(
-        (p) => p.id === newGameState.currentPlayer
-      );
-      const nextPlayerIndex =
-        (currentPlayerIndex + 1) % newGameState.players.length;
-      newGameState.currentPlayer = newGameState.players[nextPlayerIndex].id;
+    // Passer au joueur suivant
+    const currentPlayerIndex = newGameState.players.findIndex(
+      (p) => p.id === newGameState.currentPlayer
+    );
+    const nextPlayerIndex =
+      (currentPlayerIndex + 1) % newGameState.players.length;
+    newGameState.currentPlayer = newGameState.players[nextPlayerIndex].id;
 
       // Vérifier si la phase de sélection est terminée
       const factoriesEmpty = newGameState.factories.every(
