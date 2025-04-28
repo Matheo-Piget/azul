@@ -3,10 +3,23 @@
   margin: 0 auto;
   padding: 20px;
   font-family: 'Libre Baskerville', 'Segoe UI', serif;
-  background-color: #f5f5f5;
+  background-color: #f7f7f7;
   color: #3a3a3a;
+  position: relative;
 }
 
+/* Loading Screen */
+.loading-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 1.2rem;
+  color: #1a3c5b;
+  background: linear-gradient(135deg, #e6f7ff 0%, #f5f7fa 100%);
+}
+
+/* Header */
 .game-header {
   display: flex;
   flex-direction: column;
@@ -15,58 +28,94 @@
   position: relative;
 }
 
+.logo-container {
+  position: relative;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
 .game-header h1 {
   color: #1a3c5b;
-  font-size: 42px;
+  font-size: 52px;
   margin-bottom: 15px;
   letter-spacing: 2px;
   font-weight: 700;
   text-transform: uppercase;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.05);
   position: relative;
+  z-index: 2;
 }
 
-.game-header h1::after {
-  content: '';
+.azulejo-pattern {
   position: absolute;
-  bottom: -10px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
-  width: 120px;
-  height: 3px;
-  background: linear-gradient(90deg, #1a3c5b, #3a8bc5, #1a3c5b);
+  transform: translate(-50%, -50%);
+  width: 180px;
+  height: 80px;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231a3c5b' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.3;
+  z-index: 1;
+  border-radius: 40px;
 }
 
-.game-info {
+.game-banner {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   width: 100%;
   background-color: #fff;
   padding: 18px 25px;
   border-radius: 8px;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid #e1e8ed;
-  margin-top: 15px;
+  position: relative;
+  overflow: hidden;
+}
+
+.game-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #1e88e5, #e53935, #fdd835, #00897b, #424242);
+  opacity: 0.8;
 }
 
 .game-status {
   display: flex;
+  gap: 20px;
+}
+
+.status-item {
+  display: flex;
   flex-direction: column;
+  align-items: flex-start;
 }
 
-.game-status p {
-  margin: 6px 0;
-  font-size: 15px;
+.status-label {
+  font-size: 12px;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.round-info, .player-info, .phase-info {
-  color: #555;
+.status-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
 }
 
-.current-player {
-  font-weight: bold;
-  color: #1a3c5b;
+.current-player-info {
   border-left: 3px solid #3a8bc5;
-  padding-left: 10px;
+  padding-left: 15px;
+}
+
+.current-player-info .status-value {
+  color: #1a3c5b;
+  font-weight: 700;
 }
 
 .game-controls {
@@ -83,11 +132,13 @@
   color: #3a3a3a;
   font-family: inherit;
   transition: border-color 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .player-select:focus {
   outline: none;
   border-color: #3a8bc5;
+  box-shadow: 0 0 0 3px rgba(58, 139, 197, 0.1);
 }
 
 .new-game-btn {
@@ -100,6 +151,14 @@
   font-weight: 600;
   transition: all 0.2s;
   letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-icon {
+  font-size: 18px;
+  line-height: 1;
 }
 
 .new-game-btn:hover {
@@ -172,21 +231,72 @@
   transition: all 0.3s ease;
   min-width: 280px;
   background-color: #fcfcfc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.player-board-container h3 {
-  margin-top: 0;
-  color: #1a3c5b;
+.player-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   border-bottom: 1px solid #e1e8ed;
   padding-bottom: 10px;
+  margin-bottom: 12px;
+}
+
+.player-header h3 {
+  margin: 0;
+  color: #1a3c5b;
   font-size: 18px;
   font-weight: 600;
 }
 
+.player-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #f8fafc;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  justify-content: center;
+  border: 1px solid #e1e8ed;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.score-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a3c5b;
+  line-height: 1;
+}
+
+.score-label {
+  font-size: 10px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .active-player {
   border-color: #3a8bc5;
-  box-shadow: 0 0 20px rgba(58, 139, 197, 0.2);
+  box-shadow: 0 0 0 1px rgba(58, 139, 197, 0.5), 0 4px 20px rgba(58, 139, 197, 0.2);
   background-color: #f8fafc;
+}
+
+.active-player .player-header {
+  border-bottom-color: rgba(58, 139, 197, 0.3);
+}
+
+.active-player .player-score {
+  background-color: #1a3c5b;
+}
+
+.active-player .score-value {
+  color: white;
+}
+
+.active-player .score-label {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 /* Décoration inspirée du design des azulejos (carreaux portugais) */
@@ -207,15 +317,31 @@
   border-radius: 3px;
 }
 
+.game-footer {
+  margin-top: 40px;
+  text-align: center;
+  color: #888;
+  font-size: 12px;
+  padding: 15px 0;
+  border-top: 1px solid #e1e8ed;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
-  .game-info {
+  .game-banner {
     flex-direction: column;
     gap: 20px;
+    padding: 15px;
+  }
+  
+  .game-status {
+    width: 100%;
+    justify-content: space-between;
   }
   
   .game-controls {
-    justify-content: flex-start;
+    width: 100%;
+    justify-content: center;
     flex-wrap: wrap;
   }
   
@@ -224,7 +350,7 @@
   }
   
   .game-header h1 {
-    font-size: 32px;
+    font-size: 36px;
   }
   
   .factories-container {

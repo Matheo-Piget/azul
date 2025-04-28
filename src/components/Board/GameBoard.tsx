@@ -21,7 +21,7 @@ const GameBoard: React.FC = () => {
   };
   
   if (!gameState || gameState.players.length === 0) {
-    return <div>Chargement...</div>;
+    return <div className="loading-screen">Chargement du jeu...</div>;
   }
   
   // Trouver le joueur actif
@@ -30,18 +30,29 @@ const GameBoard: React.FC = () => {
   return (
     <div className="game-board">
       <div className="game-header">
-        <h1>Azul</h1>
-        <div className="game-info">
+        <div className="logo-container">
+          <h1>Azul</h1>
+          <div className="azulejo-pattern"></div>
+        </div>
+        
+        <div className="game-banner">
           <div className="game-status">
-            <p className="round-info">Round {gameState.roundNumber}</p>
-            <p className="player-info">
-              Joueur actif: <span className="current-player">{currentPlayer?.name}</span>
-            </p>
-            <p className="phase-info">
-              Phase: {gameState.gamePhase === 'drafting' ? 'Sélection des tuiles' :
-                     gameState.gamePhase === 'tiling' ? 'Placement des tuiles' :
-                     gameState.gamePhase === 'scoring' ? 'Décompte des points' : 'Fin de partie'}
-            </p>
+            <div className="status-item">
+              <span className="status-label">Tour</span>
+              <span className="status-value">{gameState.roundNumber}</span>
+            </div>
+            <div className="status-item">
+              <span className="status-label">Phase</span>
+              <span className="status-value">
+                {gameState.gamePhase === 'drafting' ? 'Sélection' :
+                 gameState.gamePhase === 'tiling' ? 'Placement' :
+                 gameState.gamePhase === 'scoring' ? 'Décompte' : 'Fin de partie'}
+              </span>
+            </div>
+            <div className="status-item current-player-info">
+              <span className="status-label">Joueur actif</span>
+              <span className="status-value">{currentPlayer?.name}</span>
+            </div>
           </div>
           
           <div className="game-controls">
@@ -54,7 +65,10 @@ const GameBoard: React.FC = () => {
               <option value="3">3 joueurs</option>
               <option value="4">4 joueurs</option>
             </select>
-            <button onClick={handleNewGame} className="new-game-btn">Nouvelle partie</button>
+            <button onClick={handleNewGame} className="new-game-btn">
+              <span className="btn-icon">+</span>
+              <span>Nouvelle partie</span>
+            </button>
           </div>
         </div>
       </div>
@@ -82,13 +96,23 @@ const GameBoard: React.FC = () => {
                 key={player.id} 
                 className={`player-board-container ${player.id === gameState.currentPlayer ? 'active-player' : ''}`}
               >
-                <h3>{player.name} {player.id === gameState.currentPlayer && '(actif)'}</h3>
+                <div className="player-header">
+                  <h3>{player.name} {player.id === gameState.currentPlayer && '(actif)'}</h3>
+                  <div className="player-score">
+                    <span className="score-value">{player.board.score}</span>
+                    <span className="score-label">points</span>
+                  </div>
+                </div>
                 <PlayerBoard playerId={player.id} />
               </div>
             ))}
           </div>
         </div>
       </div>
+      
+      <footer className="game-footer">
+        <div className="game-signature">Azul - Inspiré du jeu de société créé par Michael Kiesling</div>
+      </footer>
     </div>
   );
 };
