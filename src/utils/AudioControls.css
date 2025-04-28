@@ -1,0 +1,116 @@
+.audio-controls {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+  }
+  
+  .audio-toggle-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background-color: var(--card-bg, #ffffff);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  
+  .audio-toggle-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  .audio-icon {
+    font-size: 20px;
+  }
+  
+  .volume-controls {
+    display: flex;
+    align-items: center;
+    background-color: var(--card-bg, #ffffff);
+    border-radius: 22px;
+    padding: 5px 15px 5px 5px;
+    margin-left: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.3s ease-out;
+  }
+  
+  @keyframes slideIn {
+    from { transform: translateX(-20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  .mute-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    transition: all 0.2s;
+  }
+  
+  .mute-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  .volume-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100px;
+    height: 4px;
+    background: var(--border-color, #e1e8ed);
+    border-radius: 2px;
+    outline: none;
+  }
+  
+  .volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--primary-color, #1a3c5b);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .volume-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--primary-color, #1a3c5b);
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+  }
+  
+  .volume-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+  }
+  
+  .volume-slider::-moz-range-thumb:hover {
+    transform: scale(1.2);
+  }
+  
+  .volume-slider:disabled {
+    opacity: 0.5;
+  }
+  
+  .volume-slider:disabled::-webkit-slider-thumb {
+    background: #ccc;
+  }
+  
+  .volume-slider:disabled::-moz-range-thumb {
+    background: #ccc;
+  }

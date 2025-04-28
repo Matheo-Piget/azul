@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Tile from '../Tile/Tile';
 import { useGame } from '../../state/GameContext';
 import { mustPlaceInFloorLine } from '../../game-logic/moves';
+import { audioService } from '../../utils/SoundService';
 import './Playerboard.css';
 
 interface PlayerBoardProps {
@@ -39,6 +40,7 @@ const PlayerBoard: React.FC<PlayerBoardProps> = ({ playerId }) => {
       return;
     }
     
+    audioService.play('tilePlacement');
     placeTiles(lineIndex);
   };
   
