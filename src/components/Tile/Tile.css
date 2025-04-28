@@ -1,36 +1,36 @@
 .tile {
-  border-radius: 4px;
+  border-radius: 2px;
   position: relative;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  margin: 3px;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+  margin: 4px;
   overflow: hidden;
 }
 
 .tile-small {
-  width: 25px;
-  height: 25px;
+  width: 24px;
+  height: 24px;
 }
 
 .tile-medium {
-  width: 35px;
-  height: 35px;
+  width: 36px;
+  height: 36px;
 }
 
 .tile-large {
-  width: 45px;
-  height: 45px;
+  width: 48px;
+  height: 48px;
 }
 
 .tile.selected {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 8px rgba(255, 255, 255, 0.4);
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.25);
   z-index: 10;
 }
 
 .tile.disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -38,8 +38,8 @@
   transform: none;
   opacity: 1;
   border-radius: 0;
-  margin: 0;
-  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.3);
+  margin: 1px;
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.4);
 }
 
 .tile-pattern {
@@ -50,8 +50,29 @@
   bottom: 0;
   background-image: radial-gradient(
     circle at center,
-    rgba(255, 255, 255, 0.3) 5%,
-    transparent 60%
+    rgba(255, 255, 255, 0.35) 5%,
+    transparent 65%
   );
   pointer-events: none;
+}
+
+/* Effet de brillance subtil pour l'aspect céramique */
+.tile::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.05) 75%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(45deg);
+  pointer-events: none;
+  z-index: 2;
 }
