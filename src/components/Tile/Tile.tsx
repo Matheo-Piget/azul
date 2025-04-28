@@ -8,44 +8,56 @@ interface TileProps {
   onClick?: () => void;
   selected?: boolean;
   disabled?: boolean;
+  placed?: boolean; // Pour les tuiles placées sur le mur
 }
 
-const Tile: React.FC<TileProps> = ({ 
+const Tile: React.FC<TileProps> = ({
   color,
   size = 'medium',
   onClick,
   selected = false,
-  disabled = false
+  disabled = false,
+  placed = false
 }) => {
-  const sizeMap = {
-    small: '30px',
-    medium: '40px',
-    large: '50px'
-  };
-  
+  // Couleurs plus précises du jeu Azul
   const colorMap: Record<TileColor, string> = {
-    blue: '#1e88e5',
-    yellow: '#fdd835',
-    red: '#e53935',
-    black: '#424242',
-    teal: '#00897b'
+    blue: '#1e88e5',     // Bleu azulejos
+    yellow: '#fdd835',   // Jaune azulejos
+    red: '#e53935',      // Rouge azulejos
+    black: '#424242',    // Noir azulejos
+    teal: '#00897b'      // Turquoise azulejos
   };
   
-  const style = {
-    backgroundColor: colorMap[color],
-    width: sizeMap[size],
-    height: sizeMap[size],
-    border: selected ? '2px solid white' : '1px solid rgba(0, 0, 0, 0.2)',
-    boxShadow: selected ? '0 0 5px white' : 'none',
-    opacity: disabled ? 0.5 : 1
+  const sizeClasses = {
+    small: 'tile-small',
+    medium: 'tile-medium',
+    large: 'tile-large'
   };
+  
+  const handleClick = () => {
+    if (!disabled && onClick) {
+      onClick();
+    }
+  };
+  
+  const tileClasses = [
+    'tile',
+    sizeClasses[size],
+    selected ? 'selected' : '',
+    disabled ? 'disabled' : '',
+    placed ? 'placed' : ''
+  ].filter(Boolean).join(' ');
   
   return (
-    <div 
-      className="tile"
-      style={style}
-      onClick={disabled ? undefined : onClick}
-    />
+    <div
+      className={tileClasses}
+      style={{ backgroundColor: colorMap[color] }}
+      onClick={handleClick}
+      title={`Tuile ${color}`}
+    >
+      {/* Motif décoratif pour imiter le style azulejos */}
+      <div className="tile-pattern"></div>
+    </div>
   );
 };
 

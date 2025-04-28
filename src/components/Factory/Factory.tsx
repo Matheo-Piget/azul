@@ -9,7 +9,7 @@ interface FactoryProps {
 }
 
 const Factory: React.FC<FactoryProps> = ({ factoryId }) => {
-  const { gameState, selectTiles } = useGame();
+  const { gameState, selectTiles, selectedTiles } = useGame();
   
   const factory = gameState.factories.find(f => f.id === factoryId);
   
@@ -19,7 +19,10 @@ const Factory: React.FC<FactoryProps> = ({ factoryId }) => {
   
   // Fonction pour sélectionner toutes les tuiles d'une certaine couleur
   const handleTileClick = (color: TileColor) => {
-    selectTiles(factoryId, color);
+    // Ne permettre la sélection que pendant la phase de draft et si aucune autre sélection n'est active
+    if (gameState.gamePhase === 'drafting' && (!selectedTiles || selectedTiles.length === 0)) {
+      selectTiles(factoryId, color);
+    }
   };
   
   // Regrouper les tuiles par couleur pour l'affichage
@@ -35,19 +38,31 @@ const Factory: React.FC<FactoryProps> = ({ factoryId }) => {
     tilesByColor[tile.color]++;
   });
   
+  // Vérifier si des tuiles sont déjà sélectionnées (pour désactiver les autres)
+  const hasSelection = selectedTiles && selectedTiles.length > 0;
+  
   return (
     <div className="factory">
-      {Object.entries(tilesByColor).map(([color, count]) => {
-        if (count === 0) return null;
-        
-        return Array(count).fill(0).map((_, index) => (
-          <Tile 
-            key={`${factoryId}-${color}-${index}`}
-            color={color as TileColor}
-            onClick={() => handleTileClick(color as TileColor)}
-          />
-        ));
-      })}
+      <div className="factory-inner">
+        {Object.entries(tilesByColor).map(([color, count]) => {
+          if (count === 0) return null;
+          
+          // Optimisation : afficher un groupe avec un nombre plutôt que plusieurs tuiles identiques
+          return (
+            <div key={color} className="factory-color-group">
+              <Tile
+                color={color as TileColor}
+                onClick={() => handleTileClick(color as TileColor)}
+                disabled={hasSelection}
+              />
+              {count > 1 && (
+                <span className="factory-tile-count">{count}</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div className="factory-id">Factory {factoryId + 1}</div>
     </div>
   );
 };

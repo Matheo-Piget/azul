@@ -1,6 +1,7 @@
 import React from 'react';
 import Tile from '../Tile/Tile';
 import { useGame } from '../../state/GameContext';
+import './Playerboard.css';
 
 interface PlayerBoardProps {
   playerId: string;
