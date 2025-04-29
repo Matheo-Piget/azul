@@ -81,7 +81,6 @@ const applyFloorPenalties = (player: Player): Player => {
   return newPlayer;
 };
 
-// Transférer les tuiles des lignes de motif complètes vers le mur
 const transferCompletedLinesToWall = (player: Player, gameState: GameState): { player: Player, discardedTiles: Tile[] } => {
   let newPlayer = { ...player };
   let scoreGained = 0;
@@ -104,8 +103,9 @@ const transferCompletedLinesToWall = (player: Player, gameState: GameState): { p
         const tileScore = calculateTilePlacementScore(newPlayer.board, rowIndex, colIndex);
         scoreGained += tileScore;
         
-        // Envoyer les tuiles à la défausse
-        discardedTiles = [...discardedTiles, ...line.tiles];
+        // Prendre une tuile pour le mur et envoyer les autres à la défausse
+        const [tileForWall, ...restOfTiles] = line.tiles;
+        discardedTiles = [...discardedTiles, ...restOfTiles];
         
         // Vider la ligne de motif et réinitialiser sa couleur
         line.tiles = [];

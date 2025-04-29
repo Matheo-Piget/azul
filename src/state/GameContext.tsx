@@ -191,22 +191,6 @@ const placeTiles = useCallback(
             newGameState.currentPlayer = newGameState.firstPlayerToken;
             newGameState.firstPlayerToken = null;
           }
-
-
-          newGameState.players.forEach(player => {
-            // Les tuiles des lignes de plancher seront gérées dans calculateRoundScores 
-            // et envoyées à la défausse, pas directement au sac
-            
-            // Vérifier les lignes de motif incomplètes
-            player.board.patternLines.forEach(line => {
-              // Si la ligne est incomplète et contient des tuiles, on les remet dans la défausse
-              if (line.tiles.length > 0 && line.tiles.length < line.spaces) {
-                newGameState.discardPile = [...newGameState.discardPile, ...line.tiles];
-                line.tiles = [];
-                line.color = null;
-              }
-            });
-          });
           
           // Vérifier si le sac est vide et si la défausse a des tuiles
           if (newGameState.bag.length === 0 && newGameState.discardPile.length > 0) {
