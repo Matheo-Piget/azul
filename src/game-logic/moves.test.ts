@@ -257,23 +257,22 @@ describe('Game Moves', () => {
     });
     
     test('should return true if pattern line has same color as selected tiles', () => {
-      const player = createPlayer('p1');
-      player.board.patternLines[0].color = 'blue';
-      player.board.patternLines[0].tiles = [createTile('blue')];
-      
-      const gameState: GameState = {
-        players: [player],
-        factories: [],
-        center: [],
-        bag: [],
-        discardPile: [],
-        currentPlayer: 'p1',
-        gamePhase: 'drafting',
-        firstPlayerToken: null,
-        roundNumber: 1
-      };
-      
-      expect(canPlaceTiles(gameState, 0, [createTile('blue')])).toBe(true);
+        const player = createPlayer('p1');
+        player.board.patternLines[0].color = 'blue';
+        
+        const gameState: GameState = {
+          players: [player],
+          factories: [],
+          center: [],
+          bag: [],
+          discardPile: [],
+          currentPlayer: 'p1',
+          gamePhase: 'drafting',
+          firstPlayerToken: null,
+          roundNumber: 1
+        };
+        
+        expect(canPlaceTiles(gameState, 0, [createTile('blue')])).toBe(true);
     });
     
     test('should return true if pattern line is empty and has space', () => {
@@ -409,11 +408,30 @@ describe('Game Moves', () => {
     });
     
     test('should return true if all valid pattern lines already have the color on wall', () => {
-      const player = createPlayer('p1');
+        const player = createPlayer('p1');
+        
+        // Mark blue as filled on every row of the wall
+        for (let row = 0; row < 5; row++) {
+          const blueIndex = player.board.wall[row].findIndex(space => space.color === 'blue');
+          player.board.wall[row][blueIndex].filled = true;
+        }
+        
+        const gameState: GameState = {
+          players: [player],
+          factories: [],
+          center: [],
+          bag: [],
+          discardPile: [],
+          currentPlayer: 'p1',
+          gamePhase: 'drafting',
+          firstPlayerToken: null,
+          roundNumber: 1
+        };
+        
+        expect(mustPlaceInFloorLine(gameState, [createTile('blue')])).toBe(true);
+      });
       
-      // Mark blue as filled on every row of the wall
-    // Complete the test for all pattern lines having different colors or being full
-    test('should return true if all pattern lines either have different colors or are full', () => {
+      test('should return true if all pattern lines either have different colors or are full', () => {
         const player = createPlayer('p1');
         
         // Set different colors for all pattern lines
@@ -434,36 +452,19 @@ describe('Game Moves', () => {
         player.board.patternLines[4].tiles = [createTile('blue'), createTile('blue'), createTile('blue'), createTile('blue'), createTile('blue')];
         
         const gameState: GameState = {
-            players: [player],
-            factories: [],
-            center: [],
-            bag: [],
-            discardPile: [],
-            currentPlayer: 'p1',
-            gamePhase: 'drafting',
-            firstPlayerToken: null,
-            roundNumber: 1
+          players: [player],
+          factories: [],
+          center: [],
+          bag: [],
+          discardPile: [],
+          currentPlayer: 'p1',
+          gamePhase: 'drafting',
+          firstPlayerToken: null,
+          roundNumber: 1
         };
         
         expect(mustPlaceInFloorLine(gameState, [createTile('blue')])).toBe(true);
-    });
-      player.board.patternLines[4].color = 'blue';
-      player.board.patternLines[4].tiles = Array(5).fill(null).map(() => createTile('blue'));
-      
-      const gameState: GameState = {
-        players: [player],
-        factories: [],
-        center: [],
-        bag: [],
-        discardPile: [],
-        currentPlayer: 'p1',
-        gamePhase: 'drafting',
-        firstPlayerToken: null,
-        roundNumber: 1
-      };
-      
-      expect(mustPlaceInFloorLine(gameState, [createTile('blue')])).toBe(true);
-    });
+      });
     
     test('should return false if at least one pattern line can accept the color', () => {
       const player = createPlayer('p1');

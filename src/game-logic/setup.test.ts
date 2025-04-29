@@ -119,7 +119,7 @@ describe('Game Setup', () => {
         test('should move tiles from discard pile to bag when bag is empty', () => {
             // Create a game state with empty bag and tiles in discard
             const initialState = initializeGame(2);
-            const discardTiles = initialState.bag.splice(0, 20);
+            const discardTiles = initialState.bag.splice(0, 80);
             initialState.discardPile = discardTiles;
             
             // Empty all factories

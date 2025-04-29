@@ -1,8 +1,14 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+} from "react";
 import { GameState, TileColor, Tile } from "../models/types";
 import { initializeGame, distributeFactoryTiles } from "../game-logic/setup";
 import { canSelectTiles, canPlaceTiles } from "../game-logic/moves";
-import { getAIMove, AIDifficulty } from '../game-logic/ai/aiPlayer';
+import { getAIMove, AIDifficulty } from "../game-logic/ai/aiPlayer";
 import {
   calculateRoundScores,
   calculateFinalScores,
@@ -33,22 +39,23 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   } | null>(null);
   const [aiPlayers, setAIPlayers] = useState<Record<string, AIDifficulty>>({});
 
-  const addAIPlayer = useCallback((playerId: string, difficulty: AIDifficulty) => {
-    setAIPlayers(prev => ({
-      ...prev,
-      [playerId]: difficulty
-    }));
-  }, []);
+  const addAIPlayer = useCallback(
+    (playerId: string, difficulty: AIDifficulty) => {
+      setAIPlayers((prev) => ({
+        ...prev,
+        [playerId]: difficulty,
+      }));
+    },
+    []
+  );
 
   const removeAIPlayer = useCallback((playerId: string) => {
-    setAIPlayers(prev => {
+    setAIPlayers((prev) => {
       const newAIPlayers = { ...prev };
       delete newAIPlayers[playerId];
       return newAIPlayers;
     });
   }, []);
-
-  
 
   const startNewGame = useCallback((playerCount: number) => {
     const newGameState = initializeGame(playerCount);
@@ -111,56 +118,62 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Partie de la fonction placeTiles à modifier
 
-const placeTiles = useCallback(
-  (patternLineIndex: number) => {
-    if (!gameState || selectedTiles.length === 0 || !selectedSource) return;
+  const placeTiles = useCallback(
+    (patternLineIndex: number) => {
+      if (!gameState || selectedTiles.length === 0 || !selectedSource) return;
 
-    // Si patternLineIndex est -1, cela signifie de placer dans la ligne de plancher
-    const isFloorLine = patternLineIndex === -1;
+      // Si patternLineIndex est -1, cela signifie de placer dans la ligne de plancher
+      const isFloorLine = patternLineIndex === -1;
 
-    if (!isFloorLine && !canPlaceTiles(gameState, patternLineIndex, selectedTiles)) {
-      console.log("Placement de tuiles invalide");
-      return;
-    }
+      if (
+        !isFloorLine &&
+        !canPlaceTiles(gameState, patternLineIndex, selectedTiles)
+      ) {
+        console.log("Placement de tuiles invalide");
+        return;
+      }
 
-    // Logique pour placer les tuiles sélectionnées
-    let newGameState = { ...gameState };
-    const currentPlayer = newGameState.players.find(
-      (p) => p.id === newGameState.currentPlayer
-    );
-    if (!currentPlayer) return;
+      // Logique pour placer les tuiles sélectionnées
+      let newGameState = { ...gameState };
+      const currentPlayer = newGameState.players.find(
+        (p) => p.id === newGameState.currentPlayer
+      );
+      if (!currentPlayer) return;
 
-    if (isFloorLine) {
-      // Placer toutes les tuiles dans la ligne de plancher
-      currentPlayer.board.floorLine = [...currentPlayer.board.floorLine, ...selectedTiles];
-    } else {
-      // Placer les tuiles sur la ligne de motif
-      const patternLine = currentPlayer.board.patternLines[patternLineIndex];
-      const color = selectedTiles[0].color;
+      if (isFloorLine) {
+        // Placer toutes les tuiles dans la ligne de plancher
+        currentPlayer.board.floorLine = [
+          ...currentPlayer.board.floorLine,
+          ...selectedTiles,
+        ];
+      } else {
+        // Placer les tuiles sur la ligne de motif
+        const patternLine = currentPlayer.board.patternLines[patternLineIndex];
+        const color = selectedTiles[0].color;
 
-      // Vérifier si la ligne peut accueillir toutes les tuiles
-      const spaceAvailable = patternLine.spaces - patternLine.tiles.length;
-      const tilesToPlace = selectedTiles.slice(0, spaceAvailable);
-      const excessTiles = selectedTiles.slice(spaceAvailable);
+        // Vérifier si la ligne peut accueillir toutes les tuiles
+        const spaceAvailable = patternLine.spaces - patternLine.tiles.length;
+        const tilesToPlace = selectedTiles.slice(0, spaceAvailable);
+        const excessTiles = selectedTiles.slice(spaceAvailable);
 
-      // Mettre à jour la ligne de motif
-      patternLine.tiles = [...patternLine.tiles, ...tilesToPlace];
-      patternLine.color = patternLine.color || color;
+        // Mettre à jour la ligne de motif
+        patternLine.tiles = [...patternLine.tiles, ...tilesToPlace];
+        patternLine.color = patternLine.color || color;
 
-      // Ajouter les tuiles en excès à la ligne de plancher
-      currentPlayer.board.floorLine = [
-        ...currentPlayer.board.floorLine,
-        ...excessTiles,
-      ];
-    }
+        // Ajouter les tuiles en excès à la ligne de plancher
+        currentPlayer.board.floorLine = [
+          ...currentPlayer.board.floorLine,
+          ...excessTiles,
+        ];
+      }
 
-    // Passer au joueur suivant
-    const currentPlayerIndex = newGameState.players.findIndex(
-      (p) => p.id === newGameState.currentPlayer
-    );
-    const nextPlayerIndex =
-      (currentPlayerIndex + 1) % newGameState.players.length;
-    newGameState.currentPlayer = newGameState.players[nextPlayerIndex].id;
+      // Passer au joueur suivant
+      const currentPlayerIndex = newGameState.players.findIndex(
+        (p) => p.id === newGameState.currentPlayer
+      );
+      const nextPlayerIndex =
+        (currentPlayerIndex + 1) % newGameState.players.length;
+      newGameState.currentPlayer = newGameState.players[nextPlayerIndex].id;
 
       // Vérifier si la phase de sélection est terminée
       const factoriesEmpty = newGameState.factories.every(
@@ -191,14 +204,16 @@ const placeTiles = useCallback(
             newGameState.currentPlayer = newGameState.firstPlayerToken;
             newGameState.firstPlayerToken = null;
           }
-          
+
           // Vérifier si le sac est vide et si la défausse a des tuiles
-          if (newGameState.bag.length === 0 && newGameState.discardPile.length > 0) {
+          if (
+            newGameState.bag.length === 0 &&
+            newGameState.discardPile.length > 0
+          ) {
             newGameState.bag = [...newGameState.discardPile];
             newGameState.discardPile = [];
             newGameState.bag = shuffle(newGameState.bag); // Assurez-vous que cette fonction est importée
           }
-
 
           // Redistribuer les tuiles aux fabriques
           newGameState = distributeFactoryTiles(newGameState);
@@ -216,16 +231,16 @@ const placeTiles = useCallback(
     if (!gameState) return;
 
     const currentPlayerId = gameState.currentPlayer;
-    
+
     // Vérifier si le joueur actuel est une IA
     if (aiPlayers[currentPlayerId]) {
       try {
         const difficulty = aiPlayers[currentPlayerId];
         const aiDecision = getAIMove(gameState, difficulty);
-        
+
         // Exécuter le mouvement de l'IA
         selectTiles(aiDecision.factoryId, aiDecision.color);
-        
+
         // Utiliser setTimeout pour simuler un délai de réflexion
         setTimeout(() => {
           placeTiles(aiDecision.patternLineIndex);
@@ -236,18 +251,17 @@ const placeTiles = useCallback(
     }
   }, [gameState, aiPlayers, selectTiles, placeTiles]);
 
-
   useEffect(() => {
     if (!gameState) return;
-    
+
     const currentPlayerId = gameState.currentPlayer;
-    
+
     if (aiPlayers[currentPlayerId]) {
       // Petit délai pour que l'IA semble réfléchir
       const timer = setTimeout(() => {
         executeAITurn();
       }, 1500);
-      
+
       return () => clearTimeout(timer);
     }
   }, [gameState?.currentPlayer, aiPlayers, executeAITurn]);
@@ -261,7 +275,7 @@ const placeTiles = useCallback(
     aiPlayers,
     addAIPlayer,
     removeAIPlayer,
-    executeAITurn
+    executeAITurn,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
@@ -281,4 +295,3 @@ function shuffle(bag: Tile[]): Tile[] {
   }
   return bag;
 }
-

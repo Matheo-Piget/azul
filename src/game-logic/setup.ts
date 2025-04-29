@@ -99,25 +99,24 @@ const createFactories = (playerCount: number): Factory[] => {
 
 // Distribuer les tuiles aux fabriques
 export const distributeFactoryTiles = (gameState: GameState): GameState => {
-  const newGameState = { ...gameState };
+  // Create a deep copy to avoid reference issues
+  const newGameState = JSON.parse(JSON.stringify(gameState));
   const tilesPerFactory = 4;
   
   // Pour chaque fabrique, prendre 4 tuiles du sac
-  newGameState.factories.forEach(factory => {
-    if (newGameState.bag.length < tilesPerFactory) {
+  newGameState.factories.forEach((factory: { tiles: any; }) => {
+    if (newGameState.bag.length === 0) {
       // Si le sac est vide, remplir avec la défausse
       newGameState.bag = [...newGameState.bag, ...newGameState.discardPile];
-      newGameState.discardPile = [];
+      newGameState.discardPile = []; // Empty the discard pile
       
       // Mélanger le sac
       newGameState.bag = shuffle(newGameState.bag);
-
-
-      
     }
     
-    // Prendre 4 tuiles pour la fabrique
-    const factoryTiles = newGameState.bag.splice(0, tilesPerFactory);
+    // Prendre 4 tuiles pour la fabrique (max available)
+    const tilesToTake = Math.min(tilesPerFactory, newGameState.bag.length);
+    const factoryTiles = newGameState.bag.splice(0, tilesToTake);
     factory.tiles = factoryTiles;
   });
   
