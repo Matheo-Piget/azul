@@ -5,6 +5,7 @@ import Center from '../Center/Center';
 import { useGame } from '../../state/GameContext';
 import './Gameboard.css';
 import AIPlayerConfig from '../AI/AIPlayerConfig';
+import GameInfo from '../UI/Bag';
 
 const GameBoard: React.FC = () => {
   const { gameState, startNewGame } = useGame();
@@ -86,6 +87,7 @@ const GameBoard: React.FC = () => {
           <div className="center-area">
             <h2>Centre</h2>
             <Center />
+            <GameInfo />
           </div>
         </div>
         

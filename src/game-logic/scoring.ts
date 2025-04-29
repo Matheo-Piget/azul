@@ -1,4 +1,5 @@
-import { GameState, PlayerBoard, Player } from '../models/types';
+import { GameState, PlayerBoard, Player, Tile } from '../models/types';
+
 
 // Tableau des pénalités pour la ligne de plancher
 const floorPenalties = [-1, -1, -2, -2, -2, -3, -3];
@@ -81,9 +82,10 @@ const applyFloorPenalties = (player: Player): Player => {
 };
 
 // Transférer les tuiles des lignes de motif complètes vers le mur
-const transferCompletedLinesToWall = (player: Player): Player => {
+const transferCompletedLinesToWall = (player: Player, gameState: GameState): { player: Player, discardedTiles: Tile[] } => {
   let newPlayer = { ...player };
   let scoreGained = 0;
+  let discardedTiles: Tile[] = [];
   
   // Pour chaque ligne de motif
   newPlayer.board.patternLines.forEach((line, rowIndex) => {
@@ -102,6 +104,9 @@ const transferCompletedLinesToWall = (player: Player): Player => {
         const tileScore = calculateTilePlacementScore(newPlayer.board, rowIndex, colIndex);
         scoreGained += tileScore;
         
+        // Envoyer les tuiles à la défausse
+        discardedTiles = [...discardedTiles, ...line.tiles];
+        
         // Vider la ligne de motif et réinitialiser sa couleur
         line.tiles = [];
         line.color = null;
@@ -112,23 +117,32 @@ const transferCompletedLinesToWall = (player: Player): Player => {
   // Ajouter les points gagnés au score du joueur
   newPlayer.board.score += scoreGained;
   
-  return newPlayer;
+  return { player: newPlayer, discardedTiles };
 };
 
 // Calculer les scores à la fin d'un round
 export const calculateRoundScores = (gameState: GameState): GameState => {
   let newGameState = { ...gameState };
+  let allDiscardedTiles: Tile[] = [];
   
   // Pour chaque joueur
   newGameState.players = newGameState.players.map(player => {
     // 1. Transférer les tuiles des lignes complètes vers le mur
-    let updatedPlayer = transferCompletedLinesToWall(player);
+    const { player: updatedPlayer, discardedTiles } = transferCompletedLinesToWall(player, newGameState);
+    allDiscardedTiles = [...allDiscardedTiles, ...discardedTiles];
     
-    // 2. Appliquer les pénalités de la ligne de plancher
-    updatedPlayer = applyFloorPenalties(updatedPlayer);
+    // 2. Appliquer les pénalités de la ligne de plancher et envoyer ces tuiles à la défausse aussi
+    const floorTiles = [...updatedPlayer.board.floorLine];
+    allDiscardedTiles = [...allDiscardedTiles, ...floorTiles];
     
-    return updatedPlayer;
+    // Vider la ligne de plancher et appliquer les pénalités
+    const playerAfterPenalties = applyFloorPenalties(updatedPlayer);
+    
+    return playerAfterPenalties;
   });
+  
+  // Ajouter toutes les tuiles discardées à la défausse
+  newGameState.discardPile = [...newGameState.discardPile, ...allDiscardedTiles];
   
   return newGameState;
 };

@@ -192,6 +192,30 @@ const placeTiles = useCallback(
             newGameState.firstPlayerToken = null;
           }
 
+
+          newGameState.players.forEach(player => {
+            // Les tuiles des lignes de plancher seront gérées dans calculateRoundScores 
+            // et envoyées à la défausse, pas directement au sac
+            
+            // Vérifier les lignes de motif incomplètes
+            player.board.patternLines.forEach(line => {
+              // Si la ligne est incomplète et contient des tuiles, on les remet dans la défausse
+              if (line.tiles.length > 0 && line.tiles.length < line.spaces) {
+                newGameState.discardPile = [...newGameState.discardPile, ...line.tiles];
+                line.tiles = [];
+                line.color = null;
+              }
+            });
+          });
+          
+          // Vérifier si le sac est vide et si la défausse a des tuiles
+          if (newGameState.bag.length === 0 && newGameState.discardPile.length > 0) {
+            newGameState.bag = [...newGameState.discardPile];
+            newGameState.discardPile = [];
+            newGameState.bag = shuffle(newGameState.bag); // Assurez-vous que cette fonction est importée
+          }
+
+
           // Redistribuer les tuiles aux fabriques
           newGameState = distributeFactoryTiles(newGameState);
         }
@@ -266,3 +290,11 @@ export const useGame = () => {
   }
   return context;
 };
+function shuffle(bag: Tile[]): Tile[] {
+  for (let i = bag.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [bag[i], bag[j]] = [bag[j], bag[i]];
+  }
+  return bag;
+}
+

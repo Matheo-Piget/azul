@@ -56,4 +56,5 @@ export interface GameState {
   gamePhase: 'drafting' | 'tiling' | 'scoring' | 'gameEnd';
   firstPlayerToken: string | null;
   roundNumber: number;
+  discardMovedToBag?: boolean;
 }

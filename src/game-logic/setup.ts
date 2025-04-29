@@ -111,6 +111,9 @@ export const distributeFactoryTiles = (gameState: GameState): GameState => {
       
       // Mélanger le sac
       newGameState.bag = shuffle(newGameState.bag);
+
+
+      
     }
     
     // Prendre 4 tuiles pour la fabrique
