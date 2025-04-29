@@ -257,22 +257,23 @@ describe('Game Moves', () => {
     });
     
     test('should return true if pattern line has same color as selected tiles', () => {
-        const player = createPlayer('p1');
-        player.board.patternLines[0].color = 'blue';
-        
-        const gameState: GameState = {
-          players: [player],
-          factories: [],
-          center: [],
-          bag: [],
-          discardPile: [],
-          currentPlayer: 'p1',
-          gamePhase: 'drafting',
-          firstPlayerToken: null,
-          roundNumber: 1
-        };
-        
-        expect(canPlaceTiles(gameState, 0, [createTile('blue')])).toBe(true);
+      const player = createPlayer('p1');
+      player.board.patternLines[1].color = 'blue';
+      player.board.patternLines[1].tiles = [createTile('blue')];
+      
+      const gameState: GameState = {
+        players: [player],
+        factories: [],
+        center: [],
+        bag: [],
+        discardPile: [],
+        currentPlayer: 'p1',
+        gamePhase: 'drafting',
+        firstPlayerToken: null,
+        roundNumber: 1
+      };
+      
+      expect(canPlaceTiles(gameState, 0, [createTile('blue')])).toBe(true);
     });
     
     test('should return true if pattern line is empty and has space', () => {
