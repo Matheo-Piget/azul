@@ -412,43 +412,41 @@ describe('Game Moves', () => {
       const player = createPlayer('p1');
       
       // Mark blue as filled on every row of the wall
-      player.board.wall.forEach(row => {
-        const blueIndex = row.findIndex(space => space.color === 'blue');
-        row[blueIndex].filled = true;
-      });
-      
-      const gameState: GameState = {
-        players: [player],
-        factories: [],
-        center: [],
-        bag: [],
-        discardPile: [],
-        currentPlayer: 'p1',
-        gamePhase: 'drafting',
-        firstPlayerToken: null,
-        roundNumber: 1
-      };
-      
-      expect(mustPlaceInFloorLine(gameState, [createTile('blue')])).toBe(true);
-    });
-    
+    // Complete the test for all pattern lines having different colors or being full
     test('should return true if all pattern lines either have different colors or are full', () => {
-      const player = createPlayer('p1');
-      
-      // Set different colors for all pattern lines
-      player.board.patternLines[0].color = 'red';
-      player.board.patternLines[0].tiles = [createTile('red')];
-      
-      player.board.patternLines[1].color = 'yellow';
-      player.board.patternLines[1].tiles = [createTile('yellow')];
-      
-      player.board.patternLines[2].color = 'black';
-      player.board.patternLines[2].tiles = [createTile('black'), createTile('black'), createTile('black')];
-      
-      player.board.patternLines[3].color = 'teal';
-      player.board.patternLines[3].tiles = [createTile('teal'), createTile('teal'), createTile('teal'), createTile('teal')];
-      
-      // Last line is full
+        const player = createPlayer('p1');
+        
+        // Set different colors for all pattern lines
+        player.board.patternLines[0].color = 'red';
+        player.board.patternLines[0].tiles = [createTile('red')];
+        
+        player.board.patternLines[1].color = 'yellow';
+        player.board.patternLines[1].tiles = [createTile('yellow'), createTile('yellow')];
+        
+        player.board.patternLines[2].color = 'black';
+        player.board.patternLines[2].tiles = [createTile('black'), createTile('black'), createTile('black')];
+        
+        player.board.patternLines[3].color = 'teal';
+        player.board.patternLines[3].tiles = [createTile('teal'), createTile('teal'), createTile('teal'), createTile('teal')];
+        
+        // Last line is full
+        player.board.patternLines[4].color = 'blue';
+        player.board.patternLines[4].tiles = [createTile('blue'), createTile('blue'), createTile('blue'), createTile('blue'), createTile('blue')];
+        
+        const gameState: GameState = {
+            players: [player],
+            factories: [],
+            center: [],
+            bag: [],
+            discardPile: [],
+            currentPlayer: 'p1',
+            gamePhase: 'drafting',
+            firstPlayerToken: null,
+            roundNumber: 1
+        };
+        
+        expect(mustPlaceInFloorLine(gameState, [createTile('blue')])).toBe(true);
+    });
       player.board.patternLines[4].color = 'blue';
       player.board.patternLines[4].tiles = Array(5).fill(null).map(() => createTile('blue'));
       
