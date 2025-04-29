@@ -1,7 +1,15 @@
 import React from 'react';
 import { useGame } from '../../state/GameContext';
-import './Bag.css'
+import './Bag.css';
 
+/**
+ * GameInfo component displaying information about game elements
+ * 
+ * Shows the number of tiles in the bag and discard pile during an Azul game.
+ * Uses the game state from the GameContext.
+ * 
+ * @returns {React.ReactElement} Component displaying bag and discard information
+ */
 const GameInfo: React.FC = () => {
   const { gameState } = useGame();
   
@@ -12,12 +20,12 @@ const GameInfo: React.FC = () => {
   return (
     <div className="game-info-panel">
       <div className="info-item">
-        <div className="info-label">Sac</div>
-        <div className="info-value">{bagCount} tuiles</div>
+        <div className="info-label">Bag</div>
+        <div className="info-value">{bagCount} tiles</div>
       </div>
       <div className="info-item">
-        <div className="info-label">Défausse</div>
-        <div className="info-value">{discardCount} tuiles</div>
+        <div className="info-label">Discard</div>
+        <div className="info-value">{discardCount} tiles</div>
       </div>
     </div>
   );

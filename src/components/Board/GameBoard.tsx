@@ -7,26 +7,46 @@ import './Gameboard.css';
 import AIPlayerConfig from '../AI/AIPlayerConfig';
 import GameInfo from '../UI/Bag';
 
+/**
+ * GameBoard Component
+ * 
+ * @component
+ * @description Main game interface that renders the entire Azul game board.
+ * This component manages:
+ * - Game initialization
+ * - Display of factories, center area, and player boards
+ * - Game status information
+ * - Controls for starting a new game
+ * 
+ * @returns {React.ReactElement} The complete game board UI or a loading screen
+ */
 const GameBoard: React.FC = () => {
   const { gameState, startNewGame } = useGame();
   const [playerCount, setPlayerCount] = useState(2);
   
+  /**
+   * Effect to initialize a new game if none exists
+   */
   useEffect(() => {
-    // Démarrer une nouvelle partie si le plateau est vide
+    // Start a new game if the board is empty
     if (!gameState || gameState.players.length === 0) {
       startNewGame(2);
     }
   }, [gameState, startNewGame]);
   
+  /**
+   * Handles starting a new game with the selected player count
+   */
   const handleNewGame = () => {
     startNewGame(playerCount);
   };
   
+  // Show loading screen while game initializes
   if (!gameState || gameState.players.length === 0) {
     return <div className="loading-screen">Chargement du jeu...</div>;
   }
   
-  // Trouver le joueur actif
+  // Find the active player
   const currentPlayer = gameState.players.find(p => p.id === gameState.currentPlayer);
   
   return (
@@ -59,15 +79,21 @@ const GameBoard: React.FC = () => {
           
           <div className="game-controls">
             <select
+              id="player-count-select"
               value={playerCount}
               onChange={(e) => setPlayerCount(parseInt(e.target.value))}
               className="player-select"
+              aria-label="Sélectionner le nombre de joueurs"
             >
               <option value="2">2 joueurs</option>
               <option value="3">3 joueurs</option>
               <option value="4">4 joueurs</option>
             </select>
-            <button onClick={handleNewGame} className="new-game-btn">
+            <button 
+              onClick={handleNewGame} 
+              className="new-game-btn"
+              aria-label="Démarrer une nouvelle partie"
+            >
               <span className="btn-icon">+</span>
               <span>Nouvelle partie</span>
             </button>
