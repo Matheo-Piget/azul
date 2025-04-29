@@ -61,8 +61,9 @@ const Factory: React.FC<FactoryProps> = ({ factoryId }) => {
             </div>
           );
         })}
+        <div className="factory-id">Factory {factoryId + 1}</div>
       </div>
-      <div className="factory-id">Factory {factoryId + 1}</div>
+      
     </div>
   );
 };

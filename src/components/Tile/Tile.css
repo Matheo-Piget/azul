@@ -4,8 +4,9 @@
   cursor: pointer;
   transition: all 0.25s ease;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
-  margin: 4px;
+  margin: 2px;
   overflow: hidden;
+  gap : 0;
 }
 
 .tile-small {
