@@ -1,7 +1,5 @@
 module.exports = {
-    testEnvironment: 'node',
-    testMatch: ['**/src/**/*.test.js'],
-    transform: {
-      '^.+\\.jsx?$': 'babel-jest'
-    }
-  };
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  testMatch: ['**/src/**/*.test.(ts|tsx|js)'],
+};
