@@ -4,7 +4,7 @@ import { GameState, Tile, TileColor, WallSpace, PatternLine, PlayerBoard, Player
  * Generates a random unique identifier
  * @returns {string} A unique string ID
  */
-const generateId = (): string => {
+export const generateId = (): string => {
   return Math.random().toString(36).substring(2, 15);
 };
 
@@ -12,7 +12,7 @@ const generateId = (): string => {
  * Creates all tiles for the game
  * @returns {Tile[]} Array containing all game tiles (20 of each color)
  */
-const createTiles = (): Tile[] => {
+export const createTiles = (): Tile[] => {
   const colors: TileColor[] = ['blue', 'yellow', 'red', 'black', 'teal'];
   const tiles: Tile[] = [];
   
@@ -33,7 +33,7 @@ const createTiles = (): Tile[] => {
  * Creates an empty player board
  * @returns {PlayerBoard} A new player board with pattern lines, wall, floor line and initial score
  */
-const createPlayerBoard = (): PlayerBoard => {
+export const createPlayerBoard = (): PlayerBoard => {
   // Create pattern lines (1 to 5 spaces)
   const patternLines: PatternLine[] = [];
   for (let i = 0; i < 5; i++) {
@@ -78,7 +78,7 @@ const createPlayerBoard = (): PlayerBoard => {
  * @param {string} name - The player's name
  * @returns {Player} A new player object
  */
-const createPlayer = (id: string, name: string): Player => {
+export const createPlayer = (id: string, name: string): Player => {
   return {
     id,
     name,
@@ -92,7 +92,7 @@ const createPlayer = (id: string, name: string): Player => {
  * @param {T[]} array - The array to shuffle
  * @returns {T[]} A new shuffled array
  */
-const shuffle = <T>(array: T[]): T[] => {
+export const shuffle = <T>(array: T[]): T[] => {
   const result = [...array];
   for (let i = result.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -106,7 +106,7 @@ const shuffle = <T>(array: T[]): T[] => {
  * @param {number} playerCount - Number of players in the game
  * @returns {Factory[]} Array of factory displays
  */
-const createFactories = (playerCount: number): Factory[] => {
+export const createFactories = (playerCount: number): Factory[] => {
   const factoryCount = 2 * playerCount + 1;
   const factories: Factory[] = [];
   
@@ -156,6 +156,11 @@ export const distributeFactoryTiles = (gameState: GameState): GameState => {
  * @returns {GameState} Initial game state
  */
 export const initializeGame = (playerCount: number): GameState => {
+
+  if (playerCount < 2 || playerCount > 4) {
+    throw new Error('Player count must be between 2 and 4');
+  }
+
   // Create players
   const players: Player[] = [];
   for (let i = 0; i < playerCount; i++) {

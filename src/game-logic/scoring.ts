@@ -13,7 +13,7 @@ const FLOOR_PENALTIES = [-1, -1, -2, -2, -2, -3, -3];
  * @param {number} col - Column index of placed tile
  * @returns {number} Score earned for this placement
  */
-const calculateTilePlacementScore = (board: PlayerBoard, row: number, col: number): number => {
+export const calculateTilePlacementScore = (board: PlayerBoard, row: number, col: number): number => {
   let horizontalScore = 0;
   let verticalScore = 0;
   
@@ -75,7 +75,7 @@ const calculateTilePlacementScore = (board: PlayerBoard, row: number, col: numbe
  * @param {Player} player - Player to penalize
  * @returns {Player} Updated player with penalties applied
  */
-const applyFloorPenalties = (player: Player): Player => {
+export const applyFloorPenalties = (player: Player): Player => {
   const updatedPlayer = { ...player };
   const floorLineCount = updatedPlayer.board.floorLine.length;
   
@@ -99,7 +99,7 @@ const applyFloorPenalties = (player: Player): Player => {
  * @param {GameState} gameState - Current game state
  * @returns {Object} Contains updated player and discarded tiles
  */
-const transferCompletedLinesToWall = (
+export const transferCompletedLinesToWall = (
   player: Player,
   gameState: GameState
 ): { player: Player, discardedTiles: Tile[] } => {
