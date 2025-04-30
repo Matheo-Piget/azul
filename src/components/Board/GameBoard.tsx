@@ -20,7 +20,7 @@ import GameInfo from '../UI/Bag';
  * 
  * @returns {React.ReactElement} The complete game board UI or a loading screen
  */
-const GameBoard: React.FC = () => {
+const GameBoard: React.FC = (): React.ReactElement => {
   const { gameState, startNewGame } = useGame();
   const [playerCount, setPlayerCount] = useState(2);
   

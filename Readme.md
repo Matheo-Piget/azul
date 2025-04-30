@@ -10,6 +10,8 @@ Azul est un jeu de société basé sur les azulejos portugais, ces carreaux de c
 
 ## Règles du jeu
 
+Azul se joue de 2 à 4 joueurs. Chaque joueur a un plateau individuel représentant un mur où il placera des tuiles. Le but est de marquer le plus de points possible en complétant des motifs sur le mur. Le jeu se déroule en plusieurs tours, chacun composé de trois phases : sélection des tuiles, placement sur le plateau et scoring. Les joueurs choisissent des tuiles de différentes couleurs depuis des fabriques ou le centre, puis les placent sur leur plateau en respectant certaines règles. À la fin de chaque tour, les points sont comptés en fonction des tuiles placées et des motifs complétés.
+
 ### Objectif
 
 Marquer le plus de points en complétant des motifs de tuiles sur votre mur.
