@@ -295,27 +295,115 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
    */
   const executeAITurn = useCallback(() => {
     if (!gameState) return;
-
+  
     const currentPlayerId = gameState.currentPlayer;
-
-    // Check if current player is AI
+  
     if (aiPlayers[currentPlayerId]) {
       try {
         const difficulty = aiPlayers[currentPlayerId];
         const aiDecision = getAIMove(gameState, difficulty);
-
-        // Execute AI move
-        selectTiles(aiDecision.factoryId, aiDecision.color);
-
-        // Use setTimeout to simulate thinking delay
-        setTimeout(() => {
-          placeTiles(aiDecision.patternLineIndex);
-        }, 1000);
+  
+        // Copie du gameState pour modifications atomiques
+        let newGameState = { ...gameState };
+        let tilesToSelect: Tile[] = [];
+  
+        // Sélectionne les tuiles
+        if (aiDecision.factoryId !== null) {
+          const factory = newGameState.factories.find(f => f.id === aiDecision.factoryId);
+          if (!factory) return;
+          const selectedFromFactory = factory.tiles.filter(t => t.color === aiDecision.color);
+          const otherTiles = factory.tiles.filter(t => t.color !== aiDecision.color);
+          tilesToSelect = [...selectedFromFactory];
+          newGameState.factories = newGameState.factories.map(f =>
+            f.id === aiDecision.factoryId ? { ...f, tiles: [] } : f
+          );
+          newGameState.center = [...newGameState.center, ...otherTiles];
+        } else {
+          tilesToSelect = newGameState.center.filter(t => t.color === aiDecision.color);
+          newGameState.center = newGameState.center.filter(t => t.color !== aiDecision.color);
+          if (newGameState.firstPlayerToken === null) {
+            newGameState.firstPlayerToken = newGameState.currentPlayer;
+          }
+        }
+  
+        // Place les tuiles
+        const currentPlayer = newGameState.players.find(
+          (p) => p.id === newGameState.currentPlayer
+        );
+        if (!currentPlayer) return;
+  
+        const isFloorLine = aiDecision.patternLineIndex === -1;
+        if (isFloorLine) {
+          currentPlayer.board.floorLine = [
+            ...currentPlayer.board.floorLine,
+            ...tilesToSelect,
+          ];
+        } else {
+          const patternLine = currentPlayer.board.patternLines[aiDecision.patternLineIndex];
+          const color = tilesToSelect[0].color;
+          const spaceAvailable = patternLine.spaces - patternLine.tiles.length;
+          const tilesToPlace = tilesToSelect.slice(0, spaceAvailable);
+          const excessTiles = tilesToSelect.slice(spaceAvailable);
+          patternLine.tiles = [...patternLine.tiles, ...tilesToPlace];
+          patternLine.color = patternLine.color || color;
+          currentPlayer.board.floorLine = [
+            ...currentPlayer.board.floorLine,
+            ...excessTiles,
+          ];
+        }
+  
+        // Passe au joueur suivant
+        const currentPlayerIndex = newGameState.players.findIndex(
+          (p) => p.id === newGameState.currentPlayer
+        );
+        const nextPlayerIndex =
+          (currentPlayerIndex + 1) % newGameState.players.length;
+        newGameState.currentPlayer = newGameState.players[nextPlayerIndex].id;
+  
+        // Vérifie la fin de la phase de sélection
+        const factoriesEmpty = newGameState.factories.every(
+          (f) => f.tiles.length === 0
+        );
+        const centerEmpty = newGameState.center.length === 0;
+  
+        if (factoriesEmpty && centerEmpty) {
+          newGameState.gamePhase = "tiling";
+          newGameState = calculateRoundScores(newGameState);
+  
+          // Fin de partie ?
+          const anyWallRowComplete = newGameState.players.some((p) =>
+            p.board.wall.some((row) => row.every((space) => space.filled))
+          );
+          if (anyWallRowComplete) {
+            newGameState.gamePhase = "gameEnd";
+            newGameState = calculateFinalScores(newGameState);
+          } else {
+            newGameState.roundNumber += 1;
+            newGameState.gamePhase = "drafting";
+            if (newGameState.firstPlayerToken) {
+              newGameState.currentPlayer = newGameState.firstPlayerToken;
+              newGameState.firstPlayerToken = null;
+            }
+            if (
+              newGameState.bag.length === 0 &&
+              newGameState.discardPile.length > 0
+            ) {
+              newGameState.bag = [...newGameState.discardPile];
+              newGameState.discardPile = [];
+              newGameState.bag = shuffle(newGameState.bag);
+            }
+            newGameState = distributeFactoryTiles(newGameState);
+          }
+        }
+  
+        setGameState(newGameState);
+        setSelectedTiles([]);
+        setSelectedSource(null);
       } catch (error) {
         console.error("Error during AI turn:", error);
       }
     }
-  }, [gameState, aiPlayers, selectTiles, placeTiles]);
+  }, [gameState, aiPlayers]);
 
   /**
    * Effect to trigger AI turns automatically when it's an AI player's turn
@@ -329,7 +417,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
       // Small delay to make AI seem to think
       const timer = setTimeout(() => {
         executeAITurn();
-      }, 1500);
+      }, 50);
 
       return () => clearTimeout(timer);
     }
