@@ -394,7 +394,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
       // Add a small delay for visual effect and to avoid UI locking
       const timer = setTimeout(() => {
         executeAITurn();
-      }, 500);
+      }, 50);
       
       return () => clearTimeout(timer);
     }
