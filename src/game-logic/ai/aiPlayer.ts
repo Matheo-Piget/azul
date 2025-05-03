@@ -22,7 +22,38 @@ interface AIMove {
 }
 
 // Cache for wall position scoring
-const scoreCache = new Map<string, number>();
+class ScoreCache {
+  private static MAX_SIZE = 1000;
+  private static cache = new Map<string, number>();
+  private static accessCount = new Map<string, number>();
+
+  static get(key: string): number | undefined {
+    const value = this.cache.get(key);
+    if (value !== undefined) {
+      this.accessCount.set(key, (this.accessCount.get(key) || 0) + 1);
+    }
+    return value;
+  }
+
+  static set(key: string, value: number): void {
+    if (this.cache.size >= this.MAX_SIZE) {
+      // Éviction LRU-like
+      const entries = Array.from(this.accessCount.entries());
+      entries.sort((a, b) => a[1] - b[1]);
+      for (let i = 0; i < Math.floor(this.MAX_SIZE * 0.1); i++) {
+        this.cache.delete(entries[i][0]);
+        this.accessCount.delete(entries[i][0]);
+      }
+    }
+    this.cache.set(key, value);
+    this.accessCount.set(key, 0);
+  }
+
+  static clear(): void {
+    this.cache.clear();
+    this.accessCount.clear();
+  }
+}
 
 /**
  * Gets the best move for the AI player based on the current game state and difficulty level
@@ -32,7 +63,7 @@ const scoreCache = new Map<string, number>();
  */
 export const getAIMove = (gameState: GameState, difficulty: AIDifficulty): AIMove => {
   // Clear cache at the start of each AI decision to prevent memory leaks
-  scoreCache.clear();
+  ScoreCache.clear();
   
   // Get all possible moves
   const possibleMoves = getAllPossibleMoves(gameState);
@@ -42,7 +73,7 @@ export const getAIMove = (gameState: GameState, difficulty: AIDifficulty): AIMov
     throw new Error('No valid moves available');
   }
   
-  // Score the moves based on difficulty level - use map directly instead of creating new objects
+  // Score the moves based on difficulty level
   for (const move of possibleMoves) {
     move.score = evaluateMove(gameState, move, difficulty);
   }
@@ -50,34 +81,72 @@ export const getAIMove = (gameState: GameState, difficulty: AIDifficulty): AIMov
   // Sort moves by score - in-place sort for better performance
   possibleMoves.sort((a, b) => b.score - a.score);
   
-  // Add randomness based on difficulty
-  let selectedMove: AIMove;
+  // Select move based on difficulty with improved strategy
+  let selectedMove: AIMove | undefined;
   
   switch (difficulty) {
     case 'easy':
-      // Easy: Choose randomly from top 60% of moves
-      selectedMove = chooseRandomlyFromTop(possibleMoves, 0.6);
+      // Easy: Sometimes make random moves, sometimes choose from top portion
+      if (Math.random() < 0.3) {
+        // 30% chance of completely random move
+        selectedMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+      } else {
+        // 70% chance of choosing from top 70% of moves
+        selectedMove = chooseRandomlyFromTop(possibleMoves, 0.7);
+      }
       break;
       
     case 'medium':
-      // Medium: Choose randomly from top 30% of moves
-      selectedMove = chooseRandomlyFromTop(possibleMoves, 0.3);
+      // Medium: Mostly strategic, occasionally suboptimal
+      if (Math.random() < 0.7) {
+        // 70% chance of choosing from top 40% of moves
+        selectedMove = chooseRandomlyFromTop(possibleMoves, 0.4);
+      } else {
+        // 30% chance of choosing from middle portion (40-80%)
+        const midMoves = possibleMoves.slice(
+          Math.floor(possibleMoves.length * 0.4),
+          Math.floor(possibleMoves.length * 0.8)
+        );
+        selectedMove = midMoves[Math.floor(Math.random() * midMoves.length)] || possibleMoves[0];
+      }
       break;
       
     case 'hard':
-      // Hard: Choose the best move most of the time, with small chance of suboptimal move
-      if (Math.random() < 0.9) {
-        selectedMove = possibleMoves[0];
+      // Hard: Strategic with occasional exploration
+      if (Math.random() < 0.8) {
+
+
+        // 80% chance of choosing from top 20% of moves
+        const topIndex = Math.max(1, Math.floor(possibleMoves.length * 0.2));
+        const topMoves = possibleMoves.slice(0, topIndex);
+        
+        // Calculate weighted probabilities based on scores
+        const totalScore = topMoves.reduce((sum, move) => sum + Math.max(0.1, move.score), 0);
+        const probabilities = topMoves.map(move => Math.max(0.1, move.score) / totalScore);
+        
+        // Choose based on weighted probability
+        const randomValue = Math.random();
+        let cumulativeProbability = 0;
+        
+        for (let i = 0; i < topMoves.length; i++) {
+          cumulativeProbability += probabilities[i];
+          if (randomValue <= cumulativeProbability) {
+            selectedMove = topMoves[i];
+            break;
+          }
+        }
+        
+        // Fallback
+        if (!selectedMove) selectedMove = topMoves[0];
       } else {
-        // Only slice if there's more than one possible move
-        const suboptimalMoves = possibleMoves.length > 1 ? possibleMoves.slice(1) : possibleMoves;
-        selectedMove = chooseRandomlyFromTop(suboptimalMoves, 0.3);
+        // 20% chance of choosing a more exploratory move from top 50%
+        selectedMove = chooseRandomlyFromTop(possibleMoves, 0.5);
       }
       break;
       
     default:
       // Default to medium
-      selectedMove = chooseRandomlyFromTop(possibleMoves, 0.3);
+      selectedMove = chooseRandomlyFromTop(possibleMoves, 0.4);
   }
   
   return selectedMove;
@@ -213,10 +282,8 @@ const getPossibleSelections = (
  */
 const countTilesByColor = (tiles: Tile[], color: TileColor): number => {
   let count = 0;
-  for (const tile of tiles) {
-    if (tile.color === color) {
-      count++;
-    }
+  for (let i = 0, len = tiles.length; i < len; i++) {
+    if (tiles[i].color === color) count++;
   }
   return count;
 };
@@ -235,7 +302,7 @@ const evaluateMove = (gameState: GameState, move: AIMove, difficulty: AIDifficul
   let score = 0;
   let selectedTileCount = 0;
   
-  // Count the tiles that would be selected instead of creating arrays
+  // Count the tiles that would be selected
   if (move.factoryId !== null) {
     const factory = gameState.factories.find(f => f.id === move.factoryId);
     if (factory) {
@@ -244,24 +311,32 @@ const evaluateMove = (gameState: GameState, move: AIMove, difficulty: AIDifficul
   } else {
     selectedTileCount = countTilesByColor(gameState.center, move.color);
     
-    // Penalty for taking the first player token (only matters for medium and hard)
-    if (gameState.firstPlayerToken === null && difficulty !== 'easy') {
-      score -= 2;
+    // Increase penalty for first player token based on difficulty
+    if (gameState.firstPlayerToken === null) {
+      if (difficulty === 'easy') {
+        score -= 1;
+      } else if (difficulty === 'medium') {
+        score -= 3;
+      } else { // hard
+        score -= 5;
+      }
     }
   }
   
-  // Base score is the number of tiles we get
-  score += selectedTileCount;
+  // Base score is the number of tiles we get, but weighted by difficulty
+  score += selectedTileCount * (difficulty === 'hard' ? 0.8 : 1);
   
-  // Floor line placement is generally bad
+  // Floor line placement evaluation
   if (move.patternLineIndex === -1) {
     const floorPenalties = [-1, -1, -2, -2, -2, -3, -3];
     const newFloorLineSize = currentPlayer.board.floorLine.length + selectedTileCount;
     
-    // Calculate penalty based on how full floor line would be
+    // Calculate penalty based on how full floor line would be - increase for harder AIs
     let penalty = 0;
+    const penaltyMultiplier = difficulty === 'easy' ? 0.8 : difficulty === 'medium' ? 1 : 1.5;
+    
     for (let i = currentPlayer.board.floorLine.length; i < Math.min(newFloorLineSize, floorPenalties.length); i++) {
-      penalty += floorPenalties[i];
+      penalty += floorPenalties[i] * penaltyMultiplier;
     }
     
     score += penalty;
@@ -274,9 +349,10 @@ const evaluateMove = (gameState: GameState, move: AIMove, difficulty: AIDifficul
     
     // If this is our only option, it's better than nothing
     if (mustPlaceInFloorLine(gameState, mockTiles)) {
-      score += 3; // Offset the penalty a bit since we have no choice
+      score += difficulty === 'hard' ? 2 : difficulty === 'medium' ? 3 : 4; // Better offset for easier AIs
     }
   } else {
+    // Pattern line placement evaluation with difficulty-based strategy
     const patternLine = currentPlayer.board.patternLines[move.patternLineIndex];
     
     // Bonus for completing a pattern line
@@ -293,33 +369,36 @@ const evaluateMove = (gameState: GameState, move: AIMove, difficulty: AIDifficul
         const cacheKey = `${move.patternLineIndex}-${wallCol}`;
         let potentialScore: number;
         
-        if (scoreCache.has(cacheKey)) {
-          potentialScore = scoreCache.get(cacheKey)!;
+        if (ScoreCache.get(cacheKey)) {
+          potentialScore = ScoreCache.get(cacheKey)!;
         } else {
           potentialScore = estimatePlacementScore(currentPlayer.board, move.patternLineIndex, wallCol);
-          scoreCache.set(cacheKey, potentialScore);
+          ScoreCache.set(cacheKey, potentialScore);
         }
         
-        score += potentialScore;
+        // Apply difficulty-based scoring
+        score += potentialScore * (difficulty === 'easy' ? 1 : difficulty === 'medium' ? 1.2 : 1.5);
         
-        // Higher difficulty AIs value wall placement strategies more
-        if (difficulty === 'medium' || difficulty === 'hard') {
+        // Add wall strategy evaluation with proper difficulty scaling
+        score += evaluateWallStrategy(currentPlayer.board, move.patternLineIndex, wallCol, move.color, difficulty);
+        
+        // Strategic positioning
+        if (difficulty !== 'easy') {
           // Bonus for creating rows - use cached count
           const rowFillCount = wallRow.filter(space => space.filled).length;
-          score += rowFillCount * 0.5;
+          score += rowFillCount * (difficulty === 'medium' ? 0.7 : 1.2);
           
-          // Bonus for creating columns - use direct access instead of filtering
+          // Bonus for creating columns
           let columnFillCount = 0;
           for (let row = 0; row < 5; row++) {
             if (currentPlayer.board.wall[row][wallCol].filled) {
               columnFillCount++;
             }
           }
-          score += columnFillCount * 0.5;
+          score += columnFillCount * (difficulty === 'medium' ? 0.7 : 1.2);
           
-          // Hard AI also considers color completion
+          // Hard AI also considers color completion more heavily
           if (difficulty === 'hard') {
-            // Count how many of this color are already on the wall - use direct access for better performance
             let colorCount = 0;
             for (let row = 0; row < 5; row++) {
               for (let col = 0; col < 5; col++) {
@@ -329,31 +408,124 @@ const evaluateMove = (gameState: GameState, move: AIMove, difficulty: AIDifficul
                 }
               }
             }
-            score += colorCount * 0.5;
+            score += colorCount * 0.8;
           }
         }
       }
     } else {
-      // Partial filling - prioritize higher rows that are closer to completion
+      // Partial filling strategy based on difficulty
       const spacesLeft = patternLine.spaces - patternLine.tiles.length;
       const fillPercentage = selectedTileCount / spacesLeft;
       
-      // Scale bonus based on row size (higher rows score more)
-      const rowSizeBonus = (5 - move.patternLineIndex) / 2;
+      // Scale bonus based on row size and difficulty
+      const rowSizeBonus = (5 - move.patternLineIndex) / (difficulty === 'easy' ? 3 : difficulty === 'medium' ? 2 : 1.5);
       
       score += fillPercentage * rowSizeBonus;
       
-      // Medium and hard AIs prioritize efficiently using tiles
+      // Efficient tile usage bonus scaled by difficulty
       if (difficulty !== 'easy') {
         // Prefer moves where we use most of our selected tiles effectively
         if (selectedTileCount <= spacesLeft) {
-          score += 1;
+          score += difficulty === 'medium' ? 1 : 1.5;
+        } else {
+          // Penalize wasting tiles (harder AIs care more)
+          score -= (selectedTileCount - spacesLeft) * (difficulty === 'medium' ? 0.5 : 1);
         }
       }
     }
   }
   
   return score;
+};
+
+/**
+ * Evaluates the wall strategy for a given move
+ * @param {PlayerBoard} board - Player's board
+ * @param {number} row - Wall row index
+ * @param {number} col - Wall column index
+ * @param {TileColor} color - Color of the tile being placed
+ * @param {AIDifficulty} difficulty - AI difficulty level
+ * @returns {number} Score for the wall strategy
+ */
+const evaluateWallStrategy = (board: any, row: number, col: number, color: TileColor, difficulty: AIDifficulty): number => {
+  let strategyScore = 0;
+  
+  // Base multiplier for all strategies based on difficulty
+  const difficultyMultiplier = difficulty === 'easy' ? 0.5 : difficulty === 'medium' ? 1 : 2;
+  
+  // Row completion strategy
+  let filledInRow = 0;
+  for (let c = 0; c < 5; c++) {
+    if (board.wall[row][c].filled) {
+      filledInRow++;
+    }
+  }
+  
+  // Progressive bonus based on how close to completion the row is
+  if (filledInRow === 4) {
+    strategyScore += 8 * difficultyMultiplier; // One away from completing
+  } else if (filledInRow === 3) {
+    strategyScore += 4 * difficultyMultiplier; // Two away from completing
+  } else if (filledInRow > 0) {
+    strategyScore += filledInRow * difficultyMultiplier * 0.5;
+  }
+  
+  // Column completion strategy
+  let filledInColumn = 0;
+  for (let r = 0; r < 5; r++) {
+    if (board.wall[r][col].filled) {
+      filledInColumn++;
+    }
+  }
+  
+  // Progressive bonus based on how close to completion the column is
+  if (filledInColumn === 4) {
+    strategyScore += 8 * difficultyMultiplier;
+  } else if (filledInColumn === 3) {
+    strategyScore += 4 * difficultyMultiplier;
+  } else if (filledInColumn > 0) {
+    strategyScore += filledInColumn * difficultyMultiplier * 0.5;
+  }
+  
+  // Color completion strategy (more important for harder AIs)
+  if (difficulty !== 'easy') {
+    let colorCount = 0;
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        if (board.wall[r][c].color === color && board.wall[r][c].filled) {
+          colorCount++;
+        }
+      }
+    }
+    
+    // Progressive bonus based on how close to completing the color set
+    if (colorCount === 4) {
+      strategyScore += 10 * (difficulty === 'hard' ? 1.5 : 1);
+    } else if (colorCount === 3) {
+      strategyScore += 5 * (difficulty === 'hard' ? 1.5 : 1);
+    } else if (colorCount > 0) {
+      strategyScore += colorCount * (difficulty === 'hard' ? 1.5 : 1);
+    }
+  }
+  
+  // Adjacency bonus for hard AI (values connected tiles)
+  if (difficulty === 'hard') {
+    let adjacentCount = 0;
+    
+    // Check adjacent tiles (up, right, down, left)
+    const directions = [[-1, 0], [0, 1], [1, 0], [0, -1]];
+    for (const [dr, dc] of directions) {
+      const r = row + dr;
+      const c = col + dc;
+      if (r >= 0 && r < 5 && c >= 0 && c < 5 && board.wall[r][c].filled) {
+        adjacentCount++;
+      }
+    }
+    
+    strategyScore += adjacentCount * 1.5;
+  }
+  
+  return strategyScore;
 };
 
 /**
@@ -385,12 +557,26 @@ const estimatePlacementScore = (board: any, row: number, col: number): number =>
  * @returns {AIMove} A randomly chosen move from the top moves
  */
 const chooseRandomlyFromTop = (moves: AIMove[], topPercentage: number): AIMove => {
-  if (moves.length === 0) {
-    throw new Error('No moves available');
+  if (moves.length === 0) throw new Error('No moves available');
+  
+  // Trouver le score maximum
+  const maxScore = moves[0].score;
+  const minScore = moves[moves.length - 1].score;
+  const scoreRange = maxScore - minScore;
+  
+  // Si tous les scores sont identiques ou range très petite, retourner aléatoire
+  if (scoreRange < 0.1) {
+    return moves[Math.floor(Math.random() * moves.length)];
   }
   
-  const cutoff = Math.max(1, Math.floor(moves.length * topPercentage));
-  // Avoid slicing when possible
-  const randomIndex = Math.floor(Math.random() * cutoff);
-  return moves[randomIndex];
+  // Calculer le seuil dynamique
+  const threshold = maxScore - (scoreRange * (1 - topPercentage));
+  
+  // Filtrer les mouvements au-dessus du seuil
+  const topMoves = moves.filter(move => move.score >= threshold);
+  
+  // Si le filtrage est trop restrictif, prendre au moins 1 mouvement
+  const finalMoves = topMoves.length > 0 ? topMoves : [moves[0]];
+  
+  return finalMoves[Math.floor(Math.random() * finalMoves.length)];
 };
