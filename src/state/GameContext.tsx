@@ -4,6 +4,7 @@ import React, {
   useState,
   useCallback,
   useEffect,
+  useRef
 } from "react";
 import { GameState, TileColor, Tile } from "../models/types";
 import { initializeGame, distributeFactoryTiles } from "../game-logic/setup";
@@ -81,6 +82,23 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     color: TileColor;
   } | null>(null);
   const [aiPlayers, setAIPlayers] = useState<Record<string, AIDifficulty>>({});
+  
+  // Use refs to avoid recreating functions on every render
+  const gameStateRef = useRef<GameState | null>(null);
+  const selectedTilesRef = useRef<Tile[]>([]);
+  const selectedSourceRef = useRef<{
+    factoryId: number | null;
+    color: TileColor;
+  } | null>(null);
+  const aiPlayersRef = useRef<Record<string, AIDifficulty>>({});
+  
+  // Keep refs in sync with state
+  useEffect(() => {
+    gameStateRef.current = gameState;
+    selectedTilesRef.current = selectedTiles;
+    selectedSourceRef.current = selectedSource;
+    aiPlayersRef.current = aiPlayers;
+  }, [gameState, selectedTiles, selectedSource, aiPlayers]);
 
   /**
    * Adds an AI player with specified difficulty
@@ -127,55 +145,118 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
    */
   const selectTiles = useCallback(
     (factoryId: number | null, color: TileColor) => {
-      if (!gameState) return;
+      const currentGameState = gameStateRef.current;
+      if (!currentGameState) return;
 
-      if (!canSelectTiles(gameState, factoryId, color)) {
+      if (!canSelectTiles(currentGameState, factoryId, color)) {
         console.log("Invalid tile selection");
         return;
       }
 
-      // Logic for selecting tiles
-      let newGameState = { ...gameState };
-      let tilesToSelect: Tile[] = [];
+      // Use functional updates to avoid stale state issues
+      setGameState(prevState => {
+        if (!prevState) return null;
+        
+        // Create a new state object with minimal copying
+        const newGameState = { ...prevState };
+        let tilesToSelect: Tile[] = [];
 
-      if (factoryId !== null) {
-        // Selection from a factory
-        const factory = newGameState.factories.find((f) => f.id === factoryId);
-        if (!factory) return;
+        if (factoryId !== null) {
+          // Selection from a factory
+          const factoryIndex = newGameState.factories.findIndex(f => f.id === factoryId);
+          if (factoryIndex === -1) return prevState;
+          
+          const factory = newGameState.factories[factoryIndex];
+          
+          // Find all tiles of this color in the factory
+          const selectedFromFactory = factory.tiles.filter(t => t.color === color);
+          const otherTiles = factory.tiles.filter(t => t.color !== color);
 
-        // Find all tiles of this color in the factory
-        const selectedFromFactory = factory.tiles.filter(
-          (t) => t.color === color
-        );
-        const otherTiles = factory.tiles.filter((t) => t.color !== color);
+          tilesToSelect = selectedFromFactory;
 
-        tilesToSelect = [...selectedFromFactory];
+          // Update the factory and center (create new arrays, but reuse tile objects)
+          newGameState.factories = [
+            ...newGameState.factories.slice(0, factoryIndex),
+            { ...factory, tiles: [] },
+            ...newGameState.factories.slice(factoryIndex + 1)
+          ];
+          
+          newGameState.center = [...newGameState.center, ...otherTiles];
+        } else {
+          // Selection from the center - filter once
+          const centerTiles = newGameState.center;
+          tilesToSelect = centerTiles.filter(t => t.color === color);
+          newGameState.center = centerTiles.filter(t => t.color !== color);
 
-        // Update the factory and center
-        newGameState.factories = newGameState.factories.map((f) =>
-          f.id === factoryId ? { ...f, tiles: [] } : f
-        );
-
-        newGameState.center = [...newGameState.center, ...otherTiles];
-      } else {
-        // Selection from the center
-        tilesToSelect = newGameState.center.filter((t) => t.color === color);
-        newGameState.center = newGameState.center.filter(
-          (t) => t.color !== color
-        );
-
-        // Take the first player token if present
-        if (newGameState.firstPlayerToken === null) {
-          newGameState.firstPlayerToken = newGameState.currentPlayer;
+          // Take the first player token if present
+          if (newGameState.firstPlayerToken === null) {
+            newGameState.firstPlayerToken = newGameState.currentPlayer;
+          }
         }
-      }
 
-      setGameState(newGameState);
-      setSelectedTiles(tilesToSelect);
-      setSelectedSource({ factoryId, color });
+        // Update refs for other functions to use
+        selectedTilesRef.current = tilesToSelect;
+        selectedSourceRef.current = { factoryId, color };
+        
+        // Update state variables outside setGameState
+        setSelectedTiles(tilesToSelect);
+        setSelectedSource({ factoryId, color });
+        
+        return newGameState;
+      });
     },
-    [gameState]
+    []  // No dependencies as we use refs
   );
+
+  /**
+   * Helper to check if round is over and handle end-round logic
+   */
+  const handleRoundEnd = useCallback((gameState: GameState): GameState => {
+    let newState = { ...gameState };
+    
+    // Check if selection phase is complete
+    const factoriesEmpty = newState.factories.every(f => f.tiles.length === 0);
+    const centerEmpty = newState.center.length === 0;
+
+    if (factoriesEmpty && centerEmpty) {
+      // Move to wall tiling phase
+      newState.gamePhase = "tiling";
+      newState = calculateRoundScores(newState);
+
+      // Check if game is over - use some() for better performance
+      const anyWallRowComplete = newState.players.some(p =>
+        p.board.wall.some(row => row.every(space => space.filled))
+      );
+
+      if (anyWallRowComplete) {
+        newState.gamePhase = "gameEnd";
+        newState = calculateFinalScores(newState);
+      } else {
+        // Prepare for next round
+        newState.roundNumber += 1;
+        newState.gamePhase = "drafting";
+
+        // Reset first player token if necessary
+        if (newState.firstPlayerToken) {
+          newState.currentPlayer = newState.firstPlayerToken;
+          newState.firstPlayerToken = null;
+        }
+
+        // Check if bag is empty and discard pile has tiles
+        if (newState.bag.length === 0 && newState.discardPile.length > 0) {
+          // Reuse tile objects, just move them to the bag
+          newState.bag = [...newState.discardPile];
+          newState.discardPile = [];
+          newState.bag = shuffle(newState.bag);
+        }
+
+        // Redistribute tiles to factories
+        newState = distributeFactoryTiles(newState);
+      }
+    }
+    
+    return newState;
+  }, []);
 
   /**
    * Places selected tiles on a pattern line or floor line
@@ -183,227 +264,122 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
    */
   const placeTiles = useCallback(
     (patternLineIndex: number) => {
-      if (!gameState || selectedTiles.length === 0 || !selectedSource) return;
+      const currentGameState = gameStateRef.current;
+      const currentSelectedTiles = selectedTilesRef.current;
+      const currentSelectedSource = selectedSourceRef.current;
+      
+      if (!currentGameState || currentSelectedTiles.length === 0 || !currentSelectedSource) return;
 
       // If patternLineIndex is -1, it means place in the floor line
       const isFloorLine = patternLineIndex === -1;
 
-      if (
-        !isFloorLine &&
-        !canPlaceTiles(gameState, patternLineIndex, selectedTiles)
-      ) {
+      if (!isFloorLine && !canPlaceTiles(currentGameState, patternLineIndex, currentSelectedTiles)) {
         console.log("Invalid tile placement");
         return;
       }
 
-      // Logic for placing selected tiles
-      let newGameState = { ...gameState };
-      const currentPlayer = newGameState.players.find(
-        (p) => p.id === newGameState.currentPlayer
-      );
-      if (!currentPlayer) return;
-
-      if (isFloorLine) {
-        // Place all tiles in the floor line
-        currentPlayer.board.floorLine = [
-          ...currentPlayer.board.floorLine,
-          ...selectedTiles,
-        ];
-      } else {
-        // Place tiles on the pattern line
-        const patternLine = currentPlayer.board.patternLines[patternLineIndex];
-        const color = selectedTiles[0].color;
-
-        // Check if the line can accommodate all tiles
-        const spaceAvailable = patternLine.spaces - patternLine.tiles.length;
-        const tilesToPlace = selectedTiles.slice(0, spaceAvailable);
-        const excessTiles = selectedTiles.slice(spaceAvailable);
-
-        // Update the pattern line
-        patternLine.tiles = [...patternLine.tiles, ...tilesToPlace];
-        patternLine.color = patternLine.color || color;
-
-        // Add excess tiles to the floor line
-        currentPlayer.board.floorLine = [
-          ...currentPlayer.board.floorLine,
-          ...excessTiles,
-        ];
-      }
-
-      // Move to next player
-      const currentPlayerIndex = newGameState.players.findIndex(
-        (p) => p.id === newGameState.currentPlayer
-      );
-      const nextPlayerIndex =
-        (currentPlayerIndex + 1) % newGameState.players.length;
-      newGameState.currentPlayer = newGameState.players[nextPlayerIndex].id;
-
-      // Check if selection phase is complete
-      const factoriesEmpty = newGameState.factories.every(
-        (f) => f.tiles.length === 0
-      );
-      const centerEmpty = newGameState.center.length === 0;
-
-      if (factoriesEmpty && centerEmpty) {
-        // Move to wall tiling phase
-        newGameState.gamePhase = "tiling";
-        newGameState = calculateRoundScores(newGameState);
-
-        // Check if game is over
-        const anyWallRowComplete = newGameState.players.some((p) =>
-          p.board.wall.some((row) => row.every((space) => space.filled))
+      // Use functional updates to avoid stale state
+      setGameState(prevState => {
+        if (!prevState) return null;
+        
+        // Create new state with minimal copying
+        let newGameState = { ...prevState };
+        const currentPlayerIndex = newGameState.players.findIndex(
+          p => p.id === newGameState.currentPlayer
         );
+        
+        if (currentPlayerIndex === -1) return prevState;
+        
+        // Create a new copy of the current player, reuse other players
+        const currentPlayer = { 
+          ...newGameState.players[currentPlayerIndex],
+          board: { ...newGameState.players[currentPlayerIndex].board }
+        };
+        
+        // Update player array with minimal copying
+        newGameState.players = [
+          ...newGameState.players.slice(0, currentPlayerIndex),
+          currentPlayer,
+          ...newGameState.players.slice(currentPlayerIndex + 1)
+        ];
 
-        if (anyWallRowComplete) {
-          newGameState.gamePhase = "gameEnd";
-          newGameState = calculateFinalScores(newGameState);
+        if (isFloorLine) {
+          // Place all tiles in the floor line - create new array but reuse tile objects
+          currentPlayer.board.floorLine = [
+            ...currentPlayer.board.floorLine,
+            ...currentSelectedTiles
+          ];
         } else {
-          // Prepare for next round
-          newGameState.roundNumber += 1;
-          newGameState.gamePhase = "drafting";
+          // Create a new copy of just the affected pattern line, reuse others
+          const patternLines = [...currentPlayer.board.patternLines];
+          const patternLine = { ...patternLines[patternLineIndex] };
+          patternLines[patternLineIndex] = patternLine;
+          currentPlayer.board.patternLines = patternLines;
+          
+          const color = currentSelectedTiles[0].color;
 
-          // Reset first player token if necessary
-          if (newGameState.firstPlayerToken) {
-            newGameState.currentPlayer = newGameState.firstPlayerToken;
-            newGameState.firstPlayerToken = null;
-          }
+          // Check if the line can accommodate all tiles
+          const spaceAvailable = patternLine.spaces - patternLine.tiles.length;
+          const tilesToPlace = currentSelectedTiles.slice(0, spaceAvailable);
+          const excessTiles = currentSelectedTiles.slice(spaceAvailable);
 
-          // Check if bag is empty and discard pile has tiles
-          if (
-            newGameState.bag.length === 0 &&
-            newGameState.discardPile.length > 0
-          ) {
-            newGameState.bag = [...newGameState.discardPile];
-            newGameState.discardPile = [];
-            newGameState.bag = shuffle(newGameState.bag);
-          }
+          // Update the pattern line
+          patternLine.tiles = [...patternLine.tiles, ...tilesToPlace];
+          patternLine.color = patternLine.color || color;
 
-          // Redistribute tiles to factories
-          newGameState = distributeFactoryTiles(newGameState);
+          // Add excess tiles to the floor line
+          currentPlayer.board.floorLine = [
+            ...currentPlayer.board.floorLine,
+            ...excessTiles
+          ];
         }
-      }
 
-      setGameState(newGameState);
-      setSelectedTiles([]);
-      setSelectedSource(null);
+        // Move to next player
+        const nextPlayerIndex = (currentPlayerIndex + 1) % newGameState.players.length;
+        newGameState.currentPlayer = newGameState.players[nextPlayerIndex].id;
+
+        // Check for round end and handle end-round logic
+        newGameState = handleRoundEnd(newGameState);
+
+        // Clear selections
+        selectedTilesRef.current = [];
+        selectedSourceRef.current = null;
+        setSelectedTiles([]);
+        setSelectedSource(null);
+        
+        return newGameState;
+      });
     },
-    [gameState, selectedTiles, selectedSource]
+    [handleRoundEnd]  // Only depend on handleRoundEnd, use refs for others
   );
 
   /**
-   * Executes a turn for the current AI player
+   * Executes a turn for the current AI player with optimized logic
    */
   const executeAITurn = useCallback(() => {
-    if (!gameState) return;
+    const currentGameState = gameStateRef.current;
+    if (!currentGameState) return;
   
-    const currentPlayerId = gameState.currentPlayer;
+    const currentPlayerId = currentGameState.currentPlayer;
+    const currentAIPlayers = aiPlayersRef.current;
   
-    if (aiPlayers[currentPlayerId]) {
+    if (currentAIPlayers[currentPlayerId]) {
       try {
-        const difficulty = aiPlayers[currentPlayerId];
-        const aiDecision = getAIMove(gameState, difficulty);
-  
-        // Copie du gameState pour modifications atomiques
-        let newGameState = { ...gameState };
-        let tilesToSelect: Tile[] = [];
-  
-        // Sélectionne les tuiles
-        if (aiDecision.factoryId !== null) {
-          const factory = newGameState.factories.find(f => f.id === aiDecision.factoryId);
-          if (!factory) return;
-          const selectedFromFactory = factory.tiles.filter(t => t.color === aiDecision.color);
-          const otherTiles = factory.tiles.filter(t => t.color !== aiDecision.color);
-          tilesToSelect = [...selectedFromFactory];
-          newGameState.factories = newGameState.factories.map(f =>
-            f.id === aiDecision.factoryId ? { ...f, tiles: [] } : f
-          );
-          newGameState.center = [...newGameState.center, ...otherTiles];
-        } else {
-          tilesToSelect = newGameState.center.filter(t => t.color === aiDecision.color);
-          newGameState.center = newGameState.center.filter(t => t.color !== aiDecision.color);
-          if (newGameState.firstPlayerToken === null) {
-            newGameState.firstPlayerToken = newGameState.currentPlayer;
-          }
-        }
-  
-        // Place les tuiles
-        const currentPlayer = newGameState.players.find(
-          (p) => p.id === newGameState.currentPlayer
-        );
-        if (!currentPlayer) return;
-  
-        const isFloorLine = aiDecision.patternLineIndex === -1;
-        if (isFloorLine) {
-          currentPlayer.board.floorLine = [
-            ...currentPlayer.board.floorLine,
-            ...tilesToSelect,
-          ];
-        } else {
-          const patternLine = currentPlayer.board.patternLines[aiDecision.patternLineIndex];
-          const color = tilesToSelect[0].color;
-          const spaceAvailable = patternLine.spaces - patternLine.tiles.length;
-          const tilesToPlace = tilesToSelect.slice(0, spaceAvailable);
-          const excessTiles = tilesToSelect.slice(spaceAvailable);
-          patternLine.tiles = [...patternLine.tiles, ...tilesToPlace];
-          patternLine.color = patternLine.color || color;
-          currentPlayer.board.floorLine = [
-            ...currentPlayer.board.floorLine,
-            ...excessTiles,
-          ];
-        }
-  
-        // Passe au joueur suivant
-        const currentPlayerIndex = newGameState.players.findIndex(
-          (p) => p.id === newGameState.currentPlayer
-        );
-        const nextPlayerIndex =
-          (currentPlayerIndex + 1) % newGameState.players.length;
-        newGameState.currentPlayer = newGameState.players[nextPlayerIndex].id;
-  
-        // Vérifie la fin de la phase de sélection
-        const factoriesEmpty = newGameState.factories.every(
-          (f) => f.tiles.length === 0
-        );
-        const centerEmpty = newGameState.center.length === 0;
-  
-        if (factoriesEmpty && centerEmpty) {
-          newGameState.gamePhase = "tiling";
-          newGameState = calculateRoundScores(newGameState);
-  
-          // Fin de partie ?
-          const anyWallRowComplete = newGameState.players.some((p) =>
-            p.board.wall.some((row) => row.every((space) => space.filled))
-          );
-          if (anyWallRowComplete) {
-            newGameState.gamePhase = "gameEnd";
-            newGameState = calculateFinalScores(newGameState);
-          } else {
-            newGameState.roundNumber += 1;
-            newGameState.gamePhase = "drafting";
-            if (newGameState.firstPlayerToken) {
-              newGameState.currentPlayer = newGameState.firstPlayerToken;
-              newGameState.firstPlayerToken = null;
-            }
-            if (
-              newGameState.bag.length === 0 &&
-              newGameState.discardPile.length > 0
-            ) {
-              newGameState.bag = [...newGameState.discardPile];
-              newGameState.discardPile = [];
-              newGameState.bag = shuffle(newGameState.bag);
-            }
-            newGameState = distributeFactoryTiles(newGameState);
-          }
-        }
-  
-        setGameState(newGameState);
-        setSelectedTiles([]);
-        setSelectedSource(null);
+        const difficulty = currentAIPlayers[currentPlayerId];
+        const aiDecision = getAIMove(currentGameState, difficulty);
+        
+        // First select the tiles
+        selectTiles(aiDecision.factoryId, aiDecision.color);
+        
+        // Use setTimeout to ensure state updates before placing tiles
+        setTimeout(() => {
+          placeTiles(aiDecision.patternLineIndex);
+        }, 0);
       } catch (error) {
         console.error("Error during AI turn:", error);
       }
     }
-  }, [gameState, aiPlayers]);
+  }, [selectTiles, placeTiles]);
 
   /**
    * Effect to trigger AI turns automatically when it's an AI player's turn
@@ -412,19 +388,42 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!gameState) return;
 
     const currentPlayerId = gameState.currentPlayer;
-
-    if (aiPlayers[currentPlayerId]) {
-      // Small delay to make AI seem to think
+    
+    // Check if current player is AI and game is in drafting phase
+    if (aiPlayers[currentPlayerId] && gameState.gamePhase === 'drafting') {
+      // Add a small delay for visual effect and to avoid UI locking
       const timer = setTimeout(() => {
         executeAITurn();
-      }, 50);
-
+      }, 500);
+      
       return () => clearTimeout(timer);
     }
-  }, [gameState?.currentPlayer, aiPlayers, executeAITurn]);
+  }, [gameState, aiPlayers, executeAITurn]);
 
-  const value = {
-    gameState: gameState as GameState,
+  /**
+   * Helper function to shuffle array using Fisher-Yates algorithm
+   * @param array - Array to shuffle
+   * @returns Shuffled array
+   */
+  const shuffle = <T extends unknown>(array: T[]): T[] => {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+  };
+
+  // Initialize the game with 2 players by default if not initialized
+  useEffect(() => {
+    if (!gameState) {
+      startNewGame(2);
+    }
+  }, [gameState, startNewGame]);
+
+  // Create value object for context
+  const contextValue: GameContextType = {
+    gameState: gameState!,
     selectTiles,
     placeTiles,
     startNewGame,
@@ -432,34 +431,25 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     aiPlayers,
     addAIPlayer,
     removeAIPlayer,
-    executeAITurn,
+    executeAITurn
   };
 
-  return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
+  return (
+    <GameContext.Provider value={contextValue}>
+      {children}
+    </GameContext.Provider>
+  );
 };
 
 /**
- * Custom hook to access the game context
- * @returns Game context with game state and functions
+ * Custom hook to use the game context
+ * @returns Game context with state and functions
  * @throws Error if used outside of GameProvider
  */
-export const useGame = () => {
+export const useGame = (): GameContextType => {
   const context = useContext(GameContext);
   if (context === undefined) {
     throw new Error("useGame must be used within a GameProvider");
   }
   return context;
 };
-
-/**
- * Shuffles an array of tiles using the Fisher-Yates algorithm
- * @param bag - Array of tiles to shuffle
- * @returns Shuffled array of tiles
- */
-function shuffle(bag: Tile[]): Tile[] {
-  for (let i = bag.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [bag[i], bag[j]] = [bag[j], bag[i]];
-  }
-  return bag;
-}
