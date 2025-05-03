@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Factory from '../Factory/Factory';
 import PlayerBoard from '../PlayerBoard/PlayerBoard';
 import Center from '../Center/Center';
+import History from '../Utils/GameHistory';
 import { useGame } from '../../state/GameContext';
 import './Gameboard.css';
 import AIPlayerConfig from '../AI/AIPlayerConfig';
@@ -40,6 +41,17 @@ const GameBoard: React.FC = (): React.ReactElement => {
   const handleNewGame = () => {
     startNewGame(playerCount);
   };
+
+  if (gameState && gameState.gamePhase === 'gameEnd') {
+    return (
+      <div className="game-over-screen">
+        <h2>Partie terminée</h2>
+        <p>Voir les résultats ci-dessous :</p>
+        <History />
+        <button onClick={handleNewGame} className="new-game-btn">Nouvelle partie</button>
+      </div>
+    );
+  }
   
   // Show loading screen while game initializes
   if (!gameState || gameState.players.length === 0) {

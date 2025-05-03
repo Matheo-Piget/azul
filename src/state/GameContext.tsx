@@ -14,6 +14,7 @@ import {
   calculateRoundScores,
   calculateFinalScores,
 } from "../game-logic/scoring";
+import { saveGameStats } from '../utils/SaveService';
 
 /**
  * Interface for the Game Context
@@ -386,6 +387,17 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
    */
   useEffect(() => {
     if (!gameState) return;
+
+    if (gameState?.gamePhase === 'gameEnd') {
+      const stats = {
+        date: new Date().toISOString(),
+        players: gameState.players.map(p => p.name),
+        scores: gameState.players.map(p => p.board.score),
+        winner: gameState.players.reduce((a, b) => a.board.score > b.board.score ? a : b).name,
+        aiLevels: gameState.players.map(p => aiPlayers[p.id] || 'human')
+      };
+      saveGameStats(stats);
+    }
 
     const currentPlayerId = gameState.currentPlayer;
     
