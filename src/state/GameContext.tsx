@@ -14,7 +14,7 @@ import {
   calculateRoundScores,
   calculateFinalScores,
 } from "../game-logic/scoring";
-import { saveGameStats } from '../utils/SaveService';
+import { saveGameStats, generateGameId } from '../utils/SaveService';
 
 /**
  * Interface for the Game Context
@@ -83,6 +83,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     color: TileColor;
   } | null>(null);
   const [aiPlayers, setAIPlayers] = useState<Record<string, AIDifficulty>>({});
+  const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
+  const [gameId, setGameId] = useState<string | null>(null);
   
   // Use refs to avoid recreating functions on every render
   const gameStateRef = useRef<GameState | null>(null);
@@ -137,6 +139,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     setGameState(newGameState);
     setSelectedTiles([]);
     setSelectedSource(null);
+    setGameStartTime(new Date());
+    setGameId(generateGameId());
   }, []);
 
   /**
@@ -389,12 +393,42 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!gameState) return;
 
     if (gameState?.gamePhase === 'gameEnd') {
+
+      const duration = gameStartTime ? Math.floor((new Date().getTime() - gameStartTime.getTime()) / 1000) : 0;
+    
+      // Count completed rows, columns, and colors for each player
+      const completedRows = gameState.players.map(p => 
+        p.board.wall.filter(row => row.every(space => space.filled)).length
+      );
+      
+      const completedColumns = gameState.players.map(p => {
+        let count = 0;
+        for (let col = 0; col < 5; col++) {
+          if (p.board.wall.every(row => row[col].filled)) count++;
+        }
+        return count;
+      });
+      
+      const completedColors = gameState.players.map(p => {
+        const colors: TileColor[] = ['blue', 'yellow', 'red', 'black', 'teal'];
+        return colors.filter(color => 
+          p.board.wall.flat().filter(space => space.color === color && space.filled).length === 5
+        ).length;
+      });
+
       const stats = {
+        id: gameId || generateGameId(),
         date: new Date().toISOString(),
         players: gameState.players.map(p => p.name),
         scores: gameState.players.map(p => p.board.score),
         winner: gameState.players.reduce((a, b) => a.board.score > b.board.score ? a : b).name,
-        aiLevels: gameState.players.map(p => aiPlayers[p.id] || 'human')
+        aiLevels: gameState.players.map(p => aiPlayers[p.id] || 'human'),
+        duration,
+        rounds: gameState.roundNumber,
+        completedRows,
+        completedColumns,
+        completedColors,
+        moves: gameState.players.map(() => 0)
       };
       saveGameStats(stats);
     }

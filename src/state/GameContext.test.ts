@@ -145,7 +145,7 @@ describe('AI vs AI simulation', () => {
     difficulties.forEach(difficulty => {
       it(`simulates 100 games: ${playerCount} AI (${difficulty})`, () => {
         const results: number[][] = [];
-        for (let i = 0; i < 500; i++) {
+        for (let i = 0; i < 1500; i++) {
           results.push(simulateAIGame(playerCount, difficulty));
         }
         const s = stats(results);
