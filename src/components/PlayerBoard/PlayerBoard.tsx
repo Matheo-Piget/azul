@@ -177,27 +177,41 @@ const PlayerBoard: React.FC<PlayerBoardProps> = ({ playerId }) => {
                   player.board.patternLines[rowIndex].tiles.length ===
                     player.board.patternLines[rowIndex].spaces;
 
-                return (
-                  <div
-                    key={`wall-${rowIndex}-${colIndex}`}
-                    className={`wall-space ${space.filled ? "filled" : ""} ${
-                      isAvailablePlacement ? "available-placement" : ""
-                    }`}
-                    style={
-                      space.filled
-                        ? { backgroundColor: colorMap[space.color] }
-                        : ({
-                            "--tile-color": colorMap[space.color],
-                          } as React.CSSProperties)
-                    }
-                    data-testid={`wall-space-${rowIndex}-${colIndex}-${playerId}`}
-                    aria-label={
-                      space.filled
-                        ? `Filled ${space.color} tile`
-                        : `Empty space for ${space.color} tile`
-                    }
-                  />
-                );
+                    return (
+                      <div
+                        key={`wall-${rowIndex}-${colIndex}`}
+                        className={`wall-space ${space.filled ? "filled" : ""} ${
+                          isAvailablePlacement ? "available-placement" : ""
+                        }`}
+                        style={
+                          space.filled
+                            ? { backgroundColor: colorMap[space.color] }
+                            : ({
+                                "--tile-color": colorMap[space.color],
+                                "--highlight-opacity": isAvailablePlacement ? "0.5" : "0.25"
+                              } as React.CSSProperties)
+                        }
+                        data-testid={`wall-space-${rowIndex}-${colIndex}-${playerId}`}
+                        aria-label={
+                          space.filled
+                            ? `Filled ${space.color} tile`
+                            : `Empty space for ${space.color} tile`
+                        }
+                        onClick={() => {
+                          if (isAvailablePlacement && gameState.gamePhase === "tiling") {
+                            audioService.play("completeLine");
+                          }
+                        }}
+                        role={isAvailablePlacement ? "button" : undefined}
+                        tabIndex={isAvailablePlacement ? 0 : -1}
+                      >
+                        {isAvailablePlacement && (
+                          <div className="placement-indicator" aria-hidden="true">
+                            <span className="placement-icon">✓</span>
+                          </div>
+                        )}
+                      </div>
+                    );
               })}
             </div>
           ))}

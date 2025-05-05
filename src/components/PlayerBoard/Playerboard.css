@@ -106,7 +106,7 @@
   background-color: rgba(0, 0, 0, 0.035);
   border: 1px dashed rgba(0, 0, 0, 0.08);
   position: relative;
-  transition: all 0.3s;
+  transition: all 0.3s ease-in-out;
 }
 
 .tile-space, .wall-space {
@@ -130,9 +130,10 @@
   right: 3px;
   bottom: 3px;
   border-radius: 1px;
-  opacity: 0.25;
+  opacity: var(--highlight-opacity, 0.25);
   background-color: var(--tile-color, transparent);
   box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.1);
+  transition: opacity 0.3s ease;
 }
 
 .wall-space::before {
@@ -156,6 +157,13 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
   transform: scale(1.05);
   z-index: 2;
+  animation: tilePlaced 0.5s ease-out;
+}
+
+.wall-space.available-placement {
+  cursor: pointer;
+  box-shadow: 0 0 0 2px rgba(58, 139, 197, 0.5);
+  animation: pulseAvailable 2s infinite;
 }
 
 .wall-space.filled::before {
@@ -258,6 +266,53 @@
   font-weight: 600;
 }
 
+/* New placement indicator styling */
+.placement-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.4);
+  border-radius: 2px;
+  opacity: 0;
+  animation: fadeInOut 2s infinite;
+  pointer-events: none;
+}
+
+.placement-icon {
+  color: #1a3c5b;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.wall-space:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(58, 139, 197, 0.8);
+}
+
+/* Improve hover effect */
+.wall-space:not(.filled):hover {
+  box-shadow: 0 0 0 2px rgba(26, 60, 91, 0.3);
+  transform: scale(1.1);
+  z-index: 3;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.3; }
+}
+
+@keyframes tilePlaced {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1.05); opacity: 1; }
+}
+
 @keyframes pulse-warning {
   0% { box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.5); }
   70% { box-shadow: 0 0 0 6px rgba(229, 57, 53, 0); }
@@ -268,6 +323,12 @@
   0% { box-shadow: 0 0 0 0 rgba(26, 60, 91, 0.2); }
   70% { box-shadow: 0 0 0 4px rgba(26, 60, 91, 0); }
   100% { box-shadow: 0 0 0 0 rgba(26, 60, 91, 0); }
+}
+
+@keyframes pulseAvailable {
+  0% { box-shadow: 0 0 0 0 rgba(58, 139, 197, 0.7); }
+  70% { box-shadow: 0 0 0 6px rgba(58, 139, 197, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(58, 139, 197, 0); }
 }
 
 /* Responsive adjustments */
