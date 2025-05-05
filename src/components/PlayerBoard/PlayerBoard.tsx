@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import Tile from '../Tile/Tile';
-import { useGame } from '../../state/GameContext';
-import { mustPlaceInFloorLine } from '../../game-logic/moves';
-import { audioService } from '../../utils/SoundService';
-import './Playerboard.css';
+import React, { useEffect, useState } from "react";
+import Tile from "../Tile/Tile";
+import { useGame } from "../../state/GameContext";
+import { mustPlaceInFloorLine } from "../../game-logic/moves";
+import { audioService } from "../../utils/SoundService";
+import "./Playerboard.css";
 
 /**
  * Props for the PlayerBoard component
@@ -16,11 +16,11 @@ interface PlayerBoardProps {
 
 /**
  * PlayerBoard component that displays a player's game board in Azul
- * 
+ *
  * This component represents a player's board including pattern lines, wall, and floor line.
  * It handles tile placement during the drafting phase and enforces game rules
  * for valid placements. The component also shows player information and score.
- * 
+ *
  * @component
  * @param {PlayerBoardProps} props - The component props
  * @returns {React.ReactElement} A player's game board with interactive placement areas
@@ -28,11 +28,14 @@ interface PlayerBoardProps {
 const PlayerBoard: React.FC<PlayerBoardProps> = ({ playerId }) => {
   const { gameState, selectedTiles, placeTiles, aiPlayers } = useGame();
   const [mustUseFloorLine, setMustUseFloorLine] = useState(false);
-  
-  const player = gameState.players.find(p => p.id === playerId);
+
+  const player = gameState.players.find((p) => p.id === playerId);
   const isCurrentPlayer = player ? gameState.currentPlayer === playerId : false;
-  const canPlace = isCurrentPlayer && selectedTiles.length > 0 && gameState.gamePhase === 'drafting';
-  
+  const canPlace =
+    isCurrentPlayer &&
+    selectedTiles.length > 0 &&
+    gameState.gamePhase === "drafting";
+
   /**
    * Check if the selected tiles must be placed in the floor line
    * This effect runs whenever relevant game state changes
@@ -44,80 +47,98 @@ const PlayerBoard: React.FC<PlayerBoardProps> = ({ playerId }) => {
       setMustUseFloorLine(false);
     }
   }, [gameState, selectedTiles, canPlace, player]);
-  
+
   // Return early if player data isn't available
   if (!player) {
     return <div data-testid="player-not-found">Player not found</div>;
   }
-  
+
   /**
    * Handles tile placement when a player clicks on a pattern line or floor line
-   * 
+   *
    * @param {number} lineIndex - Index of the pattern line to place tiles (-1 for floor line)
    */
   const handlePatternLineClick = (lineIndex: number) => {
     if (!canPlace) return;
-    
+
     // If tiles must go to the floor line, prevent placing them elsewhere
     if (mustUseFloorLine && lineIndex !== -1) {
-      alert("These tiles must be placed in the floor line because no pattern line can accommodate them.");
+      alert(
+        "These tiles must be placed in the floor line because no pattern line can accommodate them."
+      );
       return;
     }
-    
-    audioService.play('tilePlacement');
+
+    audioService.play("tilePlacement");
     placeTiles(lineIndex);
   };
-  
+
   return (
-    <div 
-      className={`player-board ${isCurrentPlayer ? 'current-player' : ''}`}
+    <div
+      className={`player-board ${isCurrentPlayer ? "current-player" : ""}`}
       data-testid={`player-board-${playerId}`}
     >
       <h3 className="player-name" data-testid={`player-name-${playerId}`}>
         {player.name} ({player.board.score} pts)
         {aiPlayers[player.id] && (
-          <span 
-            className="ai-badge" 
+          <span
+            className="ai-badge"
             title={`AI - Level ${aiPlayers[player.id]}`}
             data-testid={`ai-badge-${playerId}`}
           >
-            🤖 {aiPlayers[player.id] === 'easy' ? 'I' : aiPlayers[player.id] === 'medium' ? 'II' : 'III'}
+            🤖{" "}
+            {aiPlayers[player.id] === "easy"
+              ? "I"
+              : aiPlayers[player.id] === "medium"
+              ? "II"
+              : "III"}
           </span>
         )}
       </h3>
       <div className="board-content">
-        <div className="pattern-lines" data-testid={`pattern-lines-${playerId}`}>
+        <div
+          className="pattern-lines"
+          data-testid={`pattern-lines-${playerId}`}
+        >
           {player.board.patternLines.map((line, index) => {
             // Determine if this line is available for the selected tile color
-            const lineAvailable = canPlace && 
-              line.tiles.length < line.spaces && 
+            const lineAvailable =
+              canPlace &&
+              line.tiles.length < line.spaces &&
               (line.color === null || line.color === selectedTiles[0]?.color) &&
-              !player.board.wall[index].some(space => 
-                space.color === selectedTiles[0]?.color && space.filled
+              !player.board.wall[index].some(
+                (space) =>
+                  space.color === selectedTiles[0]?.color && space.filled
               );
-            
+
             return (
-              <div 
-                key={`line-${index}`} 
+              <div
+                key={`line-${index}`}
                 className="pattern-line"
                 onClick={() => handlePatternLineClick(index)}
                 data-testid={`pattern-line-${index}-${playerId}`}
-                aria-label={`Pattern line ${index + 1} with ${line.tiles.length} of ${line.spaces} spaces filled`}
+                aria-label={`Pattern line ${index + 1} with ${
+                  line.tiles.length
+                } of ${line.spaces} spaces filled`}
                 role="button"
                 tabIndex={canPlace && lineAvailable ? 0 : -1}
               >
                 {/* Empty spaces */}
-                {Array(line.spaces - line.tiles.length).fill(0).map((_, i) => (
-                  <div 
-                    key={`empty-${i}`} 
-                    className={`tile-space ${lineAvailable && !mustUseFloorLine ? 'available' : ''}`}
-                    data-testid={`empty-space-${index}-${i}-${playerId}`}
-                  />
-                ))}
-                
+                {Array(line.spaces - line.tiles.length)
+                  .fill(0)
+                  .map((_, i) => (
+                    <div
+                      key={`empty-${i}`}
+                      className={`tile-space ${
+                        lineAvailable && !mustUseFloorLine ? "available" : ""
+                      }`}
+                      data-testid={`empty-space-${index}-${i}-${playerId}`}
+                    />
+                  ))}
+
                 {/* Placed tiles */}
                 {line.tiles.map((tile, i) => (
-                  <Tile 
+                  <Tile
                     key={`tile-${i}`}
                     color={tile.color}
                     size="small"
@@ -128,30 +149,65 @@ const PlayerBoard: React.FC<PlayerBoardProps> = ({ playerId }) => {
             );
           })}
         </div>
-        
+
         <div className="wall" data-testid={`wall-${playerId}`}>
           {player.board.wall.map((row, rowIndex) => (
-            <div 
-              key={`wall-row-${rowIndex}`} 
+            <div
+              key={`wall-row-${rowIndex}`}
               className="wall-row"
               data-testid={`wall-row-${rowIndex}-${playerId}`}
             >
-              {row.map((space, colIndex) => (
-                <div 
-                  key={`wall-${rowIndex}-${colIndex}`} 
-                  className={`wall-space ${space.filled ? 'filled' : ''}`}
-                  style={space.filled ? { backgroundColor: space.color } : {}}
-                  data-testid={`wall-space-${rowIndex}-${colIndex}-${playerId}`}
-                  aria-label={space.filled ? `Filled ${space.color} tile` : 'Empty space'}
-                />
-              ))}
+              {row.map((space, colIndex) => {
+                // Définir les couleurs pour chaque tuile
+                const colorMap = {
+                  blue: "#1e88e5",
+                  yellow: "#fdd835",
+                  red: "#e53935",
+                  black: "#424242",
+                  teal: "#00897b",
+                };
+
+                // Déterminer si cet emplacement est disponible pour un placement
+                const isAvailablePlacement =
+                  isCurrentPlayer &&
+                  selectedTiles.length > 0 &&
+                  gameState.gamePhase === "drafting" &&
+                  space.color === selectedTiles[0].color &&
+                  !space.filled &&
+                  player.board.patternLines[rowIndex].tiles.length ===
+                    player.board.patternLines[rowIndex].spaces;
+
+                return (
+                  <div
+                    key={`wall-${rowIndex}-${colIndex}`}
+                    className={`wall-space ${space.filled ? "filled" : ""} ${
+                      isAvailablePlacement ? "available-placement" : ""
+                    }`}
+                    style={
+                      space.filled
+                        ? { backgroundColor: colorMap[space.color] }
+                        : ({
+                            "--tile-color": colorMap[space.color],
+                          } as React.CSSProperties)
+                    }
+                    data-testid={`wall-space-${rowIndex}-${colIndex}-${playerId}`}
+                    aria-label={
+                      space.filled
+                        ? `Filled ${space.color} tile`
+                        : `Empty space for ${space.color} tile`
+                    }
+                  />
+                );
+              })}
             </div>
           ))}
         </div>
       </div>
-      
-      <div 
-        className={`floor-line ${mustUseFloorLine && canPlace ? 'must-use-floor' : ''}`}
+
+      <div
+        className={`floor-line ${
+          mustUseFloorLine && canPlace ? "must-use-floor" : ""
+        }`}
         onClick={() => canPlace && handlePatternLineClick(-1)}
         data-testid={`floor-line-${playerId}`}
         role="button"
@@ -159,7 +215,7 @@ const PlayerBoard: React.FC<PlayerBoardProps> = ({ playerId }) => {
         aria-label={`Floor line with ${player.board.floorLine.length} penalty tiles`}
       >
         {player.board.floorLine.map((tile, index) => (
-          <Tile 
+          <Tile
             key={`floor-${index}`}
             color={tile.color}
             size="small"
@@ -167,7 +223,9 @@ const PlayerBoard: React.FC<PlayerBoardProps> = ({ playerId }) => {
           />
         ))}
         {mustUseFloorLine && canPlace && (
-          <div className="floor-line-hint" data-testid="floor-line-hint">You must place here!</div>
+          <div className="floor-line-hint" data-testid="floor-line-hint">
+            You must place here!
+          </div>
         )}
       </div>
     </div>
