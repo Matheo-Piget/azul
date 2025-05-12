@@ -12,6 +12,8 @@ import "./Playerboard.css";
  */
 interface PlayerBoardProps {
   playerId: string;
+  patternLineRef?: (index: number, element: HTMLDivElement | null) => void;
+  floorLineRef?: (element: HTMLDivElement | null) => void;
 }
 
 /**
@@ -25,7 +27,11 @@ interface PlayerBoardProps {
  * @param {PlayerBoardProps} props - The component props
  * @returns {React.ReactElement} A player's game board with interactive placement areas
  */
-const PlayerBoard: React.FC<PlayerBoardProps> = ({ playerId }) => {
+const PlayerBoard: React.FC<PlayerBoardProps> = ({
+  playerId,
+  patternLineRef,
+  floorLineRef,
+}) => {
   const { gameState, selectedTiles, placeTiles, aiPlayers } = useGame();
   const [mustUseFloorLine, setMustUseFloorLine] = useState(false);
 
@@ -96,10 +102,7 @@ const PlayerBoard: React.FC<PlayerBoardProps> = ({ playerId }) => {
         )}
       </h3>
       <div className="board-content">
-        <div
-          className="pattern-lines"
-          data-testid={`pattern-lines-${playerId}`}
-        >
+        <div className="pattern-lines">
           {player.board.patternLines.map((line, index) => {
             // Determine if this line is available for the selected tile color
             const lineAvailable =
@@ -113,16 +116,15 @@ const PlayerBoard: React.FC<PlayerBoardProps> = ({ playerId }) => {
 
             return (
               <div
-                key={`line-${index}`}
-                className="pattern-line"
-                onClick={() => handlePatternLineClick(index)}
-                data-testid={`pattern-line-${index}-${playerId}`}
-                aria-label={`Pattern line ${index + 1} with ${
-                  line.tiles.length
-                } of ${line.spaces} spaces filled`}
-                role="button"
-                tabIndex={canPlace && lineAvailable ? 0 : -1}
-              >
+                  key={`line-${index}`}
+                  className="pattern-line"
+                  onClick={() => handlePatternLineClick(index)}
+                  data-testid={`pattern-line-${index}-${playerId}`}
+                  ref={(el) => patternLineRef && patternLineRef(index, el)}
+                  aria-label={`Pattern line ${index + 1} with ${line.tiles.length} of ${line.spaces} spaces filled`}
+                  role="button"
+                  tabIndex={canPlace && lineAvailable ? 0 : -1}
+                >
                 {/* Empty spaces */}
                 {Array(line.spaces - line.tiles.length)
                   .fill(0)
@@ -219,15 +221,14 @@ const PlayerBoard: React.FC<PlayerBoardProps> = ({ playerId }) => {
       </div>
 
       <div
-        className={`floor-line ${
-          mustUseFloorLine && canPlace ? "must-use-floor" : ""
-        }`}
+        className={`floor-line ${mustUseFloorLine && canPlace ? "must-use-floor" : ""}`}
         onClick={() => canPlace && handlePatternLineClick(-1)}
         data-testid={`floor-line-${playerId}`}
+        ref={(el) => floorLineRef && floorLineRef(el)}
         role="button"
         tabIndex={canPlace ? 0 : -1}
         aria-label={`Floor line with ${player.board.floorLine.length} penalty tiles`}
-      >
+            >
         {player.board.floorLine.map((tile, index) => (
           <Tile
             key={`floor-${index}`}

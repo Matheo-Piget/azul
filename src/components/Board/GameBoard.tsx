@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Factory from "../Factory/Factory";
 import PlayerBoard from "../PlayerBoard/PlayerBoard";
 import Center from "../Center/Center";
@@ -8,8 +8,7 @@ import "./Gameboard.css";
 import AIPlayerConfig from "../AI/AIPlayerConfig";
 import GameInfo from "../UI/Bag";
 import { TileColor } from "../../models/types";
-
-
+import AIAnimation from "../AI/AIAnimation";
 
 /**
  * GameBoard Component
@@ -31,6 +30,53 @@ const GameBoard: React.FC = (): React.ReactElement => {
 
   const [keepAiSettings, setKeepAiSettings] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
+
+  const factoryRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const centerRef = useRef<HTMLDivElement | null>(null);
+  const patternLineRefs = useRef<
+    Record<string, Record<number, HTMLDivElement | null>>
+  >({});
+  const floorLineRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [animationSource, setAnimationSource] = useState<HTMLElement | null>(
+    null
+  );
+  const [animationTarget, setAnimationTarget] = useState<HTMLElement | null>(
+    null
+  );
+
+  const { aiAnimation } = useGame();
+
+  /**
+   * Effect to handle AI animation
+   */
+  useEffect(() => {
+    if (aiAnimation) {
+      // Find source element
+      let sourceElement: HTMLElement | null = null;
+      if (
+        aiAnimation.sourceType === "factory" &&
+        aiAnimation.sourceId !== null
+      ) {
+        sourceElement = factoryRefs.current[aiAnimation.sourceId];
+      } else if (aiAnimation.sourceType === "center") {
+        sourceElement = centerRef.current;
+      }
+
+      // Find target element
+      let targetElement: HTMLElement | null = null;
+      if (aiAnimation.targetType === "patternLine") {
+        targetElement =
+          patternLineRefs.current[aiAnimation.playerId]?.[
+            aiAnimation.targetIndex
+          ] || null;
+      } else {
+        targetElement = floorLineRefs.current[aiAnimation.playerId] || null;
+      }
+
+      setAnimationSource(sourceElement);
+      setAnimationTarget(targetElement);
+    }
+  }, [aiAnimation]);
 
   /**
    * Effect to initialize a new game if none exists
@@ -269,13 +315,24 @@ const GameBoard: React.FC = (): React.ReactElement => {
           <h2>Fabriques</h2>
           <div className="factories-container">
             {gameState.factories.map((factory) => (
-              <Factory key={factory.id} factoryId={factory.id} />
+              <Factory
+                key={factory.id}
+                factoryId={factory.id}
+                ref={(el) => (factoryRefs.current[factory.id] = el)}
+                isAISelecting={
+                  aiAnimation?.sourceType === "factory" &&
+                  aiAnimation.sourceId === factory.id
+                }
+              />
             ))}
           </div>
 
           <div className="center-area">
             <h2>Centre</h2>
-            <Center />
+            <Center
+              ref={centerRef}
+              isAISelecting={aiAnimation?.sourceType === "center"}
+            />
             <GameInfo />
           </div>
         </div>
@@ -287,13 +344,17 @@ const GameBoard: React.FC = (): React.ReactElement => {
             {gameState.players.map((player) => {
               const isCurrentPlayer = player.id === gameState.currentPlayer;
               const isAI = aiPlayers[player.id];
+              const isThinking = isCurrentPlayer && isAI && !aiAnimation;
+              const isAnimatingMove = aiAnimation?.playerId === player.id;
 
               return (
                 <div
                   key={player.id}
                   className={`player-board-container ${
                     isCurrentPlayer ? "active-player" : ""
-                  } ${isCurrentPlayer && isAI ? "ai-thinking" : ""}`}
+                  } ${isThinking ? "ai-thinking" : ""} ${
+                    isAnimatingMove ? "ai-animating" : ""
+                  }`}
                 >
                   <div className="player-header">
                     <h3>
@@ -309,12 +370,40 @@ const GameBoard: React.FC = (): React.ReactElement => {
                       <span className="score-label">points</span>
                     </div>
                   </div>
-                  <PlayerBoard playerId={player.id} />
+                  <PlayerBoard
+                    playerId={player.id}
+                    patternLineRef={(index, el) => {
+                      if (!patternLineRefs.current[player.id]) {
+                        patternLineRefs.current[player.id] = {};
+                      }
+                      patternLineRefs.current[player.id][index] = el;
+                    }}
+                    floorLineRef={(el) =>
+                      (floorLineRefs.current[player.id] = el)
+                    }
+                  />
+                  {isThinking && (
+                    <div className="ai-thinking-indicator">
+                      <span className="ai-thinking-icon">🤖</span>
+                      <span>AI thinking...</span>
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
         </div>
+        {aiAnimation && animationSource && animationTarget && (
+          <AIAnimation
+          sourceElement={animationSource}
+          targetElement={animationTarget}
+          tiles={aiAnimation.tiles}
+          color={aiAnimation.color}
+          targetType={aiAnimation.targetType}
+          targetIndex={aiAnimation.targetIndex}
+          onAnimationComplete={() => {}}
+        />
+        )}
       </div>
 
       <footer className="game-footer">

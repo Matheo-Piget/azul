@@ -15,6 +15,7 @@ import {
   calculateFinalScores,
 } from "../game-logic/scoring";
 import { saveGameStats, generateGameId } from "../utils/SaveService";
+import AIAnimation from './../components/AI/AIAnimation';
 
 // This will be defined inside the component
 
@@ -27,14 +28,14 @@ interface GameContextType {
   gameState: GameState;
 
   /** Current speed setting for AI moves */
-  aiSpeed: 'fast' | 'normal' | 'slow';
+  aiSpeed: "fast" | "normal" | "slow";
 
   /**
    * Function to set the AI speed
    * @param speed - Speed of the AI ('fast', 'normal', 'slow')
    * @returns void
    */
-  setAISpeed: (speed: 'fast' | 'normal' | 'slow') => void;
+  setAISpeed: (speed: "fast" | "normal" | "slow") => void;
 
   /**
    * Function to select tiles from a factory or center
@@ -76,6 +77,18 @@ interface GameContextType {
 
   /** Function to trigger the current AI player's turn */
   executeAITurn: () => void;
+
+  /** Function to animate AI moves */
+  aiAnimation: {
+    playerId: string;
+    sourceType: 'factory' | 'center';
+    sourceId: number | null;
+    tiles: Tile[];
+    targetType: 'patternLine' | 'floorLine';
+    targetIndex: number;
+    color: TileColor;
+    isAnimating: boolean;
+  } | null;
 }
 
 /** Context for managing game state and actions */
@@ -97,7 +110,18 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   const [aiPlayers, setAIPlayers] = useState<Record<string, AIDifficulty>>({});
   const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
   const [gameId, setGameId] = useState<string | null>(null);
-  const [aiSpeed, setAISpeed] = useState<'fast' | 'normal' | 'slow'>('normal');
+  const [aiSpeed, setAISpeed] = useState<"fast" | "normal" | "slow">("normal");
+
+  const [aiAnimation, setAiAnimation] = useState<{
+    playerId: string;
+    sourceType: "factory" | "center";
+    sourceId: number | null;
+    tiles: Tile[];
+    targetType: "patternLine" | "floorLine";
+    targetIndex: number;
+    color: TileColor;
+    isAnimating: boolean;
+  } | null>(null);
 
   // Use refs to avoid recreating functions on every render
   const gameStateRef = useRef<GameState | null>(null);
@@ -414,8 +438,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     [handleRoundEnd] // Only depend on handleRoundEnd, use refs for others
   );
 
+  // Replace the existing executeAITurn function (around line 417)
   /**
-   * Executes a turn for the current AI player with optimized logic
+   * Executes a turn for the current AI player with animations
    */
   const executeAITurn = useCallback(() => {
     const currentGameState = gameStateRef.current;
@@ -429,18 +454,61 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
         const difficulty = currentAIPlayers[currentPlayerId];
         const aiDecision = getAIMove(currentGameState, difficulty);
 
-        // First select the tiles
-        selectTiles(aiDecision.factoryId, aiDecision.color);
+        // Get the tiles that will be selected
+        let tilesToSelect: Tile[] = [];
+        if (aiDecision.factoryId !== null) {
+          // From factory
+          const factory = currentGameState.factories.find(
+            (f) => f.id === aiDecision.factoryId
+          );
+          if (factory) {
+            tilesToSelect = factory.tiles.filter(
+              (t) => t.color === aiDecision.color
+            );
+          }
+        } else {
+          // From center
+          tilesToSelect = currentGameState.center.filter(
+            (t) => t.color === aiDecision.color
+          );
+        }
 
-        // Use setTimeout to ensure state updates before placing tiles
+        // Start animation
+        setAiAnimation({
+          playerId: currentPlayerId,
+          sourceType: aiDecision.factoryId !== null ? "factory" : "center",
+          sourceId: aiDecision.factoryId,
+          tiles: tilesToSelect,
+          targetType:
+            aiDecision.patternLineIndex === -1 ? "floorLine" : "patternLine",
+          targetIndex: aiDecision.patternLineIndex,
+          color: aiDecision.color,
+          isAnimating: true,
+        });
+
+        // Delay based on AI speed setting
+        const delayMap = {
+          fast: 500,
+          normal: 1000,
+          slow: 1800,
+        };
+
+        // Select tiles after a brief delay to show the selection
         setTimeout(() => {
-          placeTiles(aiDecision.patternLineIndex);
-        }, 0);
+          selectTiles(aiDecision.factoryId, aiDecision.color);
+
+          // Place tiles after animation completes
+          setTimeout(() => {
+            placeTiles(aiDecision.patternLineIndex);
+            setAiAnimation(null);
+          }, delayMap[aiSpeed] / 2);
+        }, 300);
       } catch (error) {
         console.error("Error during AI turn:", error);
+        setAiAnimation(null);
       }
     }
-  }, [selectTiles, placeTiles]);
+  }, [selectTiles, placeTiles, aiSpeed]);
 
   /**
    * Effect to trigger AI turns automatically when it's an AI player's turn
@@ -501,21 +569,21 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     const currentPlayerId = gameState.currentPlayer;
 
     // Check if current player is AI and game is in drafting phase
-    if (aiPlayers[currentPlayerId] && gameState.gamePhase === 'drafting') {
-    // Delay based on AI speed setting
-    const delayMap = {
-      'fast': 300,
-      'normal': 800,
-      'slow': 1500
-    };
-    
-    const timer = setTimeout(() => {
-      executeAITurn();
-    }, delayMap[aiSpeed]);
-    
-    return () => clearTimeout(timer);
-  }
-}, [gameState, aiPlayers, executeAITurn, aiSpeed]);
+    if (aiPlayers[currentPlayerId] && gameState.gamePhase === "drafting") {
+      // Delay based on AI speed setting
+      const delayMap = {
+        fast: 300,
+        normal: 800,
+        slow: 1500,
+      };
+
+      const timer = setTimeout(() => {
+        executeAITurn();
+      }, delayMap[aiSpeed]);
+
+      return () => clearTimeout(timer);
+    }
+  }, [gameState, aiPlayers, executeAITurn, aiSpeed]);
 
   /**
    * Helper function to shuffle array using Fisher-Yates algorithm
@@ -550,7 +618,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     removeAIPlayer,
     executeAITurn,
     setAISpeed,
-    aiSpeed
+    aiSpeed,
+    aiAnimation
+
   };
 
   return (

@@ -5,6 +5,15 @@ import { TileColor } from '../../models/types';
 import './Center.css';
 
 /**
+ * Center Component Props
+ * @interface CenterProps
+ * @property {boolean} [isAISelecting] - Indicates if the AI is selecting tiles (optional)
+ */
+interface CenterProps {
+  isAISelecting?: boolean;
+}
+
+/**
  * Center Component
  * 
  * @component
@@ -18,7 +27,9 @@ import './Center.css';
  * 
  * @returns {React.ReactElement} The center area UI
  */
-const Center: React.FC = () => {
+const Center = React.forwardRef<HTMLDivElement, CenterProps>(({
+  isAISelecting = false
+}, ref) => {
   const { gameState, selectTiles, selectedTiles } = useGame();
   
   // Check if center is empty
@@ -52,7 +63,10 @@ const Center: React.FC = () => {
   const selectedColor = hasSelectedTiles ? selectedTiles[0].color : null;
   
   return (
-    <div className="center-container">
+    <div 
+      className={`center-container ${gameState.center.length === 0 ? 'empty' : ''} ${isAISelecting ? 'ai-selecting' : ''}`}
+      ref={ref}
+    >
       {gameState.firstPlayerToken === null && (
         <div className="first-player-token" title="Premier joueur">
           
@@ -89,6 +103,6 @@ const Center: React.FC = () => {
       </div>
     </div>
   );
-};
+});
 
 export default Center;

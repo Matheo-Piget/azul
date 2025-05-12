@@ -8,9 +8,11 @@ import './Factory.css';
  * Props for the Factory component
  * @interface FactoryProps
  * @property {number} factoryId - Unique identifier for the factory (0-based index)
+ * @property {boolean} [isAISelecting] - Indicates if the AI is selecting tiles (optional)
  */
 interface FactoryProps {
   factoryId: number;
+  isAISelecting?: boolean;
 }
 
 /**
@@ -24,7 +26,10 @@ interface FactoryProps {
  * @param {FactoryProps} props - The component props
  * @returns {React.ReactElement} A factory display with grouped tiles
  */
-const Factory: React.FC<FactoryProps> = ({ factoryId }) => {
+const Factory = React.forwardRef<HTMLDivElement, FactoryProps>(({
+  factoryId,
+  isAISelecting = false
+}, ref) => {
   const { gameState, selectTiles, selectedTiles } = useGame();
   
   const factory = gameState.factories.find(f => f.id === factoryId);
@@ -64,7 +69,11 @@ const Factory: React.FC<FactoryProps> = ({ factoryId }) => {
   const hasSelection = selectedTiles && selectedTiles.length > 0;
   
   return (
-    <div className="factory" data-testid={`factory-${factoryId}`}>
+    <div 
+      className={`factory ${!factory || factory.tiles.length === 0 ? 'factory-empty' : ''} ${isAISelecting ? 'ai-selecting' : ''}`} 
+      data-testid={`factory-${factoryId}`}
+      ref={ref}
+    >
       <div className="factory-inner">
         {Object.entries(tilesByColor).map(([color, count]) => {
           if (count === 0) return null;
@@ -95,6 +104,6 @@ const Factory: React.FC<FactoryProps> = ({ factoryId }) => {
       </div>
     </div>
   );
-};
+});
 
 export default Factory;

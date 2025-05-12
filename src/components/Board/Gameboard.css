@@ -585,3 +585,22 @@
   0% { left: -50%; }
   100% { left: 100%; }
 }
+
+/* Add or update this class */
+.ai-animating {
+  position: relative;
+}
+
+.ai-animating::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #1e88e5, #e53935, #fdd835, #00897b, #424242);
+  animation: thinking 1.5s infinite;
+  width: 50%;
+  border-radius: 3px;
+  z-index: 5;
+}
