@@ -12,6 +12,9 @@ import AIAnimation from "../AI/AIAnimation";
 import { useTutorial } from "../Tutorial/TutorialSystem";
 import FinalScoringAnimation from "./../Utils/ScoringFinal";
 import RoundTransition from "../Utils/RoundTransition";
+import RoundScoringAnimation, {
+  AnimationStep,
+} from "../Utils/RoundScoringAnimation";
 
 /**
  * GameBoard Component
@@ -51,6 +54,9 @@ const GameBoard: React.FC = (): React.ReactElement => {
   const [isRoundTransitioning, setIsRoundTransitioning] = useState(false);
 
   const { aiAnimation } = useGame();
+
+  const [scoringSteps, setScoringSteps] = useState<AnimationStep[]>([]);
+  const [showRoundScoring, setShowRoundScoring] = useState(false);
 
   const { startTutorial } = useTutorial();
 
@@ -166,6 +172,30 @@ const GameBoard: React.FC = (): React.ReactElement => {
     }
   }, [gameState?.gamePhase, gameState?.players, setShowFinalScoring]);
 
+  useEffect(() => {
+  if (gameState?.gamePhase === "tiling") {
+    // Pour chaque joueur, pour chaque ligne transférée, ajoute un step
+    const steps: AnimationStep[] = [];
+    gameState.players.forEach(player => {
+      player.board.wall.forEach((row, rowIdx) => {
+        row.forEach((space, colIdx) => {
+          if (space.filled /* && vient d'être rempli ce tour-ci */) {
+            // Il faut détecter les tuiles nouvellement placées ce tour-ci
+            steps.push({
+              row: rowIdx,
+              col: colIdx,
+              points: 1,
+              color: space.color,
+            });
+          }
+        });
+      });
+    });
+    setScoringSteps(steps);
+    setShowRoundScoring(true);
+  }
+}, [gameState?.gamePhase]);
+
   /**
    * Function to handle new game button click
    * @returns {void}
@@ -177,9 +207,9 @@ const GameBoard: React.FC = (): React.ReactElement => {
   if (gameState?.gamePhase === "gameEnd") {
     if (isRoundTransition) {
       return (
-        <RoundTransition 
-          roundNumber={gameState.roundNumber} 
-          onComplete={() => setIsRoundTransitioning(false)} 
+        <RoundTransition
+          roundNumber={gameState.roundNumber}
+          onComplete={() => setIsRoundTransitioning(false)}
           autoProgress={true}
         />
       );
@@ -348,15 +378,25 @@ const GameBoard: React.FC = (): React.ReactElement => {
   const currentPlayer = gameState.players.find(
     (p) => p.id === gameState.currentPlayer
   );
-  if (isRoundTransitioning) {
-  return (
-    <RoundTransition 
-      roundNumber={gameState.roundNumber} 
-      onComplete={() => setIsRoundTransitioning(false)} 
-      autoProgress={true}
-    />
-  );
-}
+
+  {showRoundScoring && (
+  <RoundScoringAnimation
+    player={gameState.players[0]} // ou la liste, à faire pour chaque joueur
+    steps={scoringSteps}
+    onComplete={() => {
+      setShowRoundScoring(false);
+      if (isRoundTransitioning) {
+        return (
+          <RoundTransition
+            roundNumber={gameState.roundNumber}
+            onComplete={() => setIsRoundTransitioning(false)}
+            autoProgress={true}
+          />
+        );
+      }
+      }}
+  />
+)}
 
   return (
     <div className="game-board">

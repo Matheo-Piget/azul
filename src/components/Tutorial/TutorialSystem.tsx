@@ -235,7 +235,9 @@ const TutorialOverlay: React.FC<{
   useEffect(() => {
     if (highlightElement && step.position !== 'center') {
       const rect = highlightElement.getBoundingClientRect();
-      const position = { top: '50%', left: '50%' };
+        const scrollTop = window.scrollY || document.documentElement.scrollTop;
+        const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+            const position = { top: '50%', left: '50%' };
 
       switch (step.position || 'bottom') {
         case 'top':
