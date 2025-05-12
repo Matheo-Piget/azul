@@ -218,6 +218,9 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 };
 
+/**
+ *  TutorialOverlay component
+ */
 const TutorialOverlay: React.FC<{
   step: TutorialStep;
   currentStep: number;
@@ -266,32 +269,32 @@ const TutorialOverlay: React.FC<{
           <div 
             className="tutorial-highlight"
             style={{
-              top: highlightElement.getBoundingClientRect().top - 10,
-              left: highlightElement.getBoundingClientRect().left - 10,
-              width: highlightElement.getBoundingClientRect().width + 20,
-              height: highlightElement.getBoundingClientRect().height + 20,
+              top: highlightElement.getBoundingClientRect().top + 'px',
+              left: highlightElement.getBoundingClientRect().left + 'px',
+              width: highlightElement.getBoundingClientRect().width + 'px',
+              height: highlightElement.getBoundingClientRect().height + 'px',
             }}
           />
         )}
       </div>
       
       <div 
-        className={`tutorial-modal ${!highlightElement || step.position === 'center' ? 'tutorial-modal-center' : ''}`}
+        className={`tutorial-modal ${step.position === 'center' ? 'tutorial-modal-center' : ''}`}
         style={{
-          top: modalPosition.top,
           left: modalPosition.left,
-          transform: !highlightElement || step.position === 'center' 
-            ? 'translate(-50%, -50%)' 
-            : 'translate(-50%, 0)'
+          top: modalPosition.top,
+          transform: step.position === 'center' ? 'translate(-50%, -50%)' : 'none'
         }}
       >
         <div className="tutorial-header">
           <h3>{step.title}</h3>
           <button className="tutorial-close" onClick={onClose}>×</button>
         </div>
+        
         <div className="tutorial-content">
           {step.content}
         </div>
+        
         <div className="tutorial-progress">
           <div className="tutorial-dots">
             {Array.from({ length: totalSteps }).map((_, index) => (

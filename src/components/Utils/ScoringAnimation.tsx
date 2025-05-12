@@ -6,8 +6,9 @@ interface ScoringAnimationProps {
   x: number;
   y: number;
   onComplete: () => void;
-  type?: 'regular' | 'bonus' | 'penalty';
+  type?: 'regular' | 'bonus' | 'penalty' | 'row' | 'column' | 'color';
   label?: string;
+  highlightElements?: HTMLElement[];
 }
 
 const ScoringAnimation: React.FC<ScoringAnimationProps> = ({ 
@@ -16,18 +17,45 @@ const ScoringAnimation: React.FC<ScoringAnimationProps> = ({
   y, 
   onComplete, 
   type = 'regular',
-  label
+  label,
+  highlightElements = []
 }) => {
   const [isVisible, setIsVisible] = useState(true);
+  const [showHighlights, setShowHighlights] = useState(false);
 
+  // First show the animation, then highlight relevant elements
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsVisible(false);
-      onComplete();
-    }, 1500);
-
-    return () => clearTimeout(timer);
-  }, [onComplete]);
+    // First phase: show highlights after a short delay
+    const highlightTimer = setTimeout(() => {
+      setShowHighlights(true);
+      
+      // Add highlight divs to the elements
+      highlightElements.forEach(el => {
+        const highlight = document.createElement('div');
+        highlight.className = 'wall-tile-highlight';
+        if (type === 'row') highlight.classList.add('row-highlight');
+        if (type === 'column') highlight.classList.add('column-highlight');
+        if (type === 'color') highlight.classList.add('color-highlight');
+        el.appendChild(highlight);
+      });
+      
+      // Second phase: complete animation after highlights are shown
+      const completeTimer = setTimeout(() => {
+        // Remove highlight elements
+        highlightElements.forEach(el => {
+          const highlights = el.querySelectorAll('.wall-tile-highlight');
+          highlights.forEach(h => h.remove());
+        });
+        
+        setIsVisible(false);
+        onComplete();
+      }, 1500);
+      
+      return () => clearTimeout(completeTimer);
+    }, 300);
+    
+    return () => clearTimeout(highlightTimer);
+  }, [onComplete, highlightElements, type]);
 
   // Don't render if no points or animation completed
   if (!isVisible || points === 0) return null;

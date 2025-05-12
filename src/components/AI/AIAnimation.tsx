@@ -28,6 +28,7 @@ const AIAnimation: React.FC<AIAnimationProps> = ({
     endX: number;
     endY: number;
   } | null>(null);
+  const [animationState, setAnimationState] = useState<"moving" | "landing" | "complete">("moving");
 
   // Calculate positions on mount with improved targeting
   useEffect(() => {
@@ -43,21 +44,14 @@ const AIAnimation: React.FC<AIAnimationProps> = ({
       let endX, endY;
 
       if (targetType === "patternLine") {
-        // For pattern lines, calculate position based on line index
-        // The higher index lines have more potential tiles
+        // For pattern lines, calculate position based on existing tiles
         const availableSpots = targetIndex + 1; // Pattern lines have 1-5 spaces
         const filledSpots = targetElement.querySelectorAll(".tile").length;
 
-        // Calculate position for the next empty tile space
-        // We need to check how many tiles are already there
-        // and place the new tile in the next empty space
-        const tileWidth = 28; // Width of a tile space
-        const tileMargin = 4; // Margin between tiles (2px on each side)
-
-        // Calculate offset to place tile at the right position within the line
-        // Move from right to left as tiles fill from right side
-        const offsetX =
-          (availableSpots - filledSpots - 1) * (tileWidth + tileMargin);
+        // Calculate offset for right-to-left filling
+        const tileWidth = 28;
+        const tileMargin = 4;
+        const offsetX = (availableSpots - filledSpots - 1) * (tileWidth + tileMargin);
 
         // Position at the right side of the pattern line, minus the offset
         endX = targetRect.right - 20 - offsetX;
@@ -82,14 +76,25 @@ const AIAnimation: React.FC<AIAnimationProps> = ({
     }
   }, [sourceElement, targetElement, targetType, targetIndex]);
 
-  // Rest of the component stays the same
+  // Multi-stage animation sequence
   useEffect(() => {
     if (positions) {
-      const timer = setTimeout(() => {
-        onAnimationComplete();
-      }, 800);
-
-      return () => clearTimeout(timer);
+      // First phase: moving
+      const landingTimer = setTimeout(() => {
+        setAnimationState("landing");
+        
+        // Second phase: landing with impact
+        const completeTimer = setTimeout(() => {
+          setAnimationState("complete");
+          
+          // Finally: complete the animation
+          setTimeout(onAnimationComplete, 300);
+        }, 400);
+        
+        return () => clearTimeout(completeTimer);
+      }, 600);
+      
+      return () => clearTimeout(landingTimer);
     }
   }, [positions, onAnimationComplete]);
 
@@ -102,7 +107,8 @@ const AIAnimation: React.FC<AIAnimationProps> = ({
         .map((_, i) => (
           <div
             key={i}
-            className="ai-animated-tile"
+            className={`ai-animated-tile ${animationState === "landing" ? "landing" : ""} 
+                        ${animationState === "complete" ? "placed" : ""}`}
             style={
               {
                 left: `${positions.startX}px`,
@@ -117,15 +123,15 @@ const AIAnimation: React.FC<AIAnimationProps> = ({
           </div>
         ))}
 
-      {/* Effet d'impact qui s'active à la fin de l'animation */}
-      <div
-        className="tile-impact-effect"
-        style={{
-          left: `${positions.startX + positions.endX}px`,
-          top: `${positions.startY + positions.endY}px`,
-          animationDelay: `${Math.min(tiles.length, 5) * 50 + 600}ms`, // Apparaît juste avant la fin de l'animation
-        }}
-      ></div>
+      {animationState === "landing" && (
+        <div
+          className="tile-impact-effect"
+          style={{
+            left: `${positions.startX + positions.endX}px`,
+            top: `${positions.startY + positions.endY}px`,
+          }}
+        ></div>
+      )}
     </div>
   );
 };
