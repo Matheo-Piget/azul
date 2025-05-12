@@ -17,7 +17,13 @@ import {
 import { saveGameStats, generateGameId } from "../utils/SaveService";
 import AIAnimation from './../components/AI/AIAnimation';
 
-// This will be defined inside the component
+interface ScoringEvent {
+    playerId: string;
+    points: number;
+    position: { x: number; y: number };
+    type: 'regular' | 'bonus' | 'penalty';
+    label?: string;
+}
 
 /**
  * Interface for the Game Context
@@ -89,6 +95,14 @@ interface GameContextType {
     color: TileColor;
     isAnimating: boolean;
   } | null;
+
+  showFinalScoring: boolean;
+  scoringAnimations: ScoringEvent[];
+  addScoringAnimation: (event: ScoringEvent) => void;
+  clearScoringAnimations: () => void;
+  setShowFinalScoring: (show: boolean) => void;
+
+  
 }
 
 /** Context for managing game state and actions */
@@ -131,6 +145,17 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     color: TileColor;
   } | null>(null);
   const aiPlayersRef = useRef<Record<string, AIDifficulty>>({});
+
+  const [scoringAnimations, setScoringAnimations] = useState<ScoringEvent[]>([]);
+  const [showFinalScoring, setShowFinalScoring] = useState(false);
+
+  const addScoringAnimation = useCallback((event: ScoringEvent) => {
+    setScoringAnimations(prev => [...prev, event]);
+  }, []);
+
+  const clearScoringAnimations = useCallback(() => {
+    setScoringAnimations([]);
+  }, []);
 
   // Keep refs in sync with state
   useEffect(() => {
@@ -619,7 +644,12 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     executeAITurn,
     setAISpeed,
     aiSpeed,
-    aiAnimation
+    aiAnimation,
+    showFinalScoring,
+    scoringAnimations,
+    addScoringAnimation,
+    clearScoringAnimations,
+    setShowFinalScoring
 
   };
 

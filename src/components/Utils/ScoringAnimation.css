@@ -1,0 +1,189 @@
+.scoring-animation {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1000;
+  animation: scoring-float 1.5s ease-out forwards;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.4));
+  opacity: 0;
+}
+
+.scoring-points {
+  font-size: 24px;
+  font-weight: bold;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.scoring-label {
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0.8;
+}
+
+.scoring-animation.regular {
+  color: #ffc107;
+}
+
+.scoring-animation.bonus {
+  color: #4caf50;
+}
+
+.scoring-animation.penalty {
+  color: #e53935;
+}
+
+@keyframes scoring-float {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.8);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(-5px) scale(1);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(-40px) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) scale(1);
+  }
+}
+
+/* Special animation for end-game scoring */
+.final-scoring-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.final-scoring-header {
+  color: white;
+  font-size: 32px;
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.final-scoring-player {
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  width: 80%;
+  max-width: 600px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.final-scoring-player-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e1e8ed;
+}
+
+.final-scoring-player-name {
+  font-size: 22px;
+  font-weight: bold;
+  color: #1a3c5b;
+}
+
+.final-scoring-total {
+  font-size: 28px;
+  font-weight: bold;
+  color: #4caf50;
+}
+
+.final-scoring-bonus-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.final-scoring-bonus-item:last-child {
+  border-bottom: none;
+}
+
+.final-scoring-bonus-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.final-scoring-bonus-icon {
+  font-size: 18px;
+}
+
+.final-scoring-bonus-value {
+  font-weight: bold;
+  color: #4caf50;
+}
+
+.final-scoring-button {
+  margin-top: 30px;
+  padding: 12px 25px;
+  background-color: #1a3c5b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.final-scoring-button:hover {
+  background-color: #3a8bc5;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+.final-scoring-winner {
+  position: relative;
+  transform: scale(1.05);
+}
+
+.final-scoring-winner::before {
+  content: '🏆';
+  position: absolute;
+  top: -25px;
+  right: 20px;
+  font-size: 40px;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.2));
+  animation: trophy-bounce 2s infinite;
+}
+
+@keyframes trophy-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.final-scoring-bonus-item.highlight {
+  background-color: rgba(76, 175, 80, 0.1);
+  padding: 8px;
+  margin: 4px -8px;
+  border-radius: 4px;
+  animation: highlight-bonus 2s ease-out;
+}
+
+@keyframes highlight-bonus {
+  0% { background-color: rgba(76, 175, 80, 0); }
+  30% { background-color: rgba(76, 175, 80, 0.2); }
+  100% { background-color: rgba(76, 175, 80, 0.1); }
+}

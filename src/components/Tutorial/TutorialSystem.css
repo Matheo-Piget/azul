@@ -1,0 +1,163 @@
+.tutorial-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 10000;
+  pointer-events: all;
+}
+
+.tutorial-highlight-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.tutorial-highlight {
+  position: absolute;
+  border: 3px solid #ffc107;
+  border-radius: 8px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 15px rgba(255, 193, 7, 0.8);
+  z-index: 10001;
+  pointer-events: none;
+  animation: pulse-highlight 2s infinite;
+}
+
+@keyframes pulse-highlight {
+  0% { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 15px rgba(255, 193, 7, 0.4); }
+  50% { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 25px rgba(255, 193, 7, 0.8); }
+  100% { box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 15px rgba(255, 193, 7, 0.4); }
+}
+
+.tutorial-modal {
+  position: absolute;
+  max-width: 480px;
+  width: calc(100% - 40px);
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+  z-index: 10002;
+  margin: 0 auto;
+  animation: modal-appear 0.3s forwards;
+  overflow: hidden;
+}
+
+.tutorial-modal-center {
+  margin: 0 auto;
+}
+
+@keyframes modal-appear {
+  from { opacity: 0; transform: translate(-50%, -40%); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+.tutorial-header {
+  padding: 15px 20px;
+  background-color: #1a3c5b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tutorial-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 18px;
+}
+
+.tutorial-close {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tutorial-content {
+  padding: 20px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.tutorial-content p {
+  margin: 10px 0;
+  line-height: 1.5;
+}
+
+.tutorial-content ul {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.tutorial-content ul li {
+  margin-bottom: 5px;
+}
+
+.tutorial-progress {
+  padding: 15px 20px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #e1e8ed;
+}
+
+.tutorial-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 15px;
+}
+
+.tutorial-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #d0d9e1;
+}
+
+.tutorial-dot.active {
+  background-color: #1a3c5b;
+  transform: scale(1.2);
+}
+
+.tutorial-navigation {
+  display: flex;
+  justify-content: space-between;
+}
+
+.tutorial-prev,
+.tutorial-next {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.tutorial-prev {
+  background-color: #f0f2f5;
+  color: #333;
+}
+
+.tutorial-next {
+  background-color: #1a3c5b;
+  color: white;
+  margin-left: auto;
+}
+
+.tutorial-next:hover {
+  background-color: #235a8c;
+}
+
+.tutorial-prev:hover {
+  background-color: #e0e3e7;
+}

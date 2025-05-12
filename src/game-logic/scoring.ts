@@ -101,7 +101,8 @@ export const applyFloorPenalties = (player: Player): Player => {
  */
 export const transferCompletedLinesToWall = (
   player: Player,
-  gameState: GameState
+  gameState: GameState,
+  onScoreAnimation?: (row: number, col: number, points: number) => void
 ): { player: Player, discardedTiles: Tile[] } => {
   const updatedPlayer = { ...player };
   let scoreGained = 0;
@@ -121,7 +122,14 @@ export const transferCompletedLinesToWall = (
         wallRow[colIndex].filled = true;
         
         // Calculate score for this placement
-        scoreGained += calculateTilePlacementScore(updatedPlayer.board, rowIndex, colIndex);
+        const placementScore = calculateTilePlacementScore(updatedPlayer.board, rowIndex, colIndex);
+        
+        // Trigger animation callback if provided
+        if (onScoreAnimation) {
+          onScoreAnimation(rowIndex, colIndex, placementScore);
+        }
+        
+        scoreGained += placementScore;
         
         // Keep one tile on wall, discard the rest
         const [keptTile, ...extraTiles] = line.tiles;
@@ -145,7 +153,10 @@ export const transferCompletedLinesToWall = (
  * @param {GameState} gameState - Current game state
  * @returns {GameState} Updated game state with scores calculated
  */
-export const calculateRoundScores = (gameState: GameState): GameState => {
+export const calculateRoundScores = (
+  gameState: GameState,
+  onScoreAnimation?: (playerId: string, type: string, points: number, position: {row?: number, col?: number}) => void
+): GameState => {
   const updatedGameState = { ...gameState };
   let allDiscardedTiles: Tile[] = [];
   

@@ -9,6 +9,8 @@ import AIPlayerConfig from "../AI/AIPlayerConfig";
 import GameInfo from "../UI/Bag";
 import { TileColor } from "../../models/types";
 import AIAnimation from "../AI/AIAnimation";
+import { useTutorial } from "../Tutorial/TutorialSystem";
+import FinalScoringAnimation from "./../Utils/ScoringFinal";
 
 /**
  * GameBoard Component
@@ -45,6 +47,22 @@ const GameBoard: React.FC = (): React.ReactElement => {
   );
 
   const { aiAnimation } = useGame();
+
+  const { startTutorial } = useTutorial();
+
+  const { showFinalScoring, setShowFinalScoring } = useGame();
+
+  const [bonusDetails, setBonusDetails] = useState<
+    Record<
+      string,
+      {
+        rowsCompleted: number;
+        columnsCompleted: number;
+        colorsCompleted: number;
+        baseScore: number;
+      }
+    >
+  >({});
 
   /**
    * Effect to handle AI animation
@@ -88,16 +106,80 @@ const GameBoard: React.FC = (): React.ReactElement => {
     }
   }, [gameState, startNewGame]);
 
+  useEffect(() => {
+    if (gameState && gameState.gamePhase === "gameEnd") {
+      // Calculate bonus details for all players
+      const details: Record<
+        string,
+        {
+          rowsCompleted: number;
+          columnsCompleted: number;
+          colorsCompleted: number;
+          baseScore: number;
+        }
+      > = {};
+      gameState.players.forEach((player) => {
+        const wall = player.board.wall;
+
+        // Count completed rows
+        const rowsCompleted = wall.filter((row) =>
+          row.every((space) => space.filled)
+        ).length;
+
+        // Count completed columns
+        let columnsCompleted = 0;
+        for (let col = 0; col < wall[0].length; col++) {
+          if (wall.every((row) => row[col].filled)) {
+            columnsCompleted++;
+          }
+        }
+        const colors = ["blue", "yellow", "red", "black", "teal"];
+        const colorsCompleted = colors.filter(
+          (color) =>
+            wall.flat().filter((space) => space.color === color && space.filled)
+              .length === 5
+        ).length;
+
+        // Estimate base score (total - bonuses)
+        const bonusScore =
+          rowsCompleted * 2 + columnsCompleted * 7 + colorsCompleted * 10;
+        const baseScore = player.board.score - bonusScore;
+
+        details[player.id] = {
+          rowsCompleted,
+          columnsCompleted,
+          colorsCompleted,
+          baseScore,
+        };
+      });
+
+      setBonusDetails(details);
+
+      // Show final scoring with a slight delay
+      setTimeout(() => {
+        setShowFinalScoring(true);
+      }, 500);
+    }
+  }, [gameState?.gamePhase, gameState?.players, setShowFinalScoring]);
+
   /**
-   * Handles starting a new game with the selected player count
+   * Function to handle new game button click
+   * @returns {void}
    */
   const handleNewGame = () => {
     startNewGame(playerCount);
   };
 
-  if (gameState && gameState.gamePhase === "gameEnd") {
+  if (gameState?.gamePhase === "gameEnd") {
     return (
       <div className="game-over-screen">
+        {showFinalScoring && gameState?.gamePhase === "gameEnd" && (
+          <FinalScoringAnimation
+            players={gameState.players}
+            bonusDetails={bonusDetails}
+            onComplete={() => setShowFinalScoring(false)}
+          />
+        )}
         <div className="game-over-header">
           <h2>Partie terminée</h2>
           <div className="game-result">
@@ -306,6 +388,14 @@ const GameBoard: React.FC = (): React.ReactElement => {
               <span className="btn-icon">+</span>
               <span>Nouvelle partie</span>
             </button>
+            <button
+              onClick={startTutorial}
+              className="tutorial-btn"
+              aria-label="Voir le tutoriel"
+            >
+              <span className="btn-icon">❓</span>
+              <span>Tutoriel</span>
+            </button>
           </div>
         </div>
       </div>
@@ -395,14 +485,14 @@ const GameBoard: React.FC = (): React.ReactElement => {
         </div>
         {aiAnimation && animationSource && animationTarget && (
           <AIAnimation
-          sourceElement={animationSource}
-          targetElement={animationTarget}
-          tiles={aiAnimation.tiles}
-          color={aiAnimation.color}
-          targetType={aiAnimation.targetType}
-          targetIndex={aiAnimation.targetIndex}
-          onAnimationComplete={() => {}}
-        />
+            sourceElement={animationSource}
+            targetElement={animationTarget}
+            tiles={aiAnimation.tiles}
+            color={aiAnimation.color}
+            targetType={aiAnimation.targetType}
+            targetIndex={aiAnimation.targetIndex}
+            onAnimationComplete={() => {}}
+          />
         )}
       </div>
 

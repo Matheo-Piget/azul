@@ -4,6 +4,11 @@ import { useGame } from "../../state/GameContext";
 import { mustPlaceInFloorLine } from "../../game-logic/moves";
 import { audioService } from "../../utils/SoundService";
 import "./Playerboard.css";
+import { TileColor } from "../../models/types";
+import { useNotification } from "../../components/UI/NotificationSystem";
+import ScoringAnimation from "../Utils/ScoringAnimation";
+
+
 
 /**
  * Props for the PlayerBoard component
@@ -32,8 +37,9 @@ const PlayerBoard: React.FC<PlayerBoardProps> = ({
   patternLineRef,
   floorLineRef,
 }) => {
-  const { gameState, selectedTiles, placeTiles, aiPlayers } = useGame();
+    const { gameState, selectedTiles, placeTiles, aiPlayers, scoringAnimations, clearScoringAnimations, addScoringAnimation } = useGame();
   const [mustUseFloorLine, setMustUseFloorLine] = useState(false);
+  const { showNotification } = useNotification();
 
   const player = gameState.players.find((p) => p.id === playerId);
   const isCurrentPlayer = player ? gameState.currentPlayer === playerId : false;
@@ -41,6 +47,9 @@ const PlayerBoard: React.FC<PlayerBoardProps> = ({
     isCurrentPlayer &&
     selectedTiles.length > 0 &&
     gameState.gamePhase === "drafting";
+
+  const playerAnimations = scoringAnimations.filter(a => a.playerId === playerId);
+
 
   /**
    * Check if the selected tiles must be placed in the floor line
@@ -65,19 +74,65 @@ const PlayerBoard: React.FC<PlayerBoardProps> = ({
    * @param {number} lineIndex - Index of the pattern line to place tiles (-1 for floor line)
    */
   const handlePatternLineClick = (lineIndex: number) => {
-    if (!canPlace) return;
+  if (!canPlace) return;
 
-    // If tiles must go to the floor line, prevent placing them elsewhere
-    if (mustUseFloorLine && lineIndex !== -1) {
-      alert(
-        "These tiles must be placed in the floor line because no pattern line can accommodate them."
+  // If tiles must go to the floor line, prevent placing them elsewhere
+  if (mustUseFloorLine && lineIndex !== -1) {
+    showNotification(
+      'error',
+      'Ces tuiles doivent être placées dans la ligne de pénalité car aucune ligne de motif ne peut les accueillir.',
+      5000
+    );
+    return;
+  }
+
+  // Check for specific error cases when trying to place in pattern lines
+  if (lineIndex !== -1) {
+    const patternLine = player.board.patternLines[lineIndex];
+    const tileColor = selectedTiles[0]?.color;
+
+    // Pattern line is full
+    if (patternLine.tiles.length >= patternLine.spaces) {
+      showNotification('error', `Cette ligne est déjà complète (${patternLine.spaces}/${patternLine.spaces} tuiles).`);
+      return;
+    }
+
+    // Different color already in the pattern line
+    if (patternLine.color && patternLine.color !== tileColor) {
+      showNotification(
+        'error', 
+        `Cette ligne contient déjà des tuiles de couleur ${translateColor(patternLine.color)}. Vous ne pouvez y placer que des tuiles de cette couleur.`
       );
       return;
     }
 
-    audioService.play("tilePlacement");
-    placeTiles(lineIndex);
+    // Same color already on wall
+    const wallRowHasColor = player.board.wall[lineIndex].some(
+      space => space.color === tileColor && space.filled
+    );
+    if (wallRowHasColor) {
+      showNotification(
+        'error', 
+        `Une tuile ${translateColor(tileColor)} est déjà placée sur cette ligne du mur. Vous ne pouvez pas collecter plus de tuiles de cette couleur pour cette ligne.`
+      );
+      return;
+    }
+  }
+
+  placeTiles(lineIndex);
+};
+
+// Helper function to translate color names to French
+const translateColor = (color: TileColor): string => {
+  const colorTranslations: Record<TileColor, string> = {
+    'blue': 'bleue',
+    'yellow': 'jaune',
+    'red': 'rouge',
+    'black': 'noire',
+    'teal': 'turquoise'
   };
+  return colorTranslations[color] || color;
+};
 
   return (
     <div
@@ -243,6 +298,27 @@ const PlayerBoard: React.FC<PlayerBoardProps> = ({
           </div>
         )}
       </div>
+      {playerAnimations.map((animation, index) => (
+      <ScoringAnimation
+        key={`${animation.playerId}-${index}`}
+        points={animation.points}
+        x={animation.position.x}
+        y={animation.position.y}
+        type={animation.type}
+        label={animation.label}
+        onComplete={() => {
+          // Remove this animation when it's done
+          const newAnimations = [...scoringAnimations];
+          newAnimations.splice(scoringAnimations.indexOf(animation), 1);
+          clearScoringAnimations();
+          
+          // If there are other animations, add them back
+          if (newAnimations.length > 0) {
+            newAnimations.forEach(a => addScoringAnimation(a));
+          }
+        }}
+      />
+    ))}
     </div>
   );
 };

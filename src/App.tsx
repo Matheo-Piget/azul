@@ -1,14 +1,20 @@
 import React from 'react';
 import GameBoard from './components/Board/GameBoard';
 import { GameProvider } from './state/GameContext';
+import { NotificationProvider } from './components/UI/NotificationSystem';
+import { TutorialProvider } from './components/Tutorial/TutorialSystem';
 import './App.css';
 
 const App: React.FC = () => {
   return (
     <div className="App">
-      <GameProvider>
-        <GameBoard />
-      </GameProvider>
+      <NotificationProvider>
+        <TutorialProvider>
+          <GameProvider>
+            <GameBoard />
+          </GameProvider>
+        </TutorialProvider>
+      </NotificationProvider>
     </div>
   );
 };
