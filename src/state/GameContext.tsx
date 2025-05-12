@@ -15,14 +15,14 @@ import {
   calculateFinalScores,
 } from "../game-logic/scoring";
 import { saveGameStats, generateGameId } from "../utils/SaveService";
-import AIAnimation from './../components/AI/AIAnimation';
+import AIAnimation from "./../components/AI/AIAnimation";
 
 interface ScoringEvent {
-    playerId: string;
-    points: number;
-    position: { x: number; y: number };
-    type: 'regular' | 'bonus' | 'penalty';
-    label?: string;
+  playerId: string;
+  points: number;
+  position: { x: number; y: number };
+  type: "regular" | "bonus" | "penalty";
+  label?: string;
 }
 
 /**
@@ -87,10 +87,10 @@ interface GameContextType {
   /** Function to animate AI moves */
   aiAnimation: {
     playerId: string;
-    sourceType: 'factory' | 'center';
+    sourceType: "factory" | "center";
     sourceId: number | null;
     tiles: Tile[];
-    targetType: 'patternLine' | 'floorLine';
+    targetType: "patternLine" | "floorLine";
     targetIndex: number;
     color: TileColor;
     isAnimating: boolean;
@@ -102,7 +102,8 @@ interface GameContextType {
   clearScoringAnimations: () => void;
   setShowFinalScoring: (show: boolean) => void;
 
-  
+  isRoundTransition: boolean;
+  setIsRoundTransition: (isTransition: boolean) => void;
 }
 
 /** Context for managing game state and actions */
@@ -125,6 +126,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
   const [gameId, setGameId] = useState<string | null>(null);
   const [aiSpeed, setAISpeed] = useState<"fast" | "normal" | "slow">("normal");
+  const [isRoundTransitioning, setIsRoundTransitioning] = useState(false);
 
   const [aiAnimation, setAiAnimation] = useState<{
     playerId: string;
@@ -146,11 +148,13 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   } | null>(null);
   const aiPlayersRef = useRef<Record<string, AIDifficulty>>({});
 
-  const [scoringAnimations, setScoringAnimations] = useState<ScoringEvent[]>([]);
+  const [scoringAnimations, setScoringAnimations] = useState<ScoringEvent[]>(
+    []
+  );
   const [showFinalScoring, setShowFinalScoring] = useState(false);
 
   const addScoringAnimation = useCallback((event: ScoringEvent) => {
-    setScoringAnimations(prev => [...prev, event]);
+    setScoringAnimations((prev) => [...prev, event]);
   }, []);
 
   const clearScoringAnimations = useCallback(() => {
@@ -179,6 +183,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     },
     []
   );
+
+  const setIsRoundTransition = useCallback((isTransition: boolean) => {
+    setIsRoundTransitioning(isTransition);
+  }
+  , []);
 
   /**
    * Removes an AI player, converting it back to human control
@@ -310,54 +319,75 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   /**
    * Helper to check if round is over and handle end-round logic
    */
-  const handleRoundEnd = useCallback((gameState: GameState): GameState => {
-    let newState = { ...gameState };
+  const handleRoundEnd = useCallback(
+    (gameState: GameState): GameState => {
+      // Si le round est terminé (toutes les fabriques et centre vides)
+      if (
+        gameState.factories.every((f) => f.tiles.length === 0) &&
+        gameState.center.length === 0
+      ) {
+        // Copier l'état du jeu
+        let newState = { ...gameState };
 
-    // Check if selection phase is complete
-    const factoriesEmpty = newState.factories.every(
-      (f) => f.tiles.length === 0
-    );
-    const centerEmpty = newState.center.length === 0;
+        // Passer à la phase de tuilage
+        newState.gamePhase = "tiling";
 
-    if (factoriesEmpty && centerEmpty) {
-      // Move to wall tiling phase
-      newState.gamePhase = "tiling";
-      newState = calculateRoundScores(newState);
+        // Calculer les scores, mais avec animation séquentielle
+        // (Ceci sera implémenté avec un délai dans les composants visuels)
+        newState = calculateRoundScores(
+          newState,
+          (playerId, type, points, position) => {
+            // Animation callback
+            addScoringAnimation({
+              playerId,
+              points,
+              position: { x: position.col || 0, y: position.row || 0 },
+              type: type as "regular" | "bonus" | "penalty",
+            });
+          }
+        );
 
-      // Check if game is over - use some() for better performance
-      const anyWallRowComplete = newState.players.some((p) =>
-        p.board.wall.some((row) => row.every((space) => space.filled))
-      );
+        // Vérifier si le jeu est terminé
+        const anyWallRowComplete = newState.players.some((p) =>
+          p.board.wall.some((row) => row.every((space) => space.filled))
+        );
 
-      if (anyWallRowComplete) {
-        newState.gamePhase = "gameEnd";
-        newState = calculateFinalScores(newState);
-      } else {
-        // Prepare for next round
-        newState.roundNumber += 1;
-        newState.gamePhase = "drafting";
+        if (anyWallRowComplete) {
+          // Fin du jeu
+          newState.gamePhase = "gameEnd";
+          newState = calculateFinalScores(newState);
+        } else {
+          // Préparation pour le prochain tour (ceci sera déclenché après l'animation)
+          // Nous utiliserons un état supplémentaire pour gérer les transitions
+          //newState.gamePhase = "roundTransition";
+          newState.roundNumber += 1;
 
-        // Reset first player token if necessary
-        if (newState.firstPlayerToken) {
-          newState.currentPlayer = newState.firstPlayerToken;
-          newState.firstPlayerToken = null;
+          // Réinitialiser le premier joueur si nécessaire
+          if (newState.firstPlayerToken) {
+            newState.currentPlayer = newState.firstPlayerToken;
+            newState.firstPlayerToken = null;
+          }
+
+          // Vérifier si le sac est vide et la pile de défausse a des tuiles
+          if (newState.bag.length === 0 && newState.discardPile.length > 0) {
+            newState.bag = [...newState.discardPile];
+            newState.discardPile = [];
+            // Mélanger
+            newState.bag = shuffle(newState.bag);
+          }
+
+          // Distribuer les tuiles aux fabriques
+          newState = distributeFactoryTiles(newState);
+          newState.gamePhase = "drafting";
         }
 
-        // Check if bag is empty and discard pile has tiles
-        if (newState.bag.length === 0 && newState.discardPile.length > 0) {
-          // Reuse tile objects, just move them to the bag
-          newState.bag = [...newState.discardPile];
-          newState.discardPile = [];
-          newState.bag = shuffle(newState.bag);
-        }
-
-        // Redistribute tiles to factories
-        newState = distributeFactoryTiles(newState);
+        return newState;
       }
-    }
 
-    return newState;
-  }, []);
+      return gameState;
+    },
+    [addScoringAnimation]
+  );
 
   /**
    * Places selected tiles on a pattern line or floor line
@@ -459,6 +489,38 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
 
         return newGameState;
       });
+
+      if (!currentGameState) return;
+
+      const roundOver =
+        currentGameState.factories.every((f) => f.tiles.length === 0) &&
+        currentGameState.center.length === 0;
+
+      if (roundOver) {
+        const newState = handleRoundEnd(currentGameState);
+
+        // Si la manche est terminée mais le jeu n'est pas fini
+        if (
+          newState.gamePhase === "drafting" &&
+          gameStateRef.current && 
+          newState.roundNumber > gameStateRef.current.roundNumber
+        ) {
+          setIsRoundTransitioning(true);
+
+          // Attendre que toutes les animations de score soient complètes avant de passer à la suivante
+          setTimeout(() => {
+            setGameState(newState);
+
+            // Une autre courte pause avant de masquer la transition
+            setTimeout(() => {
+              setIsRoundTransitioning(false);
+            }, 2500);
+          }, 2000); // Délai pour permettre les animations de scoring
+        } else {
+          // Game over ou autres cas
+          setGameState(newState);
+        }
+      }
     },
     [handleRoundEnd] // Only depend on handleRoundEnd, use refs for others
   );
@@ -649,8 +711,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     scoringAnimations,
     addScoringAnimation,
     clearScoringAnimations,
-    setShowFinalScoring
-
+    setShowFinalScoring,
+    isRoundTransition: isRoundTransitioning,
+    setIsRoundTransition,
   };
 
   return (

@@ -11,6 +11,7 @@ import { TileColor } from "../../models/types";
 import AIAnimation from "../AI/AIAnimation";
 import { useTutorial } from "../Tutorial/TutorialSystem";
 import FinalScoringAnimation from "./../Utils/ScoringFinal";
+import RoundTransition from "../Utils/RoundTransition";
 
 /**
  * GameBoard Component
@@ -45,6 +46,9 @@ const GameBoard: React.FC = (): React.ReactElement => {
   const [animationTarget, setAnimationTarget] = useState<HTMLElement | null>(
     null
   );
+
+  const { isRoundTransition } = useGame();
+  const [isRoundTransitioning, setIsRoundTransitioning] = useState(false);
 
   const { aiAnimation } = useGame();
 
@@ -171,6 +175,15 @@ const GameBoard: React.FC = (): React.ReactElement => {
   };
 
   if (gameState?.gamePhase === "gameEnd") {
+    if (isRoundTransition) {
+      return (
+        <RoundTransition 
+          roundNumber={gameState.roundNumber} 
+          onComplete={() => setIsRoundTransitioning(false)} 
+          autoProgress={true}
+        />
+      );
+    }
     return (
       <div className="game-over-screen">
         {showFinalScoring && gameState?.gamePhase === "gameEnd" && (
@@ -335,6 +348,15 @@ const GameBoard: React.FC = (): React.ReactElement => {
   const currentPlayer = gameState.players.find(
     (p) => p.id === gameState.currentPlayer
   );
+  if (isRoundTransitioning) {
+  return (
+    <RoundTransition 
+      roundNumber={gameState.roundNumber} 
+      onComplete={() => setIsRoundTransitioning(false)} 
+      autoProgress={true}
+    />
+  );
+}
 
   return (
     <div className="game-board">

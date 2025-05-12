@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import './ScoringAnimation.css';
 
 interface ScoringAnimationProps {
@@ -9,6 +9,7 @@ interface ScoringAnimationProps {
   type?: 'regular' | 'bonus' | 'penalty' | 'row' | 'column' | 'color';
   label?: string;
   highlightElements?: HTMLElement[];
+  delay?: number;
 }
 
 const ScoringAnimation: React.FC<ScoringAnimationProps> = ({ 
@@ -18,44 +19,55 @@ const ScoringAnimation: React.FC<ScoringAnimationProps> = ({
   onComplete, 
   type = 'regular',
   label,
-  highlightElements = []
+  highlightElements = [],
+  delay = 0
 }) => {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
   const [showHighlights, setShowHighlights] = useState(false);
+  const animationRef = useRef<HTMLDivElement>(null);
 
-  // First show the animation, then highlight relevant elements
+  // Manage animation lifecycle with delays
   useEffect(() => {
-    // First phase: show highlights after a short delay
-    const highlightTimer = setTimeout(() => {
-      setShowHighlights(true);
+    // Initial delay before showing the animation
+    const initialTimer = setTimeout(() => {
+      setIsVisible(true);
       
-      // Add highlight divs to the elements
-      highlightElements.forEach(el => {
-        const highlight = document.createElement('div');
-        highlight.className = 'wall-tile-highlight';
-        if (type === 'row') highlight.classList.add('row-highlight');
-        if (type === 'column') highlight.classList.add('column-highlight');
-        if (type === 'color') highlight.classList.add('color-highlight');
-        el.appendChild(highlight);
-      });
-      
-      // Second phase: complete animation after highlights are shown
-      const completeTimer = setTimeout(() => {
-        // Remove highlight elements
+      // Add highlight after animation starts
+      const highlightTimer = setTimeout(() => {
+        setShowHighlights(true);
+        
         highlightElements.forEach(el => {
-          const highlights = el.querySelectorAll('.wall-tile-highlight');
-          highlights.forEach(h => h.remove());
+          el.classList.add('highlight-placement');
+          
+          // Add sliding animation
+          if (el.classList.contains('wall-space')) {
+            const tileElement = document.createElement('div');
+            tileElement.className = 'tile-sliding';
+            el.appendChild(tileElement);
+          }
         });
         
-        setIsVisible(false);
-        onComplete();
-      }, 1500);
+        // Complete after highlights are shown and animation finishes
+        const completeTimer = setTimeout(() => {
+          // Remove added elements
+          highlightElements.forEach(el => {
+            el.classList.remove('highlight-placement');
+            const slidingTile = el.querySelector('.tile-sliding');
+            if (slidingTile) slidingTile.remove();
+          });
+          
+          setIsVisible(false);
+          onComplete();
+        }, 1500);
+        
+        return () => clearTimeout(completeTimer);
+      }, 300);
       
-      return () => clearTimeout(completeTimer);
-    }, 300);
+      return () => clearTimeout(highlightTimer);
+    }, delay);
     
-    return () => clearTimeout(highlightTimer);
-  }, [onComplete, highlightElements, type]);
+    return () => clearTimeout(initialTimer);
+  }, [onComplete, highlightElements, delay]);
 
   // Don't render if no points or animation completed
   if (!isVisible || points === 0) return null;
@@ -68,6 +80,7 @@ const ScoringAnimation: React.FC<ScoringAnimationProps> = ({
 
   return (
     <div 
+      ref={animationRef}
       className={cssClass} 
       style={{ 
         left: `${x}px`, 
