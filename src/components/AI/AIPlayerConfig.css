@@ -104,3 +104,44 @@
   input:checked + .slider:before {
     transform: translateX(26px);
   }
+
+/* Ajouter à la fin du fichier CSS */
+
+.ai-global-settings {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #e1e8ed;
+}
+
+.ai-global-settings h4 {
+  color: #1a3c5b;
+  margin: 0 0 10px 0;
+  font-size: 15px;
+}
+
+.ai-speed-setting {
+  display: flex;
+  gap: 10px;
+}
+
+.speed-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #d0d9e1;
+  background-color: #f8fafc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  color: #666;
+}
+
+.speed-btn:hover {
+  background-color: #e9ecef;
+}
+
+.speed-btn.active {
+  background-color: #1a3c5b;
+  color: white;
+  border-color: #1a3c5b;
+}

@@ -1,16 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import Factory from '../Factory/Factory';
-import PlayerBoard from '../PlayerBoard/PlayerBoard';
-import Center from '../Center/Center';
-import History from '../Utils/GameHistory';
-import { useGame } from '../../state/GameContext';
-import './Gameboard.css';
-import AIPlayerConfig from '../AI/AIPlayerConfig';
-import GameInfo from '../UI/Bag';
+import React, { useEffect, useState } from "react";
+import Factory from "../Factory/Factory";
+import PlayerBoard from "../PlayerBoard/PlayerBoard";
+import Center from "../Center/Center";
+import History from "../Utils/GameHistory";
+import { useGame } from "../../state/GameContext";
+import "./Gameboard.css";
+import AIPlayerConfig from "../AI/AIPlayerConfig";
+import GameInfo from "../UI/Bag";
+import { TileColor } from "../../models/types";
+
+
 
 /**
  * GameBoard Component
- * 
+ *
  * @component
  * @description Main game interface that renders the entire Azul game board.
  * This component manages:
@@ -18,13 +21,17 @@ import GameInfo from '../UI/Bag';
  * - Display of factories, center area, and player boards
  * - Game status information
  * - Controls for starting a new game
- * 
+ *
  * @returns {React.ReactElement} The complete game board UI or a loading screen
  */
 const GameBoard: React.FC = (): React.ReactElement => {
   const { gameState, startNewGame } = useGame();
   const [playerCount, setPlayerCount] = useState(2);
-  
+  const [aiPlayers, setAiPlayers] = useState<Record<string, boolean>>({});
+
+  const [keepAiSettings, setKeepAiSettings] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
+
   /**
    * Effect to initialize a new game if none exists
    */
@@ -34,7 +41,7 @@ const GameBoard: React.FC = (): React.ReactElement => {
       startNewGame(2);
     }
   }, [gameState, startNewGame]);
-  
+
   /**
    * Handles starting a new game with the selected player count
    */
@@ -42,25 +49,165 @@ const GameBoard: React.FC = (): React.ReactElement => {
     startNewGame(playerCount);
   };
 
-  if (gameState && gameState.gamePhase === 'gameEnd') {
+  if (gameState && gameState.gamePhase === "gameEnd") {
     return (
       <div className="game-over-screen">
-        <h2>Partie terminée</h2>
-        <p>Voir les résultats ci-dessous :</p>
-        <History />
-        <button onClick={handleNewGame} className="new-game-btn">Nouvelle partie</button>
+        <div className="game-over-header">
+          <h2>Partie terminée</h2>
+          <div className="game-result">
+            {(() => {
+              // Trouver le gagnant et son score
+              const winners = gameState.players.reduce((acc, player) => {
+                const highestScore = Math.max(
+                  ...gameState.players.map((p) => p.board.score)
+                );
+                if (player.board.score === highestScore) {
+                  acc.push({ name: player.name, score: player.board.score });
+                }
+                return acc;
+              }, [] as { name: string; score: number }[]);
+
+              return (
+                <>
+                  <div className="winner-trophy">🏆</div>
+                  <div className="winner-info">
+                    {winners.length === 1 ? (
+                      <h3>
+                        {winners[0].name} gagne avec {winners[0].score} points !
+                      </h3>
+                    ) : (
+                      <h3>
+                        Égalité entre {winners.map((w) => w.name).join(" et ")}{" "}
+                        avec {winners[0].score} points !
+                      </h3>
+                    )}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+
+        <div className="game-summary">
+          <h3>Résumé de la partie</h3>
+          <table className="summary-table">
+            <thead>
+              <tr>
+                <th>Joueur</th>
+                <th>Score</th>
+                <th>Lignes complétées</th>
+                <th>Colonnes complétées</th>
+                <th>Couleurs complétées</th>
+              </tr>
+            </thead>
+            <tbody>
+              {gameState.players.map((player) => {
+                // Calculer les statistiques
+                const completedRows = player.board.wall.filter((row) =>
+                  row.every((space) => space.filled)
+                ).length;
+
+                const completedColumns = Array(5)
+                  .fill(0)
+                  .map((_, colIndex) =>
+                    player.board.wall.every((row) => row[colIndex].filled)
+                  )
+                  .filter(Boolean).length;
+
+                const colors: TileColor[] = [
+                  "blue",
+                  "yellow",
+                  "red",
+                  "black",
+                  "teal",
+                ];
+                const completedColors = colors.filter(
+                  (color) =>
+                    player.board.wall
+                      .flat()
+                      .filter((space) => space.color === color && space.filled)
+                      .length === 5
+                ).length;
+
+                return (
+                  <tr
+                    key={player.id}
+                    className={
+                      player.board.score ===
+                      Math.max(...gameState.players.map((p) => p.board.score))
+                        ? "winner-row"
+                        : ""
+                    }
+                  >
+                    <td>{player.name}</td>
+                    <td>{player.board.score}</td>
+                    <td>{completedRows}</td>
+                    <td>{completedColumns}</td>
+                    <td>{completedColors}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="new-game-options">
+          <h3>Nouvelle partie</h3>
+          <div className="player-options">
+            <div className="option-group">
+              <label htmlFor="new-player-count">Nombre de joueurs:</label>
+              <select
+                id="new-player-count"
+                value={playerCount}
+                onChange={(e) => setPlayerCount(parseInt(e.target.value))}
+                className="player-select"
+              >
+                <option value="2">2 joueurs</option>
+                <option value="3">3 joueurs</option>
+                <option value="4">4 joueurs</option>
+              </select>
+            </div>
+            <div className="option-group">
+              <label>Conserver les IA:</label>
+              <input
+                type="checkbox"
+                checked={keepAiSettings}
+                onChange={() => setKeepAiSettings(!keepAiSettings)}
+              />
+            </div>
+          </div>
+
+          <div className="game-buttons">
+            <button
+              onClick={() => startNewGame(playerCount, keepAiSettings)}
+              className="new-game-btn primary"
+            >
+              Nouvelle partie
+            </button>
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className="history-btn"
+            >
+              {showHistory ? "Masquer l'historique" : "Voir l'historique"}
+            </button>
+          </div>
+        </div>
+
+        {showHistory && <History />}
       </div>
     );
   }
-  
+
   // Show loading screen while game initializes
   if (!gameState || gameState.players.length === 0) {
     return <div className="loading-screen">Chargement du jeu...</div>;
   }
-  
+
   // Find the active player
-  const currentPlayer = gameState.players.find(p => p.id === gameState.currentPlayer);
-  
+  const currentPlayer = gameState.players.find(
+    (p) => p.id === gameState.currentPlayer
+  );
+
   return (
     <div className="game-board">
       <div className="game-header">
@@ -68,7 +215,7 @@ const GameBoard: React.FC = (): React.ReactElement => {
           <h1>Azul</h1>
           <div className="azulejo-pattern"></div>
         </div>
-        
+
         <div className="game-banner">
           <div className="game-status">
             <div className="status-item">
@@ -78,9 +225,13 @@ const GameBoard: React.FC = (): React.ReactElement => {
             <div className="status-item">
               <span className="status-label">Phase</span>
               <span className="status-value">
-                {gameState.gamePhase === 'drafting' ? 'Sélection' :
-                 gameState.gamePhase === 'tiling' ? 'Placement' :
-                 gameState.gamePhase === 'scoring' ? 'Décompte' : 'Fin de partie'}
+                {gameState.gamePhase === "drafting"
+                  ? "Sélection"
+                  : gameState.gamePhase === "tiling"
+                  ? "Placement"
+                  : gameState.gamePhase === "scoring"
+                  ? "Décompte"
+                  : "Fin de partie"}
               </span>
             </div>
             <div className="status-item current-player-info">
@@ -88,7 +239,7 @@ const GameBoard: React.FC = (): React.ReactElement => {
               <span className="status-value">{currentPlayer?.name}</span>
             </div>
           </div>
-          
+
           <div className="game-controls">
             <select
               id="player-count-select"
@@ -101,8 +252,8 @@ const GameBoard: React.FC = (): React.ReactElement => {
               <option value="3">3 joueurs</option>
               <option value="4">4 joueurs</option>
             </select>
-            <button 
-              onClick={handleNewGame} 
+            <button
+              onClick={handleNewGame}
               className="new-game-btn"
               aria-label="Démarrer une nouvelle partie"
             >
@@ -112,48 +263,64 @@ const GameBoard: React.FC = (): React.ReactElement => {
           </div>
         </div>
       </div>
-      
+
       <div className="main-area">
         <div className="factories-area">
           <h2>Fabriques</h2>
           <div className="factories-container">
-            {gameState.factories.map(factory => (
+            {gameState.factories.map((factory) => (
               <Factory key={factory.id} factoryId={factory.id} />
             ))}
           </div>
-          
+
           <div className="center-area">
             <h2>Centre</h2>
             <Center />
             <GameInfo />
           </div>
         </div>
-        
+
         <div className="players-area">
           <AIPlayerConfig />
           <h2>Plateaux des joueurs</h2>
           <div className="players-container">
-            {gameState.players.map(player => (
-              <div 
-                key={player.id} 
-                className={`player-board-container ${player.id === gameState.currentPlayer ? 'active-player' : ''}`}
-              >
-                <div className="player-header">
-                  <h3>{player.name} {player.id === gameState.currentPlayer && '(actif)'}</h3>
-                  <div className="player-score">
-                    <span className="score-value">{player.board.score}</span>
-                    <span className="score-label">points</span>
+            {gameState.players.map((player) => {
+              const isCurrentPlayer = player.id === gameState.currentPlayer;
+              const isAI = aiPlayers[player.id];
+
+              return (
+                <div
+                  key={player.id}
+                  className={`player-board-container ${
+                    isCurrentPlayer ? "active-player" : ""
+                  } ${isCurrentPlayer && isAI ? "ai-thinking" : ""}`}
+                >
+                  <div className="player-header">
+                    <h3>
+                      {player.name}
+                      {isCurrentPlayer && (
+                        <span className="current-turn-indicator">
+                          {isAI ? " (IA joue...)" : " (votre tour)"}
+                        </span>
+                      )}
+                    </h3>
+                    <div className="player-score">
+                      <span className="score-value">{player.board.score}</span>
+                      <span className="score-label">points</span>
+                    </div>
                   </div>
+                  <PlayerBoard playerId={player.id} />
                 </div>
-                <PlayerBoard playerId={player.id} />
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
-      
+
       <footer className="game-footer">
-        <div className="game-signature">Azul - Inspiré du jeu de société créé par Michael Kiesling</div>
+        <div className="game-signature">
+          Azul - Inspiré du jeu de société créé par Michael Kiesling
+        </div>
       </footer>
     </div>
   );

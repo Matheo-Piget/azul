@@ -1,0 +1,31 @@
+.score-animation {
+  position: absolute;
+  left: calc(var(--col) * 35px);
+  top: calc(var(--row) * 40px);
+  font-size: 24px;
+  font-weight: bold;
+  color: #ffc107;
+  text-shadow: 0 1px 0 #333, 0 0 10px rgba(255, 193, 7, 0.7);
+  pointer-events: none;
+  z-index: 100;
+  animation: scoreFloat 1s ease-out forwards;
+}
+
+@keyframes scoreFloat {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  20% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  80% {
+    transform: translate(0, -20px) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0, -40px) scale(0.8);
+    opacity: 0;
+  }
+}

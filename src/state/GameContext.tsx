@@ -4,7 +4,7 @@ import React, {
   useState,
   useCallback,
   useEffect,
-  useRef
+  useRef,
 } from "react";
 import { GameState, TileColor, Tile } from "../models/types";
 import { initializeGame, distributeFactoryTiles } from "../game-logic/setup";
@@ -14,7 +14,9 @@ import {
   calculateRoundScores,
   calculateFinalScores,
 } from "../game-logic/scoring";
-import { saveGameStats, generateGameId } from '../utils/SaveService';
+import { saveGameStats, generateGameId } from "../utils/SaveService";
+
+// This will be defined inside the component
 
 /**
  * Interface for the Game Context
@@ -23,45 +25,55 @@ import { saveGameStats, generateGameId } from '../utils/SaveService';
 interface GameContextType {
   /** Current state of the game */
   gameState: GameState;
-  
-  /** 
+
+  /** Current speed setting for AI moves */
+  aiSpeed: 'fast' | 'normal' | 'slow';
+
+  /**
+   * Function to set the AI speed
+   * @param speed - Speed of the AI ('fast', 'normal', 'slow')
+   * @returns void
+   */
+  setAISpeed: (speed: 'fast' | 'normal' | 'slow') => void;
+
+  /**
    * Function to select tiles from a factory or center
    * @param factoryId - ID of the factory, or null for the center
    * @param color - Color of tiles to select
    */
   selectTiles: (factoryId: number | null, color: TileColor) => void;
-  
+
   /**
    * Function to place selected tiles on a pattern line
    * @param patternLineIndex - Index of the pattern line, or -1 for floor line
    */
   placeTiles: (patternLineIndex: number) => void;
-  
+
   /**
    * Function to start a new game
    * @param playerCount - Number of players (2-4)
    */
-  startNewGame: (playerCount: number) => void;
-  
+  startNewGame: (playerCount: number, keepAiSettings?: boolean) => void;
+
   /** Currently selected tiles */
   selectedTiles: Tile[];
-  
+
   /** Map of player IDs to AI difficulty levels */
   aiPlayers: Record<string, AIDifficulty>;
-  
+
   /**
    * Function to add an AI player
    * @param playerId - ID of the player to convert to AI
    * @param difficulty - Difficulty level for the AI
    */
   addAIPlayer: (playerId: string, difficulty: AIDifficulty) => void;
-  
+
   /**
    * Function to remove an AI player
    * @param playerId - ID of the AI player to convert back to human
    */
   removeAIPlayer: (playerId: string) => void;
-  
+
   /** Function to trigger the current AI player's turn */
   executeAITurn: () => void;
 }
@@ -85,7 +97,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   const [aiPlayers, setAIPlayers] = useState<Record<string, AIDifficulty>>({});
   const [gameStartTime, setGameStartTime] = useState<Date | null>(null);
   const [gameId, setGameId] = useState<string | null>(null);
-  
+  const [aiSpeed, setAISpeed] = useState<'fast' | 'normal' | 'slow'>('normal');
+
   // Use refs to avoid recreating functions on every render
   const gameStateRef = useRef<GameState | null>(null);
   const selectedTilesRef = useRef<Tile[]>([]);
@@ -94,7 +107,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     color: TileColor;
   } | null>(null);
   const aiPlayersRef = useRef<Record<string, AIDifficulty>>({});
-  
+
   // Keep refs in sync with state
   useEffect(() => {
     gameStateRef.current = gameState;
@@ -133,15 +146,43 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   /**
    * Initializes a new game with the specified number of players
    * @param playerCount - Number of players (2-4)
+   * @param keepAiSettings - Whether to keep current AI settings
    */
-  const startNewGame = useCallback((playerCount: number) => {
-    const newGameState = initializeGame(playerCount);
-    setGameState(newGameState);
-    setSelectedTiles([]);
-    setSelectedSource(null);
-    setGameStartTime(new Date());
-    setGameId(generateGameId());
-  }, []);
+  const startNewGame = useCallback(
+    (playerCount: number, keepAiSettings = false) => {
+      const currentAiPlayers = aiPlayersRef.current;
+      const newGameState = initializeGame(playerCount);
+
+      setGameState(newGameState);
+      setSelectedTiles([]);
+      setSelectedSource(null);
+      setGameStartTime(new Date());
+      setGameId(generateGameId());
+
+      // Si on souhaite conserver les réglages IA
+      if (keepAiSettings) {
+        const newAiPlayers: Record<string, AIDifficulty> = {};
+
+        // Pour chaque nouveau joueur
+        newGameState.players.forEach((player, index) => {
+          // Récupérer le joueur précédent à la même position s'il existe
+          const previousPlayers = gameStateRef.current?.players || [];
+          if (index < previousPlayers.length) {
+            const previousPlayerId = previousPlayers[index].id;
+            // S'il était une IA, conserver le même niveau de difficulté
+            if (currentAiPlayers[previousPlayerId]) {
+              newAiPlayers[player.id] = currentAiPlayers[previousPlayerId];
+            }
+          }
+        });
+
+        setAIPlayers(newAiPlayers);
+      } else {
+        setAIPlayers({});
+      }
+    },
+    []
+  );
 
   /**
    * Selects tiles of a specific color from a factory or the center
@@ -159,23 +200,27 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       // Use functional updates to avoid stale state issues
-      setGameState(prevState => {
+      setGameState((prevState) => {
         if (!prevState) return null;
-        
+
         // Create a new state object with minimal copying
         const newGameState = { ...prevState };
         let tilesToSelect: Tile[] = [];
 
         if (factoryId !== null) {
           // Selection from a factory
-          const factoryIndex = newGameState.factories.findIndex(f => f.id === factoryId);
+          const factoryIndex = newGameState.factories.findIndex(
+            (f) => f.id === factoryId
+          );
           if (factoryIndex === -1) return prevState;
-          
+
           const factory = newGameState.factories[factoryIndex];
-          
+
           // Find all tiles of this color in the factory
-          const selectedFromFactory = factory.tiles.filter(t => t.color === color);
-          const otherTiles = factory.tiles.filter(t => t.color !== color);
+          const selectedFromFactory = factory.tiles.filter(
+            (t) => t.color === color
+          );
+          const otherTiles = factory.tiles.filter((t) => t.color !== color);
 
           tilesToSelect = selectedFromFactory;
 
@@ -183,15 +228,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
           newGameState.factories = [
             ...newGameState.factories.slice(0, factoryIndex),
             { ...factory, tiles: [] },
-            ...newGameState.factories.slice(factoryIndex + 1)
+            ...newGameState.factories.slice(factoryIndex + 1),
           ];
-          
+
           newGameState.center = [...newGameState.center, ...otherTiles];
         } else {
           // Selection from the center - filter once
           const centerTiles = newGameState.center;
-          tilesToSelect = centerTiles.filter(t => t.color === color);
-          newGameState.center = centerTiles.filter(t => t.color !== color);
+          tilesToSelect = centerTiles.filter((t) => t.color === color);
+          newGameState.center = centerTiles.filter((t) => t.color !== color);
 
           // Take the first player token if present
           if (newGameState.firstPlayerToken === null) {
@@ -202,15 +247,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
         // Update refs for other functions to use
         selectedTilesRef.current = tilesToSelect;
         selectedSourceRef.current = { factoryId, color };
-        
+
         // Update state variables outside setGameState
         setSelectedTiles(tilesToSelect);
         setSelectedSource({ factoryId, color });
-        
+
         return newGameState;
       });
     },
-    []  // No dependencies as we use refs
+    [] // No dependencies as we use refs
   );
 
   /**
@@ -218,9 +263,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
    */
   const handleRoundEnd = useCallback((gameState: GameState): GameState => {
     let newState = { ...gameState };
-    
+
     // Check if selection phase is complete
-    const factoriesEmpty = newState.factories.every(f => f.tiles.length === 0);
+    const factoriesEmpty = newState.factories.every(
+      (f) => f.tiles.length === 0
+    );
     const centerEmpty = newState.center.length === 0;
 
     if (factoriesEmpty && centerEmpty) {
@@ -229,8 +276,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
       newState = calculateRoundScores(newState);
 
       // Check if game is over - use some() for better performance
-      const anyWallRowComplete = newState.players.some(p =>
-        p.board.wall.some(row => row.every(space => space.filled))
+      const anyWallRowComplete = newState.players.some((p) =>
+        p.board.wall.some((row) => row.every((space) => space.filled))
       );
 
       if (anyWallRowComplete) {
@@ -259,7 +306,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
         newState = distributeFactoryTiles(newState);
       }
     }
-    
+
     return newState;
   }, []);
 
@@ -272,47 +319,55 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
       const currentGameState = gameStateRef.current;
       const currentSelectedTiles = selectedTilesRef.current;
       const currentSelectedSource = selectedSourceRef.current;
-      
-      if (!currentGameState || currentSelectedTiles.length === 0 || !currentSelectedSource) return;
+
+      if (
+        !currentGameState ||
+        currentSelectedTiles.length === 0 ||
+        !currentSelectedSource
+      )
+        return;
 
       // If patternLineIndex is -1, it means place in the floor line
       const isFloorLine = patternLineIndex === -1;
 
-      if (!isFloorLine && !canPlaceTiles(currentGameState, patternLineIndex, currentSelectedTiles)) {
+      if (
+        !isFloorLine &&
+        !canPlaceTiles(currentGameState, patternLineIndex, currentSelectedTiles)
+      ) {
         console.log("Invalid tile placement");
         return;
       }
 
       // Use functional updates to avoid stale state
-      setGameState(prevState => {
+      setGameState((prevState) => {
         if (!prevState) return null;
-        
+
         // Create new state with minimal copying
         let newGameState = { ...prevState };
         const currentPlayerIndex = newGameState.players.findIndex(
-          p => p.id === newGameState.currentPlayer
+          (p) => p.id === newGameState.currentPlayer
         );
-        
+
         if (currentPlayerIndex === -1) return prevState;
-        
+
         // Create a new copy of the current player, reuse other players
-        const currentPlayer = { 
+        const currentPlayer = {
           ...newGameState.players[currentPlayerIndex],
-          board: { ...newGameState.players[currentPlayerIndex].board }
+          board: { ...newGameState.players[currentPlayerIndex].board },
         };
-        
+
         // Update player array with minimal copying
         newGameState.players = [
           ...newGameState.players.slice(0, currentPlayerIndex),
           currentPlayer,
-          ...newGameState.players.slice(currentPlayerIndex + 1)
+          ...newGameState.players.slice(currentPlayerIndex + 1),
         ];
 
         if (isFloorLine) {
           // Place all tiles in the floor line - create new array but reuse tile objects
           currentPlayer.board.floorLine = [
             ...currentPlayer.board.floorLine,
-            ...currentSelectedTiles
+            ...currentSelectedTiles,
           ];
         } else {
           // Create a new copy of just the affected pattern line, reuse others
@@ -320,7 +375,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
           const patternLine = { ...patternLines[patternLineIndex] };
           patternLines[patternLineIndex] = patternLine;
           currentPlayer.board.patternLines = patternLines;
-          
+
           const color = currentSelectedTiles[0].color;
 
           // Check if the line can accommodate all tiles
@@ -335,12 +390,13 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
           // Add excess tiles to the floor line
           currentPlayer.board.floorLine = [
             ...currentPlayer.board.floorLine,
-            ...excessTiles
+            ...excessTiles,
           ];
         }
 
         // Move to next player
-        const nextPlayerIndex = (currentPlayerIndex + 1) % newGameState.players.length;
+        const nextPlayerIndex =
+          (currentPlayerIndex + 1) % newGameState.players.length;
         newGameState.currentPlayer = newGameState.players[nextPlayerIndex].id;
 
         // Check for round end and handle end-round logic
@@ -351,11 +407,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
         selectedSourceRef.current = null;
         setSelectedTiles([]);
         setSelectedSource(null);
-        
+
         return newGameState;
       });
     },
-    [handleRoundEnd]  // Only depend on handleRoundEnd, use refs for others
+    [handleRoundEnd] // Only depend on handleRoundEnd, use refs for others
   );
 
   /**
@@ -364,18 +420,18 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   const executeAITurn = useCallback(() => {
     const currentGameState = gameStateRef.current;
     if (!currentGameState) return;
-  
+
     const currentPlayerId = currentGameState.currentPlayer;
     const currentAIPlayers = aiPlayersRef.current;
-  
+
     if (currentAIPlayers[currentPlayerId]) {
       try {
         const difficulty = currentAIPlayers[currentPlayerId];
         const aiDecision = getAIMove(currentGameState, difficulty);
-        
+
         // First select the tiles
         selectTiles(aiDecision.factoryId, aiDecision.color);
-        
+
         // Use setTimeout to ensure state updates before placing tiles
         setTimeout(() => {
           placeTiles(aiDecision.patternLineIndex);
@@ -392,59 +448,74 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (!gameState) return;
 
-    if (gameState?.gamePhase === 'gameEnd') {
+    if (gameState?.gamePhase === "gameEnd") {
+      const duration = gameStartTime
+        ? Math.floor((new Date().getTime() - gameStartTime.getTime()) / 1000)
+        : 0;
 
-      const duration = gameStartTime ? Math.floor((new Date().getTime() - gameStartTime.getTime()) / 1000) : 0;
-    
       // Count completed rows, columns, and colors for each player
-      const completedRows = gameState.players.map(p => 
-        p.board.wall.filter(row => row.every(space => space.filled)).length
+      const completedRows = gameState.players.map(
+        (p) =>
+          p.board.wall.filter((row) => row.every((space) => space.filled))
+            .length
       );
-      
-      const completedColumns = gameState.players.map(p => {
+
+      const completedColumns = gameState.players.map((p) => {
         let count = 0;
         for (let col = 0; col < 5; col++) {
-          if (p.board.wall.every(row => row[col].filled)) count++;
+          if (p.board.wall.every((row) => row[col].filled)) count++;
         }
         return count;
       });
-      
-      const completedColors = gameState.players.map(p => {
-        const colors: TileColor[] = ['blue', 'yellow', 'red', 'black', 'teal'];
-        return colors.filter(color => 
-          p.board.wall.flat().filter(space => space.color === color && space.filled).length === 5
+
+      const completedColors = gameState.players.map((p) => {
+        const colors: TileColor[] = ["blue", "yellow", "red", "black", "teal"];
+        return colors.filter(
+          (color) =>
+            p.board.wall
+              .flat()
+              .filter((space) => space.color === color && space.filled)
+              .length === 5
         ).length;
       });
 
       const stats = {
         id: gameId || generateGameId(),
         date: new Date().toISOString(),
-        players: gameState.players.map(p => p.name),
-        scores: gameState.players.map(p => p.board.score),
-        winner: gameState.players.reduce((a, b) => a.board.score > b.board.score ? a : b).name,
-        aiLevels: gameState.players.map(p => aiPlayers[p.id] || 'human'),
+        players: gameState.players.map((p) => p.name),
+        scores: gameState.players.map((p) => p.board.score),
+        winner: gameState.players.reduce((a, b) =>
+          a.board.score > b.board.score ? a : b
+        ).name,
+        aiLevels: gameState.players.map((p) => aiPlayers[p.id] || "human"),
         duration,
         rounds: gameState.roundNumber,
         completedRows,
         completedColumns,
         completedColors,
-        moves: gameState.players.map(() => 0)
+        moves: gameState.players.map(() => 0),
       };
       saveGameStats(stats);
     }
 
     const currentPlayerId = gameState.currentPlayer;
-    
+
     // Check if current player is AI and game is in drafting phase
     if (aiPlayers[currentPlayerId] && gameState.gamePhase === 'drafting') {
-      // Add a small delay for visual effect and to avoid UI locking
-      const timer = setTimeout(() => {
-        executeAITurn();
-      }, 50);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [gameState, aiPlayers, executeAITurn]);
+    // Delay based on AI speed setting
+    const delayMap = {
+      'fast': 300,
+      'normal': 800,
+      'slow': 1500
+    };
+    
+    const timer = setTimeout(() => {
+      executeAITurn();
+    }, delayMap[aiSpeed]);
+    
+    return () => clearTimeout(timer);
+  }
+}, [gameState, aiPlayers, executeAITurn, aiSpeed]);
 
   /**
    * Helper function to shuffle array using Fisher-Yates algorithm
@@ -477,13 +548,13 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     aiPlayers,
     addAIPlayer,
     removeAIPlayer,
-    executeAITurn
+    executeAITurn,
+    setAISpeed,
+    aiSpeed
   };
 
   return (
-    <GameContext.Provider value={contextValue}>
-      {children}
-    </GameContext.Provider>
+    <GameContext.Provider value={contextValue}>{children}</GameContext.Provider>
   );
 };
 

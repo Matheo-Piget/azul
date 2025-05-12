@@ -2,7 +2,6 @@
 
 Une implémentation web complète du jeu de société Azul, développée avec React et TypeScript.
 
-![Capture d'écran du jeu]([lien vers une capture d'écran])
 
 ## À propos du jeu
 
