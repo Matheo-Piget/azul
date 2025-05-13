@@ -12,7 +12,7 @@ import { initializeGame, distributeFactoryTiles } from "../game-logic/setup";
 import { getAIMove, AIDifficulty } from "../game-logic/ai/aiPlayer";
 import { saveGameStats, generateGameId } from "../utils/SaveService";
 import AIAnimation from "./../components/AI/AIAnimation";
-import { ClassicAzulEngine } from '../game-logic/engines/classicEngine';
+import { ENGINES } from '../game-logic/engines';
 
 interface ScoringEvent {
   playerId: string;
@@ -179,11 +179,9 @@ export const GameProvider: React.FC<GameProviderProps> = ({
 
   // Sélection dynamique du moteur selon la variante
   const engine = useMemo(() => {
-    if (variant === "classic") {
-      return new ClassicAzulEngine();
-    }
-    // Ici tu pourras ajouter d'autres variantes plus tard
-    return null;
+    const engines: Record<string, any> = ENGINES;
+    const EngineClass = engines[variant];
+    return EngineClass ? new EngineClass() : null;
   }, [variant]);
 
   // Keep refs in sync with state
@@ -358,11 +356,24 @@ export const GameProvider: React.FC<GameProviderProps> = ({
    */
   const placeTiles = useCallback(
     (patternLineIndex: number) => {
-      setGameState(prev =>
-        prev
+      setGameState(prev => {
+        let newState = prev
           ? engine!.applyMove(prev, { patternLineIndex, selectedTiles: selectedTilesRef.current })
-          : prev
-      );
+          : prev;
+      
+        // Après le placement, vérifier si toutes les fabriques et le centre sont vides
+        if (
+          newState &&
+          newState.gamePhase === "drafting" &&
+          newState.factories.every((f: { tiles: Tile[] }) => f.tiles.length === 0) &&
+          newState.center.length === 0
+        ) {
+          newState = { ...newState, gamePhase: "tiling" };
+        }
+        return newState;
+      });
+      setSelectedTiles([]);
+      setSelectedSource(null);
     },
     [engine]
   );
@@ -529,18 +540,6 @@ export const GameProvider: React.FC<GameProviderProps> = ({
       }, 500); // 500ms pour laisser place à une éventuelle animation
     }
   }, [gameState, handleRoundEnd]);
-
-  useEffect(() => {
-    if (!gameState) return; 
-    if (
-      gameState.gamePhase === "drafting" &&
-      gameState.factories.every(f => f.tiles.length === 0) &&
-      gameState.center.length === 0
-    ) {
-      // On passe en phase tiling pour déclencher la fin de manche
-      setGameState(prev => prev ? { ...prev, gamePhase: "tiling" } : prev);
-    }
-  }, [gameState]);
 
   /**
    * Vérifie si les tuiles sélectionnées doivent obligatoirement aller dans la ligne de sol

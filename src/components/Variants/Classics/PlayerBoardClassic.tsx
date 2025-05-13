@@ -87,7 +87,9 @@ const PlayerBoardClassic: React.FC<PlayerBoardProps> = ({
       'yellow': 'jaune',
       'red': 'rouge',
       'black': 'noire',
-      'teal': 'turquoise'
+      'teal': 'turquoise',
+      'green': 'verte',
+      'joker': 'joker',
     };
     return colorTranslations[color] || color;
   };
@@ -173,6 +175,8 @@ const PlayerBoardClassic: React.FC<PlayerBoardProps> = ({
                   red: "#e53935",
                   black: "#424242",
                   teal: "#00897b",
+                  green: "#43a047",
+                  joker: "#b388ff",
                 };
                 const isAvailablePlacement =
                   isCurrentPlayer &&

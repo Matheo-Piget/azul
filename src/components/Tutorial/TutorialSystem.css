@@ -161,3 +161,60 @@
 .tutorial-prev:hover {
   background-color: #e0e3e7;
 }
+
+/* Flèche du popup tutoriel */
+.tutorial-arrow {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  z-index: 10003;
+}
+.tutorial-arrow-left {
+  left: -18px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.tutorial-arrow-right {
+  right: -18px;
+  top: 50%;
+  transform: translateY(-50%) scaleX(-1);
+}
+.tutorial-arrow-top {
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-90deg);
+}
+.tutorial-arrow-bottom {
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%) rotate(90deg);
+}
+.tutorial-arrow::after {
+  content: '';
+  display: block;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 12px 12px 12px 0;
+  border-color: transparent #fff transparent transparent;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.12));
+}
+.tutorial-arrow-right::after {
+  border-width: 12px 0 12px 12px;
+  border-color: transparent transparent transparent #fff;
+}
+.tutorial-arrow-top::after {
+  border-width: 0 12px 12px 12px;
+  border-color: transparent transparent #fff transparent;
+}
+.tutorial-arrow-bottom::after {
+  border-width: 12px 12px 0 12px;
+  border-color: #fff transparent transparent transparent;
+}
+
+.tutorial-modal {
+  /* On retire le fond jaune de debug si jamais il restait */
+  background-color: white;
+  border: none;
+  box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+}

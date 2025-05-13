@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import GameBoard from './components/Board/GameBoard';
+import GameBoardSummer from './components/Variants/SummerPavilion/GameBoardSummer';
 import { GameProvider } from './state/GameContext';
 import { NotificationProvider } from './components/UI/NotificationSystem';
 import { TutorialProvider } from './components/Tutorial/TutorialSystem';
@@ -7,8 +8,8 @@ import './App.css';
 
 const VARIANTS = [
   { value: "classic", label: "Azul Classique" },
+  { value: "summer", label: "Azul : Pavillon d'été" },
   // { value: "sintra", label: "Azul : Les vitraux de Sintra" },
-  // { value: "summer", label: "Azul : Pavillon d'été" },
 ];
 
 const App: React.FC = () => {
@@ -32,7 +33,7 @@ const App: React.FC = () => {
             </select>
           </div>
           <GameProvider initialVariant={variant}>
-            <GameBoard />
+            {variant === 'summer' ? <GameBoardSummer /> : <GameBoard />}
           </GameProvider>
         </TutorialProvider>
       </NotificationProvider>

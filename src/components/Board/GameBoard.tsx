@@ -30,13 +30,11 @@ import RoundScoringAnimation, {
  * @returns {React.ReactElement} The complete game board UI or a loading screen
  */
 const GameBoard: React.FC = (): React.ReactElement => {
-  const { gameState, startNewGame } = useGame();
+  const { gameState, startNewGame, variant } = useGame();
   const [playerCount, setPlayerCount] = useState(2);
   const [aiPlayers, setAiPlayers] = useState<Record<string, boolean>>({});
-
   const [keepAiSettings, setKeepAiSettings] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
-
   const factoryRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const centerRef = useRef<HTMLDivElement | null>(null);
   const patternLineRefs = useRef<
@@ -49,19 +47,13 @@ const GameBoard: React.FC = (): React.ReactElement => {
   const [animationTarget, setAnimationTarget] = useState<HTMLElement | null>(
     null
   );
-
   const { isRoundTransition } = useGame();
   const [isRoundTransitioning, setIsRoundTransitioning] = useState(false);
-
   const { aiAnimation } = useGame();
-
   const [scoringSteps, setScoringSteps] = useState<AnimationStep[]>([]);
   const [showRoundScoring, setShowRoundScoring] = useState(false);
-
   const { startTutorial } = useTutorial();
-
   const { showFinalScoring, setShowFinalScoring } = useGame();
-
   const [bonusDetails, setBonusDetails] = useState<
     Record<
       string,
@@ -74,12 +66,8 @@ const GameBoard: React.FC = (): React.ReactElement => {
     >
   >({});
 
-  /**
-   * Effect to handle AI animation
-   */
   useEffect(() => {
     if (aiAnimation) {
-      // Find source element
       let sourceElement: HTMLElement | null = null;
       if (
         aiAnimation.sourceType === "factory" &&
@@ -89,8 +77,6 @@ const GameBoard: React.FC = (): React.ReactElement => {
       } else if (aiAnimation.sourceType === "center") {
         sourceElement = centerRef.current;
       }
-
-      // Find target element
       let targetElement: HTMLElement | null = null;
       if (aiAnimation.targetType === "patternLine") {
         targetElement =
@@ -100,17 +86,12 @@ const GameBoard: React.FC = (): React.ReactElement => {
       } else {
         targetElement = floorLineRefs.current[aiAnimation.playerId] || null;
       }
-
       setAnimationSource(sourceElement);
       setAnimationTarget(targetElement);
     }
   }, [aiAnimation]);
 
-  /**
-   * Effect to initialize a new game if none exists
-   */
   useEffect(() => {
-    // Start a new game if the board is empty
     if (!gameState || gameState.players.length === 0) {
       startNewGame(2);
     }
@@ -118,7 +99,6 @@ const GameBoard: React.FC = (): React.ReactElement => {
 
   useEffect(() => {
     if (gameState && gameState.gamePhase === "gameEnd") {
-      // Calculate bonus details for all players
       const details: Record<
         string,
         {
@@ -130,13 +110,9 @@ const GameBoard: React.FC = (): React.ReactElement => {
       > = {};
       gameState.players.forEach((player) => {
         const wall = player.board.wall;
-
-        // Count completed rows
         const rowsCompleted = wall.filter((row) =>
           row.every((space) => space.filled)
         ).length;
-
-        // Count completed columns
         let columnsCompleted = 0;
         for (let col = 0; col < wall[0].length; col++) {
           if (wall.every((row) => row[col].filled)) {
@@ -149,12 +125,9 @@ const GameBoard: React.FC = (): React.ReactElement => {
             wall.flat().filter((space) => space.color === color && space.filled)
               .length === 5
         ).length;
-
-        // Estimate base score (total - bonuses)
         const bonusScore =
           rowsCompleted * 2 + columnsCompleted * 7 + colorsCompleted * 10;
         const baseScore = player.board.score - bonusScore;
-
         details[player.id] = {
           rowsCompleted,
           columnsCompleted,
@@ -162,10 +135,7 @@ const GameBoard: React.FC = (): React.ReactElement => {
           baseScore,
         };
       });
-
       setBonusDetails(details);
-
-      // Show final scoring with a slight delay
       setTimeout(() => {
         setShowFinalScoring(true);
       }, 500);
@@ -173,28 +143,30 @@ const GameBoard: React.FC = (): React.ReactElement => {
   }, [gameState?.gamePhase, gameState?.players, setShowFinalScoring]);
 
   useEffect(() => {
-  if (gameState?.gamePhase === "tiling") {
-    // Pour chaque joueur, pour chaque ligne transférée, ajoute un step
-    const steps: AnimationStep[] = [];
-    gameState.players.forEach(player => {
-      player.board.wall.forEach((row, rowIdx) => {
-        row.forEach((space, colIdx) => {
-          if (space.filled /* && vient d'être rempli ce tour-ci */) {
-            // Il faut détecter les tuiles nouvellement placées ce tour-ci
-            steps.push({
-              row: rowIdx,
-              col: colIdx,
-              points: 1,
-              color: space.color,
-            });
-          }
+    if (gameState?.gamePhase === "tiling") {
+      const steps: AnimationStep[] = [];
+      gameState.players.forEach(player => {
+        player.board.wall.forEach((row, rowIdx) => {
+          row.forEach((space, colIdx) => {
+            if (space.filled) {
+              steps.push({
+                row: rowIdx,
+                col: colIdx,
+                points: 1,
+                color: space.color,
+              });
+            }
+          });
         });
       });
-    });
-    setScoringSteps(steps);
-    setShowRoundScoring(true);
+      setScoringSteps(steps);
+      setShowRoundScoring(true);
+    }
+  }, [gameState?.gamePhase]);
+
+  if (variant && variant !== 'classic') {
+    return <div style={{ padding: 40, color: '#e53935', fontWeight: 600 }}>Variante non supportée ici. Utilisez le composant dédié.</div>;
   }
-}, [gameState?.gamePhase]);
 
   /**
    * Function to handle new game button click

@@ -1,7 +1,7 @@
 /**
  * Represents the available tile colors in the game
  */
-export type TileColor = 'blue' | 'yellow' | 'red' | 'black' | 'teal';
+export type TileColor = 'blue' | 'yellow' | 'red' | 'black' | 'teal' | 'green' | 'joker';
 
 /**
  * Represents an individual tile in the game
@@ -62,6 +62,8 @@ export interface PlayerBoard {
   floorLine: Tile[];
   /** Current score */
   score: number;
+  /** Tuiles récupérées (Summer Pavilion) */
+  collectedTiles?: Tile[];
 }
 
 /**
@@ -98,6 +100,10 @@ export interface GameState {
   firstPlayerToken: string | null;
   /** Current round number */
   roundNumber: number;
+  /** Couleur joker courante (Summer Pavilion) */
+  jokerColor?: TileColor;
+  /** Nombre max de manches (Summer Pavilion) */
+  maxRounds?: number;
   /** Flag indicating whether discarded tiles have been moved to the bag */
   discardMovedToBag?: boolean;
 }

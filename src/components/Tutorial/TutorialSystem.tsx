@@ -230,7 +230,8 @@ const TutorialOverlay: React.FC<{
   onClose: () => void;
   highlightElement: HTMLElement | null;
 }> = ({ step, currentStep, totalSteps, onNext, onPrev, onClose, highlightElement }) => {
-  const [modalPosition, setModalPosition] = useState({ top: '50%', left: '50%' });
+  type ModalPosition = { top: string; left: string; arrow?: 'left' | 'right' | 'top' | 'bottom' };
+  const [modalPosition, setModalPosition] = useState<ModalPosition>({ top: '50%', left: '50%' });
   const [highlightRect, setHighlightRect] = useState<{top: number, left: number, width: number, height: number} | null>(null);
 
   // Fonction pour recalculer la position du modal et du surlignage
@@ -239,46 +240,45 @@ const TutorialOverlay: React.FC<{
       const rect = highlightElement.getBoundingClientRect();
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
       const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-      const position = { top: '50%', left: '50%' };
       let highlight = {
         top: rect.top,
         left: rect.left,
         width: rect.width,
         height: rect.height
       };
-      // Calcul de la position du modal
-      let modalTop = 0;
-      let modalLeft = 0;
-      switch (step.position || 'bottom') {
-        case 'top':
-          modalTop = rect.top + scrollTop - 280;
-          modalLeft = rect.left + scrollLeft + rect.width / 2;
-          break;
-        case 'bottom':
-          modalTop = rect.bottom + scrollTop + 20;
-          modalLeft = rect.left + scrollLeft + rect.width / 2;
-          break;
-        case 'left':
-          modalTop = rect.top + scrollTop + rect.height / 2;
-          modalLeft = rect.left + scrollLeft - 350;
-          break;
-        case 'right':
-          modalTop = rect.top + scrollTop + rect.height / 2;
-          modalLeft = rect.right + scrollLeft + 20;
-          break;
-      }
-      // Clamp la position pour rester dans la fenêtre
+      // Placement intelligent du modal
       const winW = window.innerWidth;
       const winH = window.innerHeight;
-      // Largeur/hauteur du modal (approximatif)
       const modalWidth = 480;
       const modalHeight = 260;
+      const offset = 24; // Décalage entre la zone et le popup
+      // On essaie droite, puis gauche, puis bas, puis haut
+      let modalTop = rect.top + scrollTop + rect.height / 2 - modalHeight / 2;
+      let modalLeft = rect.right + scrollLeft + offset;
+      let arrowDirection: 'left' | 'right' | 'top' | 'bottom' = 'left';
+      // Si pas assez de place à droite, on essaie à gauche
+      if (modalLeft + modalWidth > winW) {
+        modalLeft = rect.left + scrollLeft - modalWidth - offset;
+        arrowDirection = 'right';
+      }
+      // Si pas assez de place à gauche, on essaie en bas
+      if (modalLeft < 0) {
+        modalLeft = rect.left + scrollLeft + rect.width / 2 - modalWidth / 2;
+        modalTop = rect.bottom + scrollTop + offset;
+        arrowDirection = 'top';
+      }
+      // Si pas assez de place en bas, on essaie en haut
+      if (modalTop + modalHeight > winH) {
+        modalTop = rect.top + scrollTop - modalHeight - offset;
+        arrowDirection = 'bottom';
+      }
+      // Clamp pour ne jamais sortir de l'écran
       modalLeft = Math.max(20, Math.min(modalLeft, winW - modalWidth - 20));
       modalTop = Math.max(20, Math.min(modalTop, winH - modalHeight - 20));
-      setModalPosition({ top: `${modalTop}px`, left: `${modalLeft}px` });
+      setModalPosition({ top: `${modalTop}px`, left: `${modalLeft}px`, arrow: arrowDirection });
       setHighlightRect(highlight);
     } else {
-      setModalPosition({ top: '50%', left: '50%' });
+      setModalPosition({ top: '50%', left: '50%', arrow: undefined });
       setHighlightRect(null);
     }
   };
@@ -325,11 +325,13 @@ const TutorialOverlay: React.FC<{
         style={{
           left: modalPosition.left,
           top: modalPosition.top,
-          transform: step.position === 'center' ? 'translate(-50%, -50%)' : 'translate(-50%, 0)',
-          background: '#fffbe6', // fond jaune pâle temporaire pour debug visibilité
-          border: '2px solid #ffc107', // bordure temporaire pour debug
+          transform: step.position === 'center' ? 'translate(-50%, -50%)' : 'none',
         }}
       >
+        {/* Flèche visuelle */}
+        {modalPosition.arrow && (
+          <div className={`tutorial-arrow tutorial-arrow-${modalPosition.arrow}`}></div>
+        )}
         <div className="tutorial-header">
           <h3>{step.title}</h3>
           <button className="tutorial-close" onClick={onClose}>×</button>

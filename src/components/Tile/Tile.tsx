@@ -44,7 +44,9 @@ const Tile: React.FC<TileProps> = ({
     yellow: '#fdd835', // Azulejo yellow
     red: '#e53935',    // Azulejo red
     black: '#424242',  // Azulejo black
-    teal: '#00897b'    // Azulejo turquoise
+    teal: '#00897b',   // Azulejo turquoise
+    green: '#43a047',  // Vert Summer Pavilion
+    joker: '#b388ff',  // Violet ou gris pour le joker
   };
   
   const sizeClasses = {
@@ -66,6 +68,7 @@ const Tile: React.FC<TileProps> = ({
   const tileClasses = [
     'tile',
     sizeClasses[size],
+    (color === 'green' || color === 'joker') ? 'tile-diamond' : '',
     selected ? 'selected' : '',
     disabled ? 'disabled' : '',
     placed ? 'placed' : ''

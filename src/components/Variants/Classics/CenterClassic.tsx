@@ -29,7 +29,9 @@ const CenterClassic = React.forwardRef<HTMLDivElement, CenterProps>(({ isAISelec
     yellow: 0,
     red: 0,
     black: 0,
-    teal: 0
+    teal: 0,
+    green: 0,
+    joker: 0,
   };
   gameState.center.forEach(tile => {
     tilesByColor[tile.color]++;

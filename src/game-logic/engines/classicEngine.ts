@@ -9,6 +9,7 @@ import {
   createFactories,
   distributeFactoryTiles,
 } from "./../setup";
+import { calculateClassicScore } from '../scoring/classicScoring';
 
 export class ClassicAzulEngine implements AzulGameEngine {
   initializeGame = (players: string[]): GameState => {
@@ -370,9 +371,7 @@ export class ClassicAzulEngine implements AzulGameEngine {
   }
 
   // Calcule le score total du joueur courant (ou d'un joueur donné)
-  calculateScore(gameState: GameState, playerId: string | null = null): number {
-    const id = playerId || gameState.currentPlayer;
-    const player = gameState.players.find(p => p.id === id);
-    return player ? player.board.score : 0;
+  calculateScore(gameState: GameState): number {
+    return calculateClassicScore(gameState);
   }
 }

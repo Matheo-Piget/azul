@@ -234,7 +234,9 @@ const FinalScoringAnimation: React.FC<FinalScoringAnimationProps> = ({
       yellow: '#fdd835',
       red: '#e53935',
       black: '#424242',
-      teal: '#00897b'
+      teal: '#00897b',
+      green: '#43a047',
+      joker: '#b388ff',
     };
     return colorMap[color];
   };

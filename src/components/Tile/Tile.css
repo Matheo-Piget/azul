@@ -152,3 +152,8 @@
 .theme-transition {
   animation: themeTransition 0.8s ease-in-out;
 }
+
+.tile-diamond {
+  clip-path: polygon(50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%);
+  /* Un losange étiré, plus haut que large */
+}
