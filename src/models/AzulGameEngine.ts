@@ -7,5 +7,4 @@ export interface AzulGameEngine {
   mustPlaceInFloorLine(gameState: GameState, selectedTiles: Tile[]): boolean;
   applyMove(gameState: GameState, move: any): GameState; // à typer selon tes besoins
   calculateScore(gameState: GameState): number;
-  // ... autres méthodes utiles
 }

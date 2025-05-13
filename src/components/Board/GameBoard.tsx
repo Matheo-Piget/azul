@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import Factory from "../Factory/Factory";
-import PlayerBoard from "../PlayerBoard/PlayerBoard";
-import Center from "../Center/Center";
+import Factory from "../Variants/Classics/FactoryClassic";
+import PlayerBoard from "../Variants/Classics/PlayerBoardClassic";
+import Center from "../Variants/Classics/CenterClassic";
 import History from "../Utils/GameHistory";
 import { useGame } from "../../state/GameContext";
 import "./Gameboard.css";
@@ -470,7 +470,7 @@ const GameBoard: React.FC = (): React.ReactElement => {
               <Factory
                 key={factory.id}
                 factoryId={factory.id}
-                ref={(el) => (factoryRefs.current[factory.id] = el)}
+                ref={(el: HTMLDivElement | null) => (factoryRefs.current[factory.id] = el)}
                 isAISelecting={
                   aiAnimation?.sourceType === "factory" &&
                   aiAnimation.sourceId === factory.id
@@ -524,13 +524,13 @@ const GameBoard: React.FC = (): React.ReactElement => {
                   </div>
                   <PlayerBoard
                     playerId={player.id}
-                    patternLineRef={(index, el) => {
+                    patternLineRef={(index: number, el: HTMLDivElement | null) => {
                       if (!patternLineRefs.current[player.id]) {
                         patternLineRefs.current[player.id] = {};
                       }
                       patternLineRefs.current[player.id][index] = el;
                     }}
-                    floorLineRef={(el) =>
+                    floorLineRef={(el: HTMLDivElement | null) =>
                       (floorLineRefs.current[player.id] = el)
                     }
                   />

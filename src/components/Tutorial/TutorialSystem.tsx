@@ -231,50 +231,90 @@ const TutorialOverlay: React.FC<{
   highlightElement: HTMLElement | null;
 }> = ({ step, currentStep, totalSteps, onNext, onPrev, onClose, highlightElement }) => {
   const [modalPosition, setModalPosition] = useState({ top: '50%', left: '50%' });
+  const [highlightRect, setHighlightRect] = useState<{top: number, left: number, width: number, height: number} | null>(null);
 
-  useEffect(() => {
+  // Fonction pour recalculer la position du modal et du surlignage
+  const updatePositions = () => {
     if (highlightElement && step.position !== 'center') {
       const rect = highlightElement.getBoundingClientRect();
-        const scrollTop = window.scrollY || document.documentElement.scrollTop;
-        const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-            const position = { top: '50%', left: '50%' };
-
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+      const position = { top: '50%', left: '50%' };
+      let highlight = {
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height
+      };
+      // Calcul de la position du modal
+      let modalTop = 0;
+      let modalLeft = 0;
       switch (step.position || 'bottom') {
         case 'top':
-          position.top = `${Math.max(rect.top - 280, 20)}px`;
-          position.left = `${rect.left + rect.width / 2}px`;
+          modalTop = rect.top + scrollTop - 280;
+          modalLeft = rect.left + scrollLeft + rect.width / 2;
           break;
         case 'bottom':
-          position.top = `${rect.bottom + 20}px`;
-          position.left = `${rect.left + rect.width / 2}px`;
+          modalTop = rect.bottom + scrollTop + 20;
+          modalLeft = rect.left + scrollLeft + rect.width / 2;
           break;
         case 'left':
-          position.top = `${rect.top + rect.height / 2}px`;
-          position.left = `${Math.max(rect.left - 350, 20)}px`;
+          modalTop = rect.top + scrollTop + rect.height / 2;
+          modalLeft = rect.left + scrollLeft - 350;
           break;
         case 'right':
-          position.top = `${rect.top + rect.height / 2}px`;
-          position.left = `${rect.right + 20}px`;
+          modalTop = rect.top + scrollTop + rect.height / 2;
+          modalLeft = rect.right + scrollLeft + 20;
           break;
       }
-
-      setModalPosition(position);
+      // Clamp la position pour rester dans la fenêtre
+      const winW = window.innerWidth;
+      const winH = window.innerHeight;
+      // Largeur/hauteur du modal (approximatif)
+      const modalWidth = 480;
+      const modalHeight = 260;
+      modalLeft = Math.max(20, Math.min(modalLeft, winW - modalWidth - 20));
+      modalTop = Math.max(20, Math.min(modalTop, winH - modalHeight - 20));
+      setModalPosition({ top: `${modalTop}px`, left: `${modalLeft}px` });
+      setHighlightRect(highlight);
     } else {
       setModalPosition({ top: '50%', left: '50%' });
+      setHighlightRect(null);
     }
+  };
+
+  // Recalcule à chaque changement d'élément ou de step
+  useEffect(() => {
+    updatePositions();
+    // Scroll automatique vers l'élément surligné
+    if (highlightElement && step.position !== 'center') {
+      highlightElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    // eslint-disable-next-line
+  }, [highlightElement, step]);
+
+  // Met à jour la position lors du scroll ou du resize
+  useEffect(() => {
+    window.addEventListener('scroll', updatePositions);
+    window.addEventListener('resize', updatePositions);
+    return () => {
+      window.removeEventListener('scroll', updatePositions);
+      window.removeEventListener('resize', updatePositions);
+    };
+    // eslint-disable-next-line
   }, [highlightElement, step]);
 
   return (
     <div className="tutorial-overlay">
       <div className="tutorial-highlight-container">
-        {highlightElement && (
+        {highlightRect && (
           <div 
             className="tutorial-highlight"
             style={{
-              top: highlightElement.getBoundingClientRect().top + 'px',
-              left: highlightElement.getBoundingClientRect().left + 'px',
-              width: highlightElement.getBoundingClientRect().width + 'px',
-              height: highlightElement.getBoundingClientRect().height + 'px',
+              top: highlightRect.top + 'px',
+              left: highlightRect.left + 'px',
+              width: highlightRect.width + 'px',
+              height: highlightRect.height + 'px',
             }}
           />
         )}
@@ -285,7 +325,9 @@ const TutorialOverlay: React.FC<{
         style={{
           left: modalPosition.left,
           top: modalPosition.top,
-          transform: step.position === 'center' ? 'translate(-50%, -50%)' : 'none'
+          transform: step.position === 'center' ? 'translate(-50%, -50%)' : 'translate(-50%, 0)',
+          background: '#fffbe6', // fond jaune pâle temporaire pour debug visibilité
+          border: '2px solid #ffc107', // bordure temporaire pour debug
         }}
       >
         <div className="tutorial-header">

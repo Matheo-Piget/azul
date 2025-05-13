@@ -27,6 +27,8 @@ interface ScoringEvent {
  * Provides game state and functions to interact with the game
  */
 interface GameContextType {
+
+
   /** Current state of the game */
   gameState: GameState;
 
@@ -106,17 +108,28 @@ interface GameContextType {
    * Vérifie si les tuiles sélectionnées doivent obligatoirement aller dans la ligne de sol
    */
   mustPlaceInFloorLine: (selectedTiles: Tile[]) => boolean;
+
+  /** Variante courante d'Azul */
+  variant: string;
+  /** Change la variante d'Azul */
+  setVariant: (variant: string) => void;
 }
 
 /** Context for managing game state and actions */
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
+interface GameProviderProps {
+  children: React.ReactNode;
+  initialVariant?: string;
+}
+
 /**
  * Provider component that wraps the application to provide game state and functions
  * @param children - Child components that will have access to the game context
  */
-export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
+export const GameProvider: React.FC<GameProviderProps> = ({
   children,
+  initialVariant = "classic",
 }) => {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [selectedTiles, setSelectedTiles] = useState<Tile[]>([]);
@@ -129,8 +142,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   const [gameId, setGameId] = useState<string | null>(null);
   const [aiSpeed, setAISpeed] = useState<"fast" | "normal" | "slow">("normal");
   const [isRoundTransitioning, setIsRoundTransitioning] = useState(false);
-
-  const variant = "classic";
+  const [variant, setVariant] = useState<string>(initialVariant);
 
   const [aiAnimation, setAiAnimation] = useState<{
     playerId: string;
@@ -165,10 +177,12 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     setScoringAnimations([]);
   }, []);
 
+  // Sélection dynamique du moteur selon la variante
   const engine = useMemo(() => {
     if (variant === "classic") {
       return new ClassicAzulEngine();
     }
+    // Ici tu pourras ajouter d'autres variantes plus tard
     return null;
   }, [variant]);
 
@@ -558,6 +572,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     isRoundTransition: isRoundTransitioning,
     setIsRoundTransition,
     mustPlaceInFloorLine,
+    variant,
+    setVariant,
   };
 
   return (
