@@ -67,9 +67,7 @@ function simulateAIGame(playerCount: number, difficulty: AIDifficulty): number[]
       const centerEmpty = gameState.center.length === 0;
       if (factoriesEmpty && centerEmpty) {
         gameState.gamePhase = "tiling";
-        // Use scoring logic
-        // @ts-ignore
-        gameState = scoring.calculateRoundScores(gameState);
+        gameState = engine.calculateRoundScores(gameState);
         // End game?
         const anyWallRowComplete = gameState.players.some(p =>
           p.board.wall.some(row => row.every(space => space.filled))

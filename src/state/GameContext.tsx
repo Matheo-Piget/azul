@@ -506,6 +506,28 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [gameState, startNewGame]);
 
+  useEffect(() => {
+    if (!gameState) return;
+    if (gameState.gamePhase === "tiling") {
+      // Laisse le temps aux animations si besoin, sinon mets 0
+      setTimeout(() => {
+        setGameState(prev => prev ? handleRoundEnd(prev) : prev);
+      }, 500); // 500ms pour laisser place à une éventuelle animation
+    }
+  }, [gameState, handleRoundEnd]);
+
+  useEffect(() => {
+    if (!gameState) return; 
+    if (
+      gameState.gamePhase === "drafting" &&
+      gameState.factories.every(f => f.tiles.length === 0) &&
+      gameState.center.length === 0
+    ) {
+      // On passe en phase tiling pour déclencher la fin de manche
+      setGameState(prev => prev ? { ...prev, gamePhase: "tiling" } : prev);
+    }
+  }, [gameState]);
+
   /**
    * Vérifie si les tuiles sélectionnées doivent obligatoirement aller dans la ligne de sol
    */
