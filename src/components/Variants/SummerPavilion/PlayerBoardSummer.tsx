@@ -20,17 +20,20 @@ const FLOWER_COLORS: TileColor[] = [
 // Nombre de tuiles par fleur (6 positions, pas de centre)
 const TILES_PER_FLOWER = 6;
 
-// Coordonnées pour placer les tuiles en fleur (6 positions sans centre)
-const getFlowerPositions = (radius: number, centerX: number, centerY: number) => {
+// Coordonnées pour placer les tuiles en fleur avec les tuiles collées côte à côte
+const getFlowerPositions = (centerX: number, centerY: number, tileSize: number) => {
   const positions = [];
+  const hexRadius = tileSize * 0.866; // Distance du centre aux sommets pour un hexagone régulier
   
-  // Positions des 6 pétales autour
+  // Positions des 6 tuiles formant une fleur collée par un côté
   for (let i = 0; i < 6; i++) {
     const angle = (Math.PI / 3) * i;
+    
+    // Ajuster pour que les losanges se touchent par un côté
     positions.push({
-      left: centerX + radius * Math.cos(angle),
-      top: centerY + radius * Math.sin(angle),
-      rotate: angle * (180 / Math.PI) + 45, // +45° pour orienter le losange
+      left: centerX + hexRadius * Math.cos(angle),
+      top: centerY + hexRadius * Math.sin(angle),
+      rotate: angle * (180 / Math.PI), // Orientation pour que les côtés se touchent
     });
   }
   
@@ -58,17 +61,30 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
   const player = gameState.players.find(p => p.id === playerId);
   const jokerColor = gameState.jokerColor;
 
-  // Dans un vrai jeu, on récupérerait les tuiles placées du state
-  // Pour cette démo, on génère un plateau partiellement rempli
+  // Construction du plateau avec les vraies tuiles placées (si disponibles)
+  // Pour la démo, si le plateau est vide, on place quelques tuiles factices
   const placedTiles = useMemo(() => {
-    return FLOWER_COLORS.map((color, idx) => {
-      // Simuler des tuiles placées au hasard
-      return Array(TILES_PER_FLOWER).fill(null).map((_, i) => {
-        // 40% de chance d'avoir une tuile placée
-        return Math.random() < 0.4 ? color : "empty";
+    const collected = player?.board.collectedTiles || [];
+    let hasRealTiles = collected.length > 0;
+    if (hasRealTiles) {
+      return FLOWER_COLORS.map((color) => {
+        const tilesOfColor = collected.filter(t => t.color === color);
+        return Array(TILES_PER_FLOWER).fill(null).map((_, i) =>
+          tilesOfColor[i] ? color : "empty"
+        );
       });
-    });
-  }, []);
+    } else {
+      // Démo : placer quelques tuiles sur différentes fleurs
+      return [
+        ["blue", "blue", "empty", "empty", "empty", "empty"], // 2 bleues
+        ["yellow", "empty", "empty", "empty", "empty", "empty"], // 1 jaune
+        ["red", "empty", "empty", "empty", "empty", "empty"], // 1 rouge
+        ["black", "empty", "empty", "empty", "empty", "empty"], // 1 noire
+        ["teal", "empty", "empty", "empty", "empty", "empty"], // 1 turquoise
+        ["green", "empty", "empty", "empty", "empty", "empty"], // 1 verte
+      ] as (TileColor | 'empty')[][];
+    }
+  }, [player]);
 
   // Vérifier si une fleur est complète
   const isFlowerComplete = (flowerIdx: number) => {
@@ -77,17 +93,17 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
   };
 
   // Dimensions et positionnement
-  const boardSize = 380;
+  const boardSize = 480; // Augmenté pour plus d'espace
   const centerPoint = boardSize / 2;
-  const flowerRadius = 75; // Rayon pour les fleurs satellites
-  const petalRadius = 40; // Distance entre le centre d'une fleur et ses pétales
+  const flowerRadius = 110; // Rayon augmenté pour espacer davantage les fleurs
+  const tileSize = 32; // Taille d'une tuile losange
   
   return (
     <div className="player-board summer-pavilion-board">
       <div className="player-board-header">
         Azul Summer Pavilion - <b>{player?.name || 'Joueur'}</b>
         {jokerColor && (
-          <span className="joker-badge" style={{ background: '#b388ff', color: '#fff', marginLeft: 12, padding: '2px 10px', borderRadius: 12, fontWeight: 600 }}>
+          <span className="joker-badge">
             Joker : {jokerColor}
           </span>
         )}
@@ -99,21 +115,21 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
           className="summer-star center-star"
           style={{
             position: 'absolute',
-            left: centerPoint - 50,
-            top: centerPoint - 50,
-            width: 100,
-            height: 100,
+            left: centerPoint,
+            top: centerPoint,
+            width: 0,
+            height: 0,
             zIndex: 10
           }}
         >
-          {getFlowerPositions(petalRadius, 50, 50).map((pos, i) => (
+          {getFlowerPositions(0, 0, tileSize).map((pos, i) => (
             <div
               key={`center-${i}`}
               className="star-tile-pos"
               style={{
                 position: 'absolute',
-                left: pos.left - 16,
-                top: pos.top - 16,
+                left: pos.left - tileSize/2,
+                top: pos.top - tileSize/2,
               }}
             >
               <DiamondTile 
@@ -133,7 +149,7 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
           const flowerCenterY = centerPoint + flowerRadius * Math.sin(angle);
           
           // Obtenir les positions des tuiles pour cette fleur
-          const positions = getFlowerPositions(petalRadius, 50, 50);
+          const positions = getFlowerPositions(0, 0, tileSize);
           
           return (
             <div
@@ -141,10 +157,10 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
               className={`summer-star star-${color} ${jokerColor === color ? 'joker-glow' : ''} ${isFlowerComplete(flowerIdx) ? 'rosette-glow' : ''}`}
               style={{
                 position: 'absolute',
-                left: flowerCenterX - 50,
-                top: flowerCenterY - 50,
-                width: 100,
-                height: 100,
+                left: flowerCenterX,
+                top: flowerCenterY,
+                width: 0,
+                height: 0,
               }}
             >
               {positions.map((pos, posIdx) => {
@@ -157,8 +173,8 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
                     className="star-tile-pos"
                     style={{
                       position: 'absolute',
-                      left: pos.left - 16,
-                      top: pos.top - 16,
+                      left: pos.left - tileSize/2,
+                      top: pos.top - tileSize/2,
                     }}
                   >
                     <DiamondTile 

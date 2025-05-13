@@ -9,7 +9,7 @@ const GameBoardSummer: React.FC = () => {
   const { gameState } = useGame();
 
   return (
-    <div className="game-board">
+    <div className="game-board game-board-summer">
       <div className="factories-center-row">
         <div className="factories">
           {gameState.factories.map((factory) => (

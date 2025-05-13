@@ -3,17 +3,37 @@
   width: 420px;
   height: 420px;
   background-color: #f5f5dc;
-  border-radius: 8px;
-  padding: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  margin: 16px;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+  margin: 24px;
+  overflow: hidden;
+}
+
+.player-board.summer-pavilion-board::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231a3c5b' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.18;
+  z-index: 0;
+  border-radius: 16px;
 }
 
 .player-board-header {
   text-align: center;
-  margin-bottom: 12px;
-  font-size: 18px;
-  color: #333;
+  margin-bottom: 18px;
+  font-size: 22px;
+  color: #1a3c5b;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  z-index: 2;
+  position: relative;
+  text-shadow: 0 2px 8px rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.7);
+  border-radius: 12px;
+  padding: 8px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
 .summer-stars-container {
@@ -21,11 +41,119 @@
   width: 380px;
   height: 380px;
   margin: 0 auto;
+  z-index: 1;
+}
+
+.summer-stars-container::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 220px;
+  height: 220px;
+  transform: translate(-50%, -50%);
+  background-image: url("data:image/svg+xml,%3Csvg width='220' height='220' viewBox='0 0 220 220' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='110' cy='110' r='100' stroke='%231a3c5b' stroke-width='2' stroke-opacity='0.08'/%3E%3Ccircle cx='110' cy='110' r='70' stroke='%231a3c5b' stroke-width='2' stroke-opacity='0.08'/%3E%3Ccircle cx='110' cy='110' r='40' stroke='%231a3c5b' stroke-width='2' stroke-opacity='0.08'/%3E%3C/svg%3E");
+  opacity: 0.7;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .summer-star {
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.10), 0 0 0 4px rgba(255,255,255,0.18);
   border-radius: 50%;
+  background: rgba(255,255,255,0.85);
+  position: relative;
+}
+
+.summer-star .diamond-tile {
+  box-shadow: 0 2px 10px rgba(0,0,0,0.13), 0 0 0 2px rgba(255,255,255,0.13);
+  border-radius: 8px;
+  background-clip: padding-box;
+  position: relative;
+  overflow: hidden;
+}
+.summer-star .diamond-tile:not(.tile-empty)::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(120deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.05) 60%, transparent 100%);
+  pointer-events: none;
+  border-radius: 8px;
+}
+.summer-star .diamond-tile:not(.tile-empty):hover {
+  box-shadow: 0 4px 18px rgba(26,60,91,0.18), 0 0 0 2px #1a3c5b;
+  filter: brightness(1.08) saturate(1.1);
+  z-index: 3;
+}
+
+.summer-star .tile-empty {
+  opacity: 0.45;
+  border-style: dotted;
+  background-color: rgba(255,255,255,0.13);
+  box-shadow: none;
+}
+
+.summer-star {
+  border: 3px solid rgba(26,60,91,0.10);
+}
+
+/* Halo coloré sous chaque fleur */
+.summer-star.star-blue::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, #1976d2 0%, #1976d2 60%, transparent 100%);
+  opacity: 0.13;
+  z-index: 0;
+}
+.summer-star.star-yellow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffc107 0%, #ffc107 60%, transparent 100%);
+  opacity: 0.13;
+  z-index: 0;
+}
+.summer-star.star-red::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, #f44336 0%, #f44336 60%, transparent 100%);
+  opacity: 0.13;
+  z-index: 0;
+}
+.summer-star.star-black::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, #37474f 0%, #37474f 60%, transparent 100%);
+  opacity: 0.13;
+  z-index: 0;
+}
+.summer-star.star-teal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, #00796b 0%, #00796b 60%, transparent 100%);
+  opacity: 0.13;
+  z-index: 0;
+}
+.summer-star.star-green::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, #4caf50 0%, #4caf50 60%, transparent 100%);
+  opacity: 0.13;
+  z-index: 0;
 }
 
 /* Couleurs des étoiles */
@@ -41,17 +169,32 @@
 /* Tile styling */
 .diamond-tile {
   clip-path: polygon(50% 0%, 75% 50%, 50% 100%, 25% 50%);
-  width: 40px;
-  height: 40px;
+  width: 60px;
+  height: 60px;
   position: relative;
   transform-origin: center;
   transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  margin: 2px;
 }
-
 .diamond-tile:hover {
   filter: brightness(1.2);
-  transform: scale(1.05);
+  transform: scale(1.08);
+  z-index: 2;
 }
+
+/* Tuiles vides : bordure colorée et transparence */
+.tile-empty {
+  background-color: rgba(255, 255, 255, 0.18);
+  border: 2px dashed #bbb;
+  opacity: 0.7;
+}
+.star-blue .tile-empty { border-color: #1976d2; }
+.star-yellow .tile-empty { border-color: #ffc107; }
+.star-red .tile-empty { border-color: #f44336; }
+.star-black .tile-empty { border-color: #37474f; }
+.star-teal .tile-empty { border-color: #00796b; }
+.star-green .tile-empty { border-color: #4caf50; }
 
 /* Couleur des tuiles */
 .tile-blue { background-color: #1976d2; }
@@ -99,4 +242,116 @@
 .empty-tile-spot {
   opacity: 0.5;
   border: 1px dashed #999;
+}
+
+/* --- GameBoard Summer Pavilion --- */
+.game-board-summer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 0 32px 0;
+  font-family: 'Libre Baskerville', 'Segoe UI', serif;
+  background: linear-gradient(135deg, #e0f7fa 0%, #f5f7fa 100%);
+  color: #2c3e50;
+  min-height: 100vh;
+  position: relative;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+  overflow-x: hidden;
+}
+.game-board-summer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231a3c5b' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.13;
+  z-index: 0;
+  border-radius: 18px;
+  pointer-events: none;
+}
+
+.factories-center-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 48px;
+  margin-bottom: 36px;
+  position: relative;
+  z-index: 1;
+}
+
+.factories {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  background: rgba(255,255,255,0.85);
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  padding: 24px 18px;
+  min-width: 320px;
+}
+
+.player-boards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 36px;
+  justify-content: center;
+  margin-top: 32px;
+  z-index: 1;
+}
+
+/* Titre pour la zone factories et joueurs */
+.factories::before {
+  content: 'Fabriques';
+  display: block;
+  font-size: 22px;
+  color: #00796b;
+  font-weight: 700;
+  margin-bottom: 18px;
+  letter-spacing: 1px;
+  text-align: center;
+}
+.player-boards::before {
+  content: 'Plateaux des joueurs';
+  display: block;
+  font-size: 22px;
+  color: #1a3c5b;
+  font-weight: 700;
+  margin-bottom: 18px;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .factories-center-row {
+    flex-direction: column;
+    gap: 24px;
+    align-items: center;
+  }
+  .factories {
+    min-width: unset;
+    width: 100%;
+    padding: 18px 6px;
+  }
+  .player-boards {
+    gap: 18px;
+    margin-top: 18px;
+  }
+}
+
+@media (max-width: 600px) {
+  .game-board-summer {
+    padding: 8px 0 8px 0;
+  }
+  .factories {
+    flex-direction: column;
+    gap: 12px;
+    padding: 10px 2px;
+  }
+  .player-boards {
+    flex-direction: column;
+    gap: 10px;
+  }
 }
