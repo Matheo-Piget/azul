@@ -8,6 +8,13 @@
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
   margin: 24px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 420px;
+  min-height: 480px;
+  margin: 0 auto 32px auto;
 }
 
 .player-board.summer-pavilion-board::before {
@@ -41,6 +48,14 @@
   width: 380px;
   height: 380px;
   margin: 0 auto;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 1;
 }
 
@@ -354,4 +369,60 @@
     flex-direction: column;
     gap: 10px;
   }
+}
+
+/* Bag personnel sous le plateau Summer Pavilion */
+.bag-summer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 18px auto 0 auto;
+  padding: 8px 18px;
+  background: rgba(255,255,255,0.85);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  min-width: 120px;
+  max-width: 260px;
+  font-size: 15px;
+  gap: 10px;
+}
+.bag-label {
+  color: #1a3c5b;
+  font-weight: 600;
+  margin-right: 8px;
+}
+.bag-tiles {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.bag-tile {
+  width: 28px;
+  height: 28px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+  border-radius: 6px;
+}
+.bag-empty {
+  color: #bbb;
+  font-style: italic;
+  font-size: 14px;
+}
+
+.bag-tile.selected {
+  border: 3px solid #43a047;
+  box-shadow: 0 0 0 4px #b2dfdb;
+  filter: brightness(1.15);
+  z-index: 3;
+}
+
+.star-tile-pos.placeable {
+  box-shadow: 0 0 0 4px #43a047, 0 2px 8px rgba(67,160,71,0.18);
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 5;
+  transition: box-shadow 0.2s;
+}
+.star-tile-pos.placeable:hover {
+  box-shadow: 0 0 0 6px #43a047, 0 4px 16px rgba(67,160,71,0.25);
+  filter: brightness(1.08);
 }

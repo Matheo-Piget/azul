@@ -53,7 +53,7 @@ interface GameContextType {
    * Function to place selected tiles on a pattern line
    * @param patternLineIndex - Index of the pattern line, or -1 for floor line
    */
-  placeTiles: (patternLineIndex: number) => void;
+  placeTiles: (arg: number | { color: TileColor; targetFlower: number; targetPos: number }) => void;
 
   /**
    * Function to start a new game
@@ -351,17 +351,22 @@ export const GameProvider: React.FC<GameProviderProps> = ({
   );
 
   /**
-   * Places selected tiles on a pattern line or floor line
-   * @param patternLineIndex - Index of the pattern line, or -1 for floor line
+   * Places selected tiles on a pattern line or floor line (classique) OU place une tuile sur une fleur (summer)
+   * @param patternLineIndex - Index de la ligne OU move Summer Pavilion
    */
   const placeTiles = useCallback(
-    (patternLineIndex: number) => {
+    (arg: number | { color: TileColor; targetFlower: number; targetPos: number }) => {
       setGameState(prev => {
-        let newState = prev
-          ? engine!.applyMove(prev, { patternLineIndex, selectedTiles: selectedTilesRef.current })
-          : prev;
-      
-        // Après le placement, vérifier si toutes les fabriques et le centre sont vides
+        if (!prev) return prev;
+        let newState = prev;
+        if (typeof arg === 'number') {
+          // Classique : patternLineIndex
+          newState = engine!.applyMove(prev, { patternLineIndex: arg, selectedTiles: selectedTilesRef.current });
+        } else {
+          // Summer Pavilion : move complet
+          newState = engine!.applyMove(prev, arg);
+        }
+        // Après le placement, vérifier si toutes les fabriques et le centre sont vides (classique)
         if (
           newState &&
           newState.gamePhase === "drafting" &&

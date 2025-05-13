@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import "./PlayerBoardSummer.css";
 import { TileColor } from "../../../models/types";
 import { useGame } from '../../../state/GameContext';
@@ -56,34 +56,44 @@ const DiamondTile: React.FC<{
   );
 };
 
+// Composant pour afficher le sac du joueur (bag personnel)
+const BagSummer: React.FC<{ tiles: { color: TileColor }[] }> = ({ tiles }) => {
+  return (
+    <div className="bag-summer">
+      <span className="bag-label">Sac :</span>
+      <div className="bag-tiles">
+        {tiles.length === 0 ? (
+          <span className="bag-empty">(vide)</span>
+        ) : (
+          tiles.map((tile, i) => (
+            <div key={i} className={`diamond-tile tile-${tile.color} bag-tile`} />
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
 const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
-  const { gameState } = useGame();
+  const { gameState, placeTiles } = useGame();
   const player = gameState.players.find(p => p.id === playerId);
   const jokerColor = gameState.jokerColor;
+
+  // État local : tuile sélectionnée dans le bag
+  const [selectedBagIdx, setSelectedBagIdx] = useState<number | null>(null);
 
   // Construction du plateau avec les vraies tuiles placées (si disponibles)
   // Pour la démo, si le plateau est vide, on place quelques tuiles factices
   const placedTiles = useMemo(() => {
-    const collected = player?.board.collectedTiles || [];
-    let hasRealTiles = collected.length > 0;
-    if (hasRealTiles) {
-      return FLOWER_COLORS.map((color) => {
-        const tilesOfColor = collected.filter(t => t.color === color);
-        return Array(TILES_PER_FLOWER).fill(null).map((_, i) =>
-          tilesOfColor[i] ? color : "empty"
-        );
+    // On construit la matrice des fleurs à partir de board.placedTiles
+    const placed = player?.board.placedTiles || [];
+    // Pour chaque fleur, pour chaque position, on met la couleur ou "empty"
+    return FLOWER_COLORS.map((color, flowerIdx) => {
+      return Array(TILES_PER_FLOWER).fill(null).map((_, posIdx) => {
+        const found = placed.find(pt => pt.flower === flowerIdx && pt.pos === posIdx);
+        return found ? found.color : "empty";
       });
-    } else {
-      // Démo : placer quelques tuiles sur différentes fleurs
-      return [
-        ["blue", "blue", "empty", "empty", "empty", "empty"], // 2 bleues
-        ["yellow", "empty", "empty", "empty", "empty", "empty"], // 1 jaune
-        ["red", "empty", "empty", "empty", "empty", "empty"], // 1 rouge
-        ["black", "empty", "empty", "empty", "empty", "empty"], // 1 noire
-        ["teal", "empty", "empty", "empty", "empty", "empty"], // 1 turquoise
-        ["green", "empty", "empty", "empty", "empty", "empty"], // 1 verte
-      ] as (TileColor | 'empty')[][];
-    }
+    });
   }, [player]);
 
   // Vérifier si une fleur est complète
@@ -98,6 +108,21 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
   const flowerRadius = 110; // Rayon augmenté pour espacer davantage les fleurs
   const tileSize = 32; // Taille d'une tuile losange
   
+  // Handler : sélection d'une tuile du sac
+  const handleSelectBagTile = (idx: number) => {
+    setSelectedBagIdx(idx);
+  };
+
+  // Handler : placement sur une case de fleur
+  const handlePlaceTile = (flowerIdx: number, posIdx: number) => {
+    if (selectedBagIdx === null || !player?.board.collectedTiles) return;
+    const tile = player.board.collectedTiles[selectedBagIdx];
+    if (!tile) return;
+    // Appel à la logique de placement (move Summer Pavilion)
+    placeTiles({ color: tile.color, targetFlower: flowerIdx, targetPos: posIdx });
+    setSelectedBagIdx(null);
+  };
+
   return (
     <div className="player-board summer-pavilion-board">
       <div className="player-board-header">
@@ -147,10 +172,8 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
           const angle = (Math.PI / 3) * flowerIdx;
           const flowerCenterX = centerPoint + flowerRadius * Math.cos(angle);
           const flowerCenterY = centerPoint + flowerRadius * Math.sin(angle);
-          
           // Obtenir les positions des tuiles pour cette fleur
           const positions = getFlowerPositions(0, 0, tileSize);
-          
           return (
             <div
               key={`flower-${color}`}
@@ -164,18 +187,21 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
               }}
             >
               {positions.map((pos, posIdx) => {
-                // Déterminer si une tuile est placée à cette position
                 const tileColor = placedTiles[flowerIdx][posIdx];
-                
+                // Highlight si une tuile du bag est sélectionnée et la case est vide
+                const isPlaceable = selectedBagIdx !== null && tileColor === "empty";
                 return (
                   <div
                     key={`${color}-pos-${posIdx}`}
-                    className="star-tile-pos"
+                    className={`star-tile-pos${isPlaceable ? ' placeable' : ''}`}
                     style={{
                       position: 'absolute',
                       left: pos.left - tileSize/2,
                       top: pos.top - tileSize/2,
+                      cursor: isPlaceable ? 'pointer' : undefined,
+                      zIndex: isPlaceable ? 5 : undefined,
                     }}
+                    onClick={() => isPlaceable && handlePlaceTile(flowerIdx, posIdx)}
                   >
                     <DiamondTile 
                       color={tileColor} 
@@ -188,6 +214,24 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
             </div>
           );
         })}
+      </div>
+      {/* Bag personnel avec sélection */}
+      <div className="bag-summer">
+        <span className="bag-label">Sac :</span>
+        <div className="bag-tiles">
+          {player?.board.collectedTiles && player.board.collectedTiles.length === 0 ? (
+            <span className="bag-empty">(vide)</span>
+          ) : (
+            player?.board.collectedTiles?.map((tile, i) => (
+              <div
+                key={i}
+                className={`diamond-tile tile-${tile.color} bag-tile${selectedBagIdx === i ? ' selected' : ''}`}
+                style={{ cursor: 'pointer' }}
+                onClick={() => handleSelectBagTile(i)}
+              />
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

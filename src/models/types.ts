@@ -64,6 +64,8 @@ export interface PlayerBoard {
   score: number;
   /** Tuiles récupérées (Summer Pavilion) */
   collectedTiles?: Tile[];
+  /** Tuiles placées sur le plateau Summer Pavilion (fleurs) */
+  placedTiles?: { color: TileColor; flower: number; pos: number }[];
 }
 
 /**

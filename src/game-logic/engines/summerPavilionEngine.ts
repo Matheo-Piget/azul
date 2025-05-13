@@ -81,7 +81,8 @@ export class SummerPavilionEngine implements AzulGameEngine {
   }
 
   applyMove(gameState: GameState, move: any): GameState {
-    // move = { factoryId, color }
+    // move = { factoryId, color } en drafting
+    // move = { color, targetFlower, targetPos } en tiling
     // PHASE 1 : Récupérer des tuiles
     if (gameState.gamePhase === 'drafting') {
       let newState = { ...gameState };
@@ -152,8 +153,78 @@ export class SummerPavilionEngine implements AzulGameEngine {
       }
       return newState;
     }
-    // PHASE 2 : Placement (TODO)
-    // PHASE 3 : Préparation de la manche suivante (TODO)
+    // PHASE 2 : Placement tour par tour
+    if (gameState.gamePhase === 'tiling') {
+      let newState = { ...gameState };
+      const player = newState.players.find(p => p.id === newState.currentPlayer);
+      if (!player) return gameState;
+      if (!player.board.collectedTiles || player.board.collectedTiles.length === 0) {
+        // Si le joueur n'a plus de tuiles à placer, passer au suivant
+        const idx = newState.players.findIndex(p => p.id === newState.currentPlayer);
+        const nextIdx = (idx + 1) % newState.players.length;
+        newState.currentPlayer = newState.players[nextIdx].id;
+        return newState;
+      }
+      // Vérifier que la tuile à placer est bien dans le bag
+      const tileIdx = player.board.collectedTiles.findIndex(t => t.color === move.color);
+      if (tileIdx === -1) return gameState;
+      // Simuler le plateau Summer Pavilion : on stocke les placements dans board.placedTiles (à créer si besoin)
+      if (!player.board.placedTiles) player.board.placedTiles = [];
+      player.board.placedTiles.push({
+        color: move.color,
+        flower: move.targetFlower,
+        pos: move.targetPos,
+      });
+      // Retirer la tuile du bag
+      player.board.collectedTiles.splice(tileIdx, 1);
+      // Calcul des points (adjacence, bonus, etc.)
+      // Calculer la position absolue de la tuile sur le plateau (pour l'adjacence)
+      // On suppose que chaque fleur a 6 positions, et qu'il y a 6 fleurs autour du centre
+      // Pour la démo, on fait un calcul simple : +1 pour la tuile, +1 par tuile adjacente orthogonale
+      let points = 1;
+      // Chercher les tuiles adjacentes (dans placedTiles)
+      const placed = player.board.placedTiles || [];
+      const adjacents = placed.filter(pt => {
+        // Même fleur, position voisine
+        if (pt.flower === move.targetFlower && Math.abs(pt.pos - move.targetPos) === 1) return true;
+        // TODO : gérer les adjacences entre fleurs (pour le vrai jeu)
+        return false;
+      });
+      points += adjacents.length;
+      // Bonus rosette : si la fleur est complète après ce placement
+      const tilesOnFlower = placed.filter(pt => pt.flower === move.targetFlower).length;
+      if (tilesOnFlower === 6) {
+        points += 1; // Bonus rosette (à ajuster selon la règle)
+      }
+      // Bonus centre (si on place au centre, à adapter si besoin)
+      if (move.targetFlower === -1) {
+        points += 1;
+      }
+      player.board.score += points;
+      // Passer au joueur suivant
+      const idx = newState.players.findIndex(p => p.id === newState.currentPlayer);
+      let nextIdx = (idx + 1) % newState.players.length;
+      // Si tous les bags sont vides, fin de la phase
+      const allBagsEmpty = newState.players.every(p => !p.board.collectedTiles || p.board.collectedTiles.length === 0);
+      if (allBagsEmpty) {
+        // Préparer la manche suivante
+        return this.prepareNextRound(newState);
+      } else {
+        // Passer au prochain joueur qui a encore des tuiles
+        let tries = 0;
+        while (tries < newState.players.length) {
+          const nextPlayer = newState.players[nextIdx];
+          if (nextPlayer && nextPlayer.board && nextPlayer.board.collectedTiles && nextPlayer.board.collectedTiles.length > 0) {
+            break;
+          }
+          nextIdx = (nextIdx + 1) % newState.players.length;
+          tries++;
+        }
+        newState.currentPlayer = newState.players[nextIdx].id;
+      }
+      return newState;
+    }
+    // PHASE 3 : Préparation de la manche suivante (inchangé)
     return gameState;
   }
 
