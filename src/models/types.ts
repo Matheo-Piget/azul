@@ -66,6 +66,8 @@ export interface PlayerBoard {
   collectedTiles?: Tile[];
   /** Tuiles placées sur le plateau Summer Pavilion (fleurs) */
   placedTiles?: { color: TileColor; flower: number; pos: number }[];
+  /** Tuiles conservées pour la prochaine manche (Summer Pavilion) */
+  savedTiles?: Tile[];
 }
 
 /**

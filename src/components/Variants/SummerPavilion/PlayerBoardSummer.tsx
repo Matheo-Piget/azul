@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import "./PlayerBoardSummer.css";
-import { TileColor } from "../../../models/types";
+import { TileColor, Tile } from "../../../models/types";
 import { useGame } from '../../../state/GameContext';
 
 interface PlayerBoardSummerProps {
@@ -78,9 +78,13 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
   const { gameState, placeTiles } = useGame();
   const player = gameState.players.find(p => p.id === playerId);
   const jokerColor = gameState.jokerColor;
+  const isCurrentPlayer = gameState.currentPlayer === playerId;
 
   // État local : tuile sélectionnée dans le bag
   const [selectedBagIdx, setSelectedBagIdx] = useState<number | null>(null);
+  // État local : passer son tour et conserver des tuiles
+  const [passing, setPassing] = useState<boolean>(false);
+  const [tilesToKeep, setTilesToKeep] = useState<Tile[]>([]);
 
   // Construction du plateau avec les vraies tuiles placées (si disponibles)
   // Pour la démo, si le plateau est vide, on place quelques tuiles factices
@@ -110,30 +114,104 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
   
   // Handler : sélection d'une tuile du sac
   const handleSelectBagTile = (idx: number) => {
+    // Ne peut pas sélectionner si on est en mode "passer"
+    if (passing) return;
     setSelectedBagIdx(idx);
   };
 
   // Handler : placement sur une case de fleur
   const handlePlaceTile = (flowerIdx: number, posIdx: number) => {
-    if (selectedBagIdx === null || !player?.board.collectedTiles) return;
+    if (selectedBagIdx === null || !player?.board.collectedTiles || !isCurrentPlayer) return;
     const tile = player.board.collectedTiles[selectedBagIdx];
     if (!tile) return;
+    
+    // Déterminer le coût de l'espace (1-6)
+    // Pour la démo, on simplifie en utilisant la position comme coût
+    const cost = Math.min(6, Math.max(1, posIdx + 1));
+    
     // Appel à la logique de placement (move Summer Pavilion)
-    placeTiles({ color: tile.color, targetFlower: flowerIdx, targetPos: posIdx });
+    placeTiles({ 
+      color: tile.color, 
+      targetFlower: flowerIdx, 
+      targetPos: posIdx,
+      cost: cost
+    });
     setSelectedBagIdx(null);
   };
+
+  // Handler : passer son tour
+  const handlePass = () => {
+    if (!isCurrentPlayer) return;
+    setPassing(true);
+    setSelectedBagIdx(null);
+  };
+
+  // Handler : sélectionner/désélectionner une tuile à conserver
+  const handleKeepTile = (tile: Tile) => {
+    if (!passing) return;
+    
+    if (tilesToKeep.some(t => t.id === tile.id)) {
+      // Désélectionner une tuile
+      setTilesToKeep(tilesToKeep.filter(t => t.id !== tile.id));
+    } else if (tilesToKeep.length < 4) {
+      // Sélectionner une tuile (max 4)
+      setTilesToKeep([...tilesToKeep, tile]);
+    }
+  };
+
+  // Handler : confirmer la sélection et passer
+  const handleConfirmPass = () => {
+    if (!isCurrentPlayer) return;
+    placeTiles({ pass: true, keepTiles: tilesToKeep });
+    setPassing(false);
+    setTilesToKeep([]);
+  };
+
+  // Afficher les tuiles sauvegardées de la manche précédente
+  const savedTiles = player?.board.savedTiles || [];
 
   return (
     <div className="player-board summer-pavilion-board">
       <div className="player-board-header">
-        Azul Summer Pavilion - <b>{player?.name || 'Joueur'}</b>
-        {jokerColor && (
-          <span className="joker-badge">
-            Joker : {jokerColor}
-          </span>
+        <h3>{player?.name || 'Joueur'} {player?.board.score || 0} pts 
+          {isCurrentPlayer && <span className="current-turn-indicator">À votre tour</span>}
+        </h3>
+        {isCurrentPlayer && gameState.gamePhase === 'tiling' && (
+          <button 
+            className="pass-button" 
+            onClick={handlePass}
+            disabled={passing || (player?.board.collectedTiles?.length || 0) === 0}
+          >
+            Passer
+          </button>
         )}
       </div>
-      
+
+      {/* Mode passer - Sélection des tuiles à conserver */}
+      {passing && (
+        <div className="keep-tiles-dialog">
+          <h4>Conserver jusqu'à 4 tuiles pour la prochaine manche:</h4>
+          <div className="keep-tiles-options">
+            {player?.board.collectedTiles?.map((tile, idx) => (
+              <div 
+                key={tile.id}
+                className={`diamond-tile tile-${tile.color} keep-option${tilesToKeep.some(t => t.id === tile.id) ? ' selected' : ''}`}
+                onClick={() => handleKeepTile(tile)}
+              />
+            ))}
+          </div>
+          <div className="keep-tiles-actions">
+            <span>Sélectionnées: {tilesToKeep.length}/4</span>
+            <button 
+              className="confirm-pass-button"
+              onClick={handleConfirmPass}
+            >
+              Confirmer
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="summer-stars-container">
         {/* Fleur centrale (sans coloris spécifique) */}
         <div
@@ -215,22 +293,40 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
           );
         })}
       </div>
+
       {/* Bag personnel avec sélection */}
-      <div className="bag-summer">
-        <span className="bag-label">Sac :</span>
-        <div className="bag-tiles">
-          {player?.board.collectedTiles && player.board.collectedTiles.length === 0 ? (
-            <span className="bag-empty">(vide)</span>
-          ) : (
-            player?.board.collectedTiles?.map((tile, i) => (
-              <div
-                key={i}
-                className={`diamond-tile tile-${tile.color} bag-tile${selectedBagIdx === i ? ' selected' : ''}`}
-                style={{ cursor: 'pointer' }}
-                onClick={() => handleSelectBagTile(i)}
-              />
-            ))
-          )}
+      <div className="player-status">
+        {savedTiles.length > 0 && (
+          <div className="saved-tiles">
+            <span className="saved-label">Conservées :</span>
+            <div className="saved-tiles-container">
+              {savedTiles.map((tile, i) => (
+                <div
+                  key={i}
+                  className={`diamond-tile tile-${tile.color} saved-tile`}
+                  title={`Tuile ${tile.color} conservée de la manche précédente`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+        
+        <div className="bag-summer">
+          <span className="bag-label">Sac :</span>
+          <div className="bag-tiles">
+            {player?.board.collectedTiles && player.board.collectedTiles.length === 0 ? (
+              <span className="bag-empty">(vide)</span>
+            ) : (
+              player?.board.collectedTiles?.map((tile, i) => (
+                <div
+                  key={i}
+                  className={`diamond-tile tile-${tile.color} bag-tile${selectedBagIdx === i ? ' selected' : ''}${passing ? ' disabled' : ''}`}
+                  style={{ cursor: passing ? 'default' : 'pointer' }}
+                  onClick={() => !passing && handleSelectBagTile(i)}
+                />
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>

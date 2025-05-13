@@ -53,7 +53,14 @@ interface GameContextType {
    * Function to place selected tiles on a pattern line
    * @param patternLineIndex - Index of the pattern line, or -1 for floor line
    */
-  placeTiles: (arg: number | { color: TileColor; targetFlower: number; targetPos: number }) => void;
+  placeTiles: (arg: number | { 
+    color?: TileColor; 
+    targetFlower?: number; 
+    targetPos?: number;
+    cost?: number;
+    pass?: boolean;
+    keepTiles?: Tile[];
+  }) => void;
 
   /**
    * Function to start a new game
@@ -355,7 +362,14 @@ export const GameProvider: React.FC<GameProviderProps> = ({
    * @param patternLineIndex - Index de la ligne OU move Summer Pavilion
    */
   const placeTiles = useCallback(
-    (arg: number | { color: TileColor; targetFlower: number; targetPos: number }) => {
+    (arg: number | { 
+      color?: TileColor; 
+      targetFlower?: number; 
+      targetPos?: number;
+      cost?: number;
+      pass?: boolean;
+      keepTiles?: Tile[];
+    }) => {
       setGameState(prev => {
         if (!prev) return prev;
         let newState = prev;

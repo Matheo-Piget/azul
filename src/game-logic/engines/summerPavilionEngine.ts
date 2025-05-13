@@ -7,9 +7,16 @@ const SUMMER_COLORS: TileColor[] = ['blue', 'yellow', 'red', 'black', 'teal', 'g
 const JOKER_COLOR = 'joker';
 const MAX_ROUNDS = 6;
 
+// Ordre des couleurs joker pour les 6 manches
+const JOKER_COLORS: TileColor[] = ['joker', 'blue', 'yellow', 'red', 'black', 'teal', 'green'];
+
+// Coût des espaces (1 à 6)
+const SPACE_COSTS = [1, 2, 3, 4, 5, 6];
+
 function getJokerColorForRound(round: number): TileColor {
-  // La couleur joker change à chaque manche, cyclique sur SUMMER_COLORS
-  return SUMMER_COLORS[(round - 1) % SUMMER_COLORS.length];
+  // On s'assure que round est entre 1 et 6
+  const safeRound = Math.max(1, Math.min(6, round));
+  return JOKER_COLORS[safeRound] || 'joker';
 }
 
 function createSummerTiles(): Tile[] {
@@ -67,146 +74,318 @@ export class SummerPavilionEngine implements AzulGameEngine {
   }
 
   canSelectTiles(gameState: GameState, factoryId: number | null, color: TileColor): boolean {
-    // On ne peut pas prendre la couleur joker de la manche
-    if (color === gameState.jokerColor) return false;
-    if (factoryId !== null) {
-      const factory = gameState.factories.find(f => f.id === factoryId);
-      if (!factory) return false;
-      // Peut-on prendre cette couleur ?
-      return factory.tiles.some(t => t.color === color);
-    } else {
-      // Centre
-      return gameState.center.some(t => t.color === color);
+    // Vérifications de base
+    if (gameState.gamePhase !== 'drafting') return false;
+
+    // Détermine la source (factory ou centre)
+    const source = factoryId !== null
+      ? gameState.factories.find(f => f.id === factoryId)?.tiles || []
+      : gameState.center;
+
+    // Vérifie si la couleur est disponible dans la source
+    const hasColor = source.some(t => t.color === color);
+    if (!hasColor) return false;
+
+    // La couleur joker actuelle
+    const jokerColor = gameState.jokerColor || 'joker';
+
+    // Si on essaie de sélectionner la couleur joker directement
+    if (color === jokerColor) {
+      // On ne peut sélectionner que 1 tuile joker si c'est tout ce qui reste
+      const hasOnlyJokers = source.every(t => t.color === jokerColor);
+      return hasOnlyJokers;
     }
+
+    // Règle normale : on peut sélectionner des tuiles non-joker
+    return true;
   }
 
   applyMove(gameState: GameState, move: any): GameState {
-    // move = { factoryId, color } en drafting
-    // move = { color, targetFlower, targetPos } en tiling
-    // PHASE 1 : Récupérer des tuiles
+    // PHASE 1 : Récupérer des tuiles (move = { factoryId, color })
     if (gameState.gamePhase === 'drafting') {
       let newState = { ...gameState };
-      let tilesTaken: Tile[] = [];
-      let jokerTaken: Tile | null = null;
-      if (move.factoryId !== null) {
-        // Prise dans une fabrique
-        const factory = newState.factories.find(f => f.id === move.factoryId);
-        if (!factory) return gameState;
-        // Prendre toutes les tuiles de la couleur (hors joker)
-        tilesTaken = factory.tiles.filter(t => t.color === move.color);
-        // Prendre une tuile joker si présente
-        const jokers = factory.tiles.filter(t => t.color === newState.jokerColor);
-        if (jokers.length > 0) {
-          jokerTaken = jokers[0];
-        }
-        // Si on ne prend que des jokers, on ne peut en prendre qu'une
-        if (move.color === newState.jokerColor) {
-          tilesTaken = [factory.tiles.find(t => t.color === newState.jokerColor)!];
-        }
-        // Mettre les autres tuiles au centre
-        const toCenter = factory.tiles.filter(t => !tilesTaken.includes(t) && t !== jokerTaken);
-        newState.center = [...newState.center, ...toCenter];
-        // Vider la fabrique
-        factory.tiles = [];
-      } else {
-        // Prise dans le centre
-        tilesTaken = newState.center.filter(t => t.color === move.color);
-        const jokers = newState.center.filter(t => t.color === newState.jokerColor);
-        if (jokers.length > 0) {
-          jokerTaken = jokers[0];
-        }
-        if (move.color === newState.jokerColor) {
-          tilesTaken = [newState.center.find(t => t.color === newState.jokerColor)!];
-        }
-        // Retirer les tuiles prises du centre
-        newState.center = newState.center.filter(t => !tilesTaken.includes(t) && t !== jokerTaken);
-        // Premier joueur à prendre au centre
-        if (!newState.firstPlayerToken) {
-          newState.firstPlayerToken = newState.currentPlayer;
-          // Pénalité : perdre autant de points que de tuiles prises
-          const player = newState.players.find(p => p.id === newState.currentPlayer);
-          if (player) {
-            player.board.score = Math.max(1, player.board.score - (tilesTaken.length + (jokerTaken ? 1 : 0)));
+      const currentPlayer = newState.players.find(p => p.id === newState.currentPlayer);
+      if (!currentPlayer) return gameState;
+
+      // Initialiser collectedTiles si pas encore fait
+      if (!currentPlayer.board.collectedTiles) {
+        currentPlayer.board.collectedTiles = [];
+      }
+
+      const { factoryId, color } = move;
+      const jokerColor = newState.jokerColor || 'joker';
+
+      if (factoryId !== null) {
+        // Sélection depuis une fabrique
+        const factoryIndex = newState.factories.findIndex(f => f.id === factoryId);
+        if (factoryIndex === -1) return gameState;
+
+        const factory = newState.factories[factoryIndex];
+        
+        // Sélectionne toutes les tuiles de la couleur choisie
+        const selectedTiles = factory.tiles.filter(t => t.color === color);
+        
+        // Si on ne sélectionne pas directement des jokers, il faut prendre une tuile joker si présente
+        if (color !== jokerColor) {
+          const jokerTiles = factory.tiles.filter(t => t.color === jokerColor);
+          // Si jokers présents, ajoute un seul joker à la sélection
+          if (jokerTiles.length > 0) {
+            selectedTiles.push(jokerTiles[0]);
           }
         }
-      }
-      // Ajouter les tuiles prises au "stock" du joueur (à côté du plateau)
-      const player = newState.players.find(p => p.id === gameState.currentPlayer);
-      if (player) {
-        if (!player.board.collectedTiles) player.board.collectedTiles = [];
-        player.board.collectedTiles = [
-          ...player.board.collectedTiles,
-          ...tilesTaken,
-          ...(jokerTaken ? [jokerTaken] : [])
+        
+        // Retire toutes les tuiles sélectionnées de la fabrique
+        const remainingTiles = factory.tiles.filter(t => 
+          t.color !== color && (color !== jokerColor || t.color !== jokerColor) &&
+          (!selectedTiles.includes(t))
+        );
+        
+        // Ajoute les tuiles sélectionnées au joueur
+        currentPlayer.board.collectedTiles = [
+          ...currentPlayer.board.collectedTiles,
+          ...selectedTiles
+        ];
+        
+        // Met à jour la fabrique et le centre
+        newState.factories = [
+          ...newState.factories.slice(0, factoryIndex),
+          { ...factory, tiles: [] },
+          ...newState.factories.slice(factoryIndex + 1)
+        ];
+        newState.center = [...newState.center, ...remainingTiles];
+      } else {
+        // Sélection depuis le centre
+        // Si on prend au centre et que personne n'a encore pris le marqueur premier joueur
+        let pointPenalty = 0;
+        if (newState.firstPlayerToken === null) {
+          newState.firstPlayerToken = currentPlayer.id;
+          // Pénalité de points égale au nombre de tuiles prises
+          const selectedFromCenter = newState.center.filter(t => t.color === color);
+          const jokerInCenter = newState.center.filter(t => t.color === jokerColor);
+          pointPenalty = selectedFromCenter.length + (color !== jokerColor && jokerInCenter.length > 0 ? 1 : 0);
+          
+          // Pénalité limitée par la position de score (pas en dessous de 1)
+          const newScore = Math.max(1, currentPlayer.board.score - pointPenalty);
+          currentPlayer.board.score = newScore;
+        }
+        
+        // Sélectionne toutes les tuiles de la couleur choisie
+        const selectedTiles = newState.center.filter(t => t.color === color);
+        
+        // Si on ne sélectionne pas directement des jokers, il faut prendre une tuile joker si présente
+        if (color !== jokerColor) {
+          const jokerTiles = newState.center.filter(t => t.color === jokerColor);
+          // Si jokers présents, ajoute un seul joker à la sélection
+          if (jokerTiles.length > 0) {
+            selectedTiles.push(jokerTiles[0]);
+          }
+        }
+        
+        // Retire toutes les tuiles sélectionnées du centre
+        newState.center = newState.center.filter(t => 
+          !selectedTiles.includes(t) && 
+          (t.color !== color) && 
+          (color === jokerColor || t.color !== jokerColor || selectedTiles.includes(t))
+        );
+        
+        // Ajoute les tuiles sélectionnées au joueur
+        currentPlayer.board.collectedTiles = [
+          ...currentPlayer.board.collectedTiles,
+          ...selectedTiles
         ];
       }
-      // Passer au joueur suivant
-      const idx = newState.players.findIndex(p => p.id === newState.currentPlayer);
-      const nextIdx = (idx + 1) % newState.players.length;
-      newState.currentPlayer = newState.players[nextIdx].id;
-      // Fin de la phase 1 ?
-      const allFactoriesEmpty = newState.factories.every(f => f.tiles.length === 0);
+
+      // Passe au joueur suivant
+      const currentPlayerIndex = newState.players.findIndex(p => p.id === newState.currentPlayer);
+      const nextPlayerIndex = (currentPlayerIndex + 1) % newState.players.length;
+      newState.currentPlayer = newState.players[nextPlayerIndex].id;
+
+      // Vérifie si toutes les tuiles ont été prises pour passer à la phase 2
+      const factoriesEmpty = newState.factories.every(f => f.tiles.length === 0);
       const centerEmpty = newState.center.length === 0;
-      if (allFactoriesEmpty && centerEmpty) {
+      
+      if (factoriesEmpty && centerEmpty) {
         newState.gamePhase = 'tiling';
-        // TODO: Passer à la phase 2 (placement)
+        // Le joueur avec le marqueur Premier joueur commence la phase de placement
+        if (newState.firstPlayerToken) {
+          newState.currentPlayer = newState.firstPlayerToken;
+        }
       }
+
       return newState;
     }
-    // PHASE 2 : Placement tour par tour
+    
+    // PHASE 2 : Placement tour par tour (move = { color, targetFlower, targetPos, cost })
     if (gameState.gamePhase === 'tiling') {
       let newState = { ...gameState };
       const player = newState.players.find(p => p.id === newState.currentPlayer);
       if (!player) return gameState;
+      
+      // Si le joueur n'a plus de tuiles à placer, passe son tour
       if (!player.board.collectedTiles || player.board.collectedTiles.length === 0) {
-        // Si le joueur n'a plus de tuiles à placer, passer au suivant
+        // Passe au joueur suivant
         const idx = newState.players.findIndex(p => p.id === newState.currentPlayer);
         const nextIdx = (idx + 1) % newState.players.length;
         newState.currentPlayer = newState.players[nextIdx].id;
         return newState;
       }
-      // Vérifier que la tuile à placer est bien dans le bag
-      const tileIdx = player.board.collectedTiles.findIndex(t => t.color === move.color);
-      if (tileIdx === -1) return gameState;
-      // Simuler le plateau Summer Pavilion : on stocke les placements dans board.placedTiles (à créer si besoin)
+
+      // Si c'est une action "passer" (move = { pass: true, keepTiles: [...] })
+      if (move.pass) {
+        // Le joueur garde jusqu'à 4 tuiles pour la prochaine manche
+        const tilesToKeep = move.keepTiles || [];
+        
+        // Perds 1 point par tuile défaussée
+        const tilesToDiscard = player.board.collectedTiles.filter(
+          t => !tilesToKeep.some((kt: Tile) => kt.id === t.id)
+        );
+        
+        // Met à jour le score (minimum 1)
+        player.board.score = Math.max(1, player.board.score - tilesToDiscard.length);
+        
+        // Défausse les tuiles non conservées
+        newState.discardPile = [...newState.discardPile, ...tilesToDiscard];
+        
+        // Met de côté les tuiles conservées pour la prochaine manche
+        player.board.collectedTiles = [];
+        player.board.savedTiles = tilesToKeep.slice(0, 4);
+        
+        // Passe au joueur suivant
+        const idx = newState.players.findIndex(p => p.id === newState.currentPlayer);
+        const nextIdx = (idx + 1) % newState.players.length;
+        newState.currentPlayer = newState.players[nextIdx].id;
+        
+        // Vérifie si tous les joueurs ont passé
+        const allPassed = newState.players.every(p => !p.board.collectedTiles || p.board.collectedTiles.length === 0);
+        if (allPassed) {
+          return this.prepareNextRound(newState);
+        }
+        
+        return newState;
+      }
+
+      // Placement normal d'une tuile (move = { color, targetFlower, targetPos, cost })
+      const { color, targetFlower, targetPos, cost } = move;
+      
+      // Vérifie si le joueur a les tuiles nécessaires
+      const availableTiles = player.board.collectedTiles;
+      const jokerColor = newState.jokerColor || 'joker';
+      
+      // On doit avoir au moins une tuile de la couleur exacte (sauf si on place un joker)
+      const hasExactColor = availableTiles.some(t => t.color === color);
+      const hasJokers = availableTiles.filter(t => t.color === jokerColor);
+      
+      if (!hasExactColor && color !== jokerColor) return gameState;
+      
+      // Vérifie si on a assez de tuiles pour payer le coût
+      if ((hasExactColor ? 1 : 0) + hasJokers.length < cost) return gameState;
+      
+      // Prépare les tuiles à dépenser
+      const tilesToPlace: Tile[] = [];
+      let colorTiles = availableTiles.filter(t => t.color === color);
+      let jokerTiles = availableTiles.filter(t => t.color === jokerColor);
+      
+      // Une tuile de la couleur exacte + possiblement des jokers
+      if (hasExactColor) {
+        tilesToPlace.push(colorTiles[0]);
+        // Complète avec des jokers si besoin
+        for (let i = 1; i < cost && jokerTiles.length > 0; i++) {
+          tilesToPlace.push(jokerTiles.shift()!);
+        }
+      } else {
+        // Placement direct d'un joker (doit aller sur un espace de la couleur joker)
+        tilesToPlace.push(jokerTiles[0]);
+      }
+      
+      // Simuler le plateau Summer Pavilion : stocke les placements dans board.placedTiles
       if (!player.board.placedTiles) player.board.placedTiles = [];
       player.board.placedTiles.push({
-        color: move.color,
-        flower: move.targetFlower,
-        pos: move.targetPos,
+        color: color,
+        flower: targetFlower,
+        pos: targetPos,
       });
-      // Retirer la tuile du bag
-      player.board.collectedTiles.splice(tileIdx, 1);
+      
+      // Retire les tuiles dépensées du bag
+      const remainingTiles = [...player.board.collectedTiles];
+      for (const tile of tilesToPlace) {
+        const idx = remainingTiles.findIndex(t => t.id === tile.id);
+        if (idx !== -1) {
+          remainingTiles.splice(idx, 1);
+        }
+      }
+      player.board.collectedTiles = remainingTiles;
+      
+      // Défausse les tuiles utilisées pour le coût (sauf celle placée)
+      const tilesToDefausse = tilesToPlace.slice(1);
+      newState.discardPile = [...newState.discardPile, ...tilesToDefausse];
+      
       // Calcul des points (adjacence, bonus, etc.)
-      // Calculer la position absolue de la tuile sur le plateau (pour l'adjacence)
-      // On suppose que chaque fleur a 6 positions, et qu'il y a 6 fleurs autour du centre
-      // Pour la démo, on fait un calcul simple : +1 pour la tuile, +1 par tuile adjacente orthogonale
-      let points = 1;
-      // Chercher les tuiles adjacentes (dans placedTiles)
+      let points = 1; // Le point de base pour la tuile placée
+      
+      // 1. Adjacences dans la même fleur
       const placed = player.board.placedTiles || [];
-      const adjacents = placed.filter(pt => {
+      const adjacentsInSameFlower = placed.filter(pt => {
         // Même fleur, position voisine
-        if (pt.flower === move.targetFlower && Math.abs(pt.pos - move.targetPos) === 1) return true;
-        // TODO : gérer les adjacences entre fleurs (pour le vrai jeu)
-        return false;
+        return pt.flower === targetFlower && Math.abs(pt.pos - targetPos) === 1;
       });
-      points += adjacents.length;
-      // Bonus rosette : si la fleur est complète après ce placement
-      const tilesOnFlower = placed.filter(pt => pt.flower === move.targetFlower).length;
-      if (tilesOnFlower === 6) {
-        points += 1; // Bonus rosette (à ajuster selon la règle)
+      points += adjacentsInSameFlower.length;
+      
+      // 2. Adjacences entre fleurs
+      // Les fleurs sont disposées en cercle: 0-1-2-3-4-5-0
+      const adjacentFlowers = [
+        (targetFlower + 1) % 6, // Fleur suivante
+        (targetFlower + 5) % 6  // Fleur précédente (6-1=5)
+      ];
+      
+      // Pour chaque fleur adjacente, chercher si la même position a une tuile
+      const adjacentsBetweenFlowers = placed.filter(pt => 
+        adjacentFlowers.includes(pt.flower) && pt.pos === targetPos
+      );
+      points += adjacentsBetweenFlowers.length;
+      
+      // 3. Bonus rosette : si la fleur est complète après ce placement
+      const tilesOnFlower = placed.filter(pt => pt.flower === targetFlower).length;
+      if (tilesOnFlower === 6) { // 6 positions par fleur
+        // Bonus Rosette variable selon la couleur de la fleur
+        const rosetteBonuses = [14, 16, 17, 18, 20, 15]; // rouge, jaune, orange, vert, violet, bleu
+        points += rosetteBonuses[targetFlower];
       }
-      // Bonus centre (si on place au centre, à adapter si besoin)
-      if (move.targetFlower === -1) {
-        points += 1;
+      
+      // 4. Bonus pilier : si cette tuile complète un pilier (toutes les fleurs ont une tuile à la même position)
+      const allFlowers = [0, 1, 2, 3, 4, 5];
+      const isPillarComplete = allFlowers.every(flower => 
+        placed.some(tile => tile.flower === flower && tile.pos === targetPos)
+      );
+      
+      if (isPillarComplete) {
+        points += 8; // Bonus pilier
       }
+      
+      // 5. Bonus pour compléter les coûts
+      // Si cette tuile complète un ensemble de tuiles du même coût à travers toutes les fleurs
+      const isCostSetComplete = allFlowers.every(flower => 
+        placed.some(tile => tile.flower === flower && tile.pos === targetPos)
+      );
+      
+      if (isCostSetComplete) {
+        // Bonus selon le coût (1-6)
+        const costBonus = [4, 8, 12, 16, 20, 24]; // Bonus pour coûts 1, 2, 3, 4, 5, 6
+        points += costBonus[targetPos];
+      }
+      
+      // Mise à jour du score
       player.board.score += points;
-      // Passer au joueur suivant
+      
+      // Passer au joueur suivant qui a encore des tuiles
       const idx = newState.players.findIndex(p => p.id === newState.currentPlayer);
       let nextIdx = (idx + 1) % newState.players.length;
-      // Si tous les bags sont vides, fin de la phase
-      const allBagsEmpty = newState.players.every(p => !p.board.collectedTiles || p.board.collectedTiles.length === 0);
-      if (allBagsEmpty) {
+      
+      // Si tous les joueurs ont passé ou n'ont plus de tuiles
+      const anyoneHasTiles = newState.players.some(p => 
+        p.board.collectedTiles && p.board.collectedTiles.length > 0
+      );
+      
+      if (!anyoneHasTiles) {
         // Préparer la manche suivante
         return this.prepareNextRound(newState);
       } else {
@@ -222,40 +401,234 @@ export class SummerPavilionEngine implements AzulGameEngine {
         }
         newState.currentPlayer = newState.players[nextIdx].id;
       }
+      
       return newState;
     }
-    // PHASE 3 : Préparation de la manche suivante (inchangé)
+    
+    // PHASE 3 : Préparation de la manche suivante
     return gameState;
   }
 
-  // Changement de manche, changement de couleur joker
   prepareNextRound(gameState: GameState): GameState {
     let newState = { ...gameState };
-    if ((newState.roundNumber || 1) < (newState.maxRounds || 6)) {
-      newState.roundNumber = (newState.roundNumber || 1) + 1;
-      newState.jokerColor = getJokerColorForRound(newState.roundNumber);
-      // TODO: Remplir les fabriques avec 4 tuiles chacune, vider le centre, remettre le marqueur premier joueur au centre
-      // TODO: Remettre les tuiles conservées dans les coins à côté du plateau
-      // Réinitialiser les collectedTiles de chaque joueur
-      newState.players.forEach(p => { p.board.collectedTiles = []; });
-      newState.gamePhase = 'drafting';
-    } else {
+    
+    // Incrémente le numéro de manche
+    newState.roundNumber += 1;
+    
+    // Vérifie si c'est la fin de la partie (après 6 manches)
+    if (newState.roundNumber > 6) {
       newState.gamePhase = 'gameEnd';
+      // Calcul du score final
+      return this.calculateFinalScore(newState);
     }
+    
+    // Réinitialise la phase à "drafting"
+    newState.gamePhase = 'drafting';
+    
+    // Met à jour la couleur joker pour la nouvelle manche
+    newState.jokerColor = getJokerColorForRound(newState.roundNumber);
+    
+    // Réinitialise le marqueur premier joueur
+    // Si un joueur avait le marqueur, il commence la nouvelle manche
+    const firstPlayer = newState.firstPlayerToken 
+      ? newState.players.find(p => p.id === newState.firstPlayerToken)
+      : null;
+      
+    if (firstPlayer) {
+      newState.currentPlayer = firstPlayer.id;
+    }
+    
+    newState.firstPlayerToken = null;
+    
+    // Récupère les tuiles sauvegardées par les joueurs
+    newState.players = newState.players.map(player => {
+      return {
+        ...player,
+        board: {
+          ...player.board,
+          collectedTiles: player.board.savedTiles || [],
+          savedTiles: [],
+        }
+      };
+    });
+    
+    // Remplir le sac si nécessaire
+    if (newState.bag.length < newState.factories.length * 4) {
+      newState.bag = [...newState.bag, ...newState.discardPile];
+      newState.discardPile = [];
+      
+      // Mélange le sac
+      newState.bag = this.shuffle(newState.bag);
+    }
+    
+    // Distribue les tuiles aux fabriques
+    newState = this.distributeFactoryTiles(newState);
+    
     return newState;
   }
-
-  canPlaceTiles(gameState: GameState, patternLineIndex: number, selectedTiles: Tile[]): boolean {
-    // TODO: Placement spécifique
-    return true;
+  
+  distributeFactoryTiles(gameState: GameState): GameState {
+    const newState = { ...gameState };
+    
+    // Pour chaque fabrique
+    for (let i = 0; i < newState.factories.length; i++) {
+      // Piocher 4 tuiles aléatoires du sac
+      const tiles: Tile[] = [];
+      for (let j = 0; j < 4 && newState.bag.length > 0; j++) {
+        const randomIndex = Math.floor(Math.random() * newState.bag.length);
+        tiles.push(newState.bag[randomIndex]);
+        newState.bag.splice(randomIndex, 1);
+      }
+      
+      // Mettre à jour la fabrique
+      newState.factories[i] = {
+        ...newState.factories[i],
+        tiles,
+      };
+    }
+    
+    return newState;
   }
+  
+  shuffle<T>(array: T[]): T[] {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+  }
+  
+  calculateFinalScore(gameState: GameState): GameState {
+    let newState = { ...gameState };
+    
+    // Pour chaque joueur
+    newState.players = newState.players.map(player => {
+      let finalScore = player.board.score;
+      const placedTiles = player.board.placedTiles || [];
+      
+      // Bonus pour les étoiles complètes
+      // Étoile centrale (multicolore) : 12 points
+      const centerStarComplete = this.isStarComplete(placedTiles, -1);
+      if (centerStarComplete) finalScore += 12;
+      
+      // Autres étoiles (14-20 points selon la couleur)
+      const starBonuses = [14, 16, 17, 18, 20, 15]; // rouge, jaune, orange, vert, violet, bleu
+      for (let i = 0; i < 6; i++) {
+        if (this.isStarComplete(placedTiles, i)) {
+          finalScore += starBonuses[i];
+        }
+      }
+      
+      // Bonus pour tous les espaces de même coût
+      const costBonuses = [4, 8, 12, 16, 0, 0]; // espaces 1, 2, 3, 4, (5, 6 n'ont pas de bonus)
+      for (let cost = 1; cost <= 4; cost++) {
+        if (this.allCostSpacesFilled(placedTiles, cost)) {
+          finalScore += costBonuses[cost - 1];
+        }
+      }
+      
+      // Pénalité pour les tuiles non utilisées
+      const unusedTiles = (player.board.savedTiles || []).length;
+      finalScore = Math.max(1, finalScore - unusedTiles);
+      
+      return {
+        ...player,
+        board: {
+          ...player.board,
+          score: finalScore,
+        }
+      };
+    });
+    
+    return newState;
+  }
+  
+  isStarComplete(placedTiles: { color: TileColor; flower: number; pos: number }[], flowerIndex: number): boolean {
+    const tilesOnFlower = placedTiles.filter(t => t.flower === flowerIndex);
+    return tilesOnFlower.length === 6; // 6 positions par étoile
+  }
+  
+  allCostSpacesFilled(placedTiles: { color: TileColor; flower: number; pos: number }[], cost: number): boolean {
+    // Dans Summer Pavilion, chaque étoile a une position de chaque coût (1 à 6)
+    // Le coût est lié à la position dans la fleur (0-5 correspond aux coûts 1-6)
+    const flowers = [0, 1, 2, 3, 4, 5]; // Les 6 fleurs
 
+    // La position cost-1 correspond au coût 'cost'
+    const costPosition = cost - 1;
+    
+    // Vérifier si chaque fleur a une tuile à la position du coût spécifié
+    return flowers.every(flower => 
+      placedTiles.some(tile => tile.flower === flower && tile.pos === costPosition)
+    );
+  }
+  
+  canPlaceTiles(gameState: GameState, placement: any, selectedTiles: Tile[]): boolean {
+    // Vérifie si on est en phase de placement
+    if (gameState.gamePhase !== 'tiling') return false;
+    
+    // Vérifie si le joueur est le joueur actif
+    const player = gameState.players.find(p => p.id === gameState.currentPlayer);
+    if (!player) return false;
+    
+    // Si c'est une action "passer", c'est toujours valide
+    if (placement.pass) return true;
+    
+    const { color, targetFlower, targetPos, cost } = placement;
+    
+    // Vérifier si l'emplacement est libre
+    const placedTiles = player.board.placedTiles || [];
+    const isOccupied = placedTiles.some(pt => pt.flower === targetFlower && pt.pos === targetPos);
+    if (isOccupied) return false;
+    
+    // Vérifier si la couleur est valide pour cette fleur
+    // Dans Summer Pavilion, chaque fleur a une couleur assignée, mais le joker peut aller n'importe où
+    const jokerColor = gameState.jokerColor || 'joker';
+    
+    // Si c'est le joker de la manche, il peut aller dans sa fleur correspondante
+    if (color === jokerColor) {
+      return targetFlower === SUMMER_COLORS.indexOf(color as TileColor);
+    }
+    
+    // Pour les couleurs normales, vérifier si elles correspondent à la fleur
+    // Ou si la couleur est le joker (peut aller n'importe où)
+    const flowerColor = SUMMER_COLORS[targetFlower];
+    if (color !== flowerColor && color !== 'joker') return false;
+    
+    // Vérifier le coût
+    // Le coût réel est basé sur la position: position 0-5 correspond aux coûts 1-6
+    const actualCost = targetPos + 1;
+    
+    // Vérifier si le joueur a suffisamment de tuiles
+    // Pour un coût de N, il faut N tuiles (dont au moins une de la bonne couleur, le reste peut être des jokers)
+    const availableTiles = player.board.collectedTiles || [];
+    const colorTiles = availableTiles.filter(t => t.color === color);
+    const jokerTiles = availableTiles.filter(t => t.color === jokerColor);
+    
+    // Il faut au moins une tuile de la couleur exacte (sauf si on place directement un joker)
+    const hasColorTile = colorTiles.length > 0 || color === jokerColor;
+    
+    // Nombre total de tuiles disponibles pour payer le coût
+    let availableCount = 0;
+    if (color === jokerColor) {
+      // Si on place un joker, on n'a besoin que d'une seule tuile
+      availableCount = jokerTiles.length;
+    } else {
+      // Sinon, on utilise une tuile de la couleur + des jokers au besoin
+      availableCount = colorTiles.length + jokerTiles.length;
+    }
+    
+    // Vérifier si le joueur a assez de tuiles pour payer le coût
+    return hasColorTile && availableCount >= actualCost;
+  }
+  
   mustPlaceInFloorLine(gameState: GameState, selectedTiles: Tile[]): boolean {
-    // TODO: Règle spécifique
+    // Summer Pavilion n'a pas de ligne de sol
     return false;
   }
-
+  
   calculateScore(gameState: GameState): number {
-    return calculateSummerPavilionScore(gameState);
+    // Pour chaque joueur, somme des scores
+    return gameState.players.reduce((total, player) => total + player.board.score, 0);
   }
 } 
