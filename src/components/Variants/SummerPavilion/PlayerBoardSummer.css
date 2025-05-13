@@ -40,7 +40,12 @@
 
 /* Tile styling */
 .diamond-tile {
-  clip-path: polygon(50% 0%, 100% 75%, 50% 100%, 25% 50%);
+  clip-path: polygon(50% 0%, 75% 50%, 50% 100%, 25% 50%);
+  width: 40px;
+  height: 40px;
+  position: relative;
+  transform-origin: center;
+  transition: all 0.2s ease;
 }
 
 .diamond-tile:hover {
