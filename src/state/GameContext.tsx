@@ -5,17 +5,14 @@ import React, {
   useCallback,
   useEffect,
   useRef,
+  useMemo,
 } from "react";
 import { GameState, TileColor, Tile } from "../models/types";
 import { initializeGame, distributeFactoryTiles } from "../game-logic/setup";
-import { canSelectTiles, canPlaceTiles } from "../game-logic/moves";
 import { getAIMove, AIDifficulty } from "../game-logic/ai/aiPlayer";
-import {
-  calculateRoundScores,
-  calculateFinalScores,
-} from "../game-logic/scoring";
 import { saveGameStats, generateGameId } from "../utils/SaveService";
 import AIAnimation from "./../components/AI/AIAnimation";
+import { ClassicAzulEngine } from '../game-logic/engines/classicEngine';
 
 interface ScoringEvent {
   playerId: string;
@@ -104,6 +101,11 @@ interface GameContextType {
 
   isRoundTransition: boolean;
   setIsRoundTransition: (isTransition: boolean) => void;
+
+  /**
+   * Vérifie si les tuiles sélectionnées doivent obligatoirement aller dans la ligne de sol
+   */
+  mustPlaceInFloorLine: (selectedTiles: Tile[]) => boolean;
 }
 
 /** Context for managing game state and actions */
@@ -127,6 +129,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   const [gameId, setGameId] = useState<string | null>(null);
   const [aiSpeed, setAISpeed] = useState<"fast" | "normal" | "slow">("normal");
   const [isRoundTransitioning, setIsRoundTransitioning] = useState(false);
+
+  const variant = "classic";
 
   const [aiAnimation, setAiAnimation] = useState<{
     playerId: string;
@@ -160,6 +164,13 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   const clearScoringAnimations = useCallback(() => {
     setScoringAnimations([]);
   }, []);
+
+  const engine = useMemo(() => {
+    if (variant === "classic") {
+      return new ClassicAzulEngine();
+    }
+    return null;
+  }, [variant]);
 
   // Keep refs in sync with state
   useEffect(() => {
@@ -252,7 +263,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
       const currentGameState = gameStateRef.current;
       if (!currentGameState) return;
 
-      if (!canSelectTiles(currentGameState, factoryId, color)) {
+      if (!engine?.canSelectTiles(currentGameState, factoryId, color)) {
         console.log("Invalid tile selection");
         return;
       }
@@ -321,72 +332,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
    */
   const handleRoundEnd = useCallback(
     (gameState: GameState): GameState => {
-      // Si le round est terminé (toutes les fabriques et centre vides)
-      if (
-        gameState.factories.every((f) => f.tiles.length === 0) &&
-        gameState.center.length === 0
-      ) {
-        // Copier l'état du jeu
-        let newState = { ...gameState };
-
-        // Passer à la phase de tuilage
-        newState.gamePhase = "tiling";
-
-        // Calculer les scores, mais avec animation séquentielle
-        // (Ceci sera implémenté avec un délai dans les composants visuels)
-        newState = calculateRoundScores(
-          newState,
-          (playerId, type, points, position) => {
-            // Animation callback
-            addScoringAnimation({
-              playerId,
-              points,
-              position: { x: position.col || 0, y: position.row || 0 },
-              type: type as "regular" | "bonus" | "penalty",
-            });
-          }
-        );
-
-        // Vérifier si le jeu est terminé
-        const anyWallRowComplete = newState.players.some((p) =>
-          p.board.wall.some((row) => row.every((space) => space.filled))
-        );
-
-        if (anyWallRowComplete) {
-          // Fin du jeu
-          newState.gamePhase = "gameEnd";
-          newState = calculateFinalScores(newState);
-        } else {
-          // Préparation pour le prochain tour (ceci sera déclenché après l'animation)
-          // Nous utiliserons un état supplémentaire pour gérer les transitions
-          //newState.gamePhase = "roundTransition";
-          newState.roundNumber += 1;
-
-          // Réinitialiser le premier joueur si nécessaire
-          if (newState.firstPlayerToken) {
-            newState.currentPlayer = newState.firstPlayerToken;
-            newState.firstPlayerToken = null;
-          }
-
-          // Vérifier si le sac est vide et la pile de défausse a des tuiles
-          if (newState.bag.length === 0 && newState.discardPile.length > 0) {
-            newState.bag = [...newState.discardPile];
-            newState.discardPile = [];
-            // Mélanger
-            newState.bag = shuffle(newState.bag);
-          }
-
-          // Distribuer les tuiles aux fabriques
-          newState = distributeFactoryTiles(newState);
-          newState.gamePhase = "drafting";
-        }
-
-        return newState;
-      }
-
-      return gameState;
+      if (!engine) return gameState;
+      return engine.handleRoundEnd(gameState);
     },
-    [addScoringAnimation]
+    [engine]
   );
 
   /**
@@ -395,137 +344,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
    */
   const placeTiles = useCallback(
     (patternLineIndex: number) => {
-      const currentGameState = gameStateRef.current;
-      const currentSelectedTiles = selectedTilesRef.current;
-      const currentSelectedSource = selectedSourceRef.current;
-
-      if (
-        !currentGameState ||
-        currentSelectedTiles.length === 0 ||
-        !currentSelectedSource
-      )
-        return;
-
-      // If patternLineIndex is -1, it means place in the floor line
-      const isFloorLine = patternLineIndex === -1;
-
-      if (
-        !isFloorLine &&
-        !canPlaceTiles(currentGameState, patternLineIndex, currentSelectedTiles)
-      ) {
-        console.log("Invalid tile placement");
-        return;
-      }
-
-      // Use functional updates to avoid stale state
-      setGameState((prevState) => {
-        if (!prevState) return null;
-
-        // Create new state with minimal copying
-        let newGameState = { ...prevState };
-        const currentPlayerIndex = newGameState.players.findIndex(
-          (p) => p.id === newGameState.currentPlayer
-        );
-
-        if (currentPlayerIndex === -1) return prevState;
-
-        // Create a new copy of the current player, reuse other players
-        const currentPlayer = {
-          ...newGameState.players[currentPlayerIndex],
-          board: { ...newGameState.players[currentPlayerIndex].board },
-        };
-
-        // Update player array with minimal copying
-        newGameState.players = [
-          ...newGameState.players.slice(0, currentPlayerIndex),
-          currentPlayer,
-          ...newGameState.players.slice(currentPlayerIndex + 1),
-        ];
-
-        if (isFloorLine) {
-          // Place all tiles in the floor line - create new array but reuse tile objects
-          currentPlayer.board.floorLine = [
-            ...currentPlayer.board.floorLine,
-            ...currentSelectedTiles,
-          ];
-        } else {
-          // Create a new copy of just the affected pattern line, reuse others
-          const patternLines = [...currentPlayer.board.patternLines];
-          const patternLine = { ...patternLines[patternLineIndex] };
-          patternLines[patternLineIndex] = patternLine;
-          currentPlayer.board.patternLines = patternLines;
-
-          const color = currentSelectedTiles[0].color;
-
-          // Check if the line can accommodate all tiles
-          const spaceAvailable = patternLine.spaces - patternLine.tiles.length;
-          const tilesToPlace = currentSelectedTiles.slice(0, spaceAvailable);
-          const excessTiles = currentSelectedTiles.slice(spaceAvailable);
-
-          // Update the pattern line
-          patternLine.tiles = [...patternLine.tiles, ...tilesToPlace];
-          patternLine.color = patternLine.color || color;
-
-          // Add excess tiles to the floor line
-          currentPlayer.board.floorLine = [
-            ...currentPlayer.board.floorLine,
-            ...excessTiles,
-          ];
-        }
-
-        // Move to next player
-        const nextPlayerIndex =
-          (currentPlayerIndex + 1) % newGameState.players.length;
-        newGameState.currentPlayer = newGameState.players[nextPlayerIndex].id;
-
-        // Check for round end and handle end-round logic
-        newGameState = handleRoundEnd(newGameState);
-
-        // Clear selections
-        selectedTilesRef.current = [];
-        selectedSourceRef.current = null;
-        setSelectedTiles([]);
-        setSelectedSource(null);
-
-        return newGameState;
-      });
-
-      if (!currentGameState) return;
-
-      const roundOver =
-        currentGameState.factories.every((f) => f.tiles.length === 0) &&
-        currentGameState.center.length === 0;
-
-      if (roundOver) {
-        const newState = handleRoundEnd(currentGameState);
-
-        // Si la manche est terminée mais le jeu n'est pas fini
-        if (
-          newState.gamePhase === "drafting" &&
-          gameStateRef.current && 
-          newState.roundNumber > gameStateRef.current.roundNumber
-        ) {
-          setIsRoundTransitioning(true);
-
-          // Attendre que toutes les animations de score soient complètes avant de passer à la suivante
-          setTimeout(() => {
-            setGameState(newState);
-
-            // Une autre courte pause avant de masquer la transition
-            setTimeout(() => {
-              setIsRoundTransitioning(false);
-            }, 2500);
-          }, 2000); // Délai pour permettre les animations de scoring
-        } else {
-          // Game over ou autres cas
-          setGameState(newState);
-        }
-      }
+      setGameState(prev =>
+        prev
+          ? engine!.applyMove(prev, { patternLineIndex, selectedTiles: selectedTilesRef.current })
+          : prev
+      );
     },
-    [handleRoundEnd] // Only depend on handleRoundEnd, use refs for others
+    [engine]
   );
-
-  // Replace the existing executeAITurn function (around line 417)
+  
   /**
    * Executes a turn for the current AI player with animations
    */
@@ -672,26 +499,20 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [gameState, aiPlayers, executeAITurn, aiSpeed]);
 
-  /**
-   * Helper function to shuffle array using Fisher-Yates algorithm
-   * @param array - Array to shuffle
-   * @returns Shuffled array
-   */
-  const shuffle = <T extends unknown>(array: T[]): T[] => {
-    const newArray = [...array];
-    for (let i = newArray.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-    }
-    return newArray;
-  };
-
   // Initialize the game with 2 players by default if not initialized
   useEffect(() => {
     if (!gameState) {
       startNewGame(2);
     }
   }, [gameState, startNewGame]);
+
+  /**
+   * Vérifie si les tuiles sélectionnées doivent obligatoirement aller dans la ligne de sol
+   */
+  const mustPlaceInFloorLine = useCallback((selectedTiles: Tile[]) => {
+    if (!engine || !gameState) return false;
+    return engine.mustPlaceInFloorLine(gameState, selectedTiles);
+  }, [engine, gameState]);
 
   // Create value object for context
   const contextValue: GameContextType = {
@@ -714,6 +535,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     setShowFinalScoring,
     isRoundTransition: isRoundTransitioning,
     setIsRoundTransition,
+    mustPlaceInFloorLine,
   };
 
   return (

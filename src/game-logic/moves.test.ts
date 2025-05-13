@@ -8,7 +8,7 @@ import {
   WallSpace,
   PatternLine,
 } from "../models/types";
-import { canSelectTiles, canPlaceTiles, mustPlaceInFloorLine } from "./moves";
+import { ClassicAzulEngine } from "./engines/classicEngine";
 
 // Utility functions for creating test fixtures
 const createEmptyWall = (): WallSpace[][] => {
@@ -67,6 +67,8 @@ const createTile = (
   color,
 });
 
+const engine = new ClassicAzulEngine();
+
 describe("Game Moves", () => {
   describe("canSelectTiles", () => {
     test("should return false if game phase is not drafting", () => {
@@ -82,7 +84,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(canSelectTiles(gameState, 0, "blue")).toBe(false);
+      expect(engine.canSelectTiles(gameState, 0, "blue")).toBe(false);
     });
 
     test("should return false if factory does not exist", () => {
@@ -98,7 +100,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(canSelectTiles(gameState, 999, "blue")).toBe(false);
+      expect(engine.canSelectTiles(gameState, 999, "blue")).toBe(false);
     });
 
     test("should return true if factory has tiles of selected color", () => {
@@ -114,7 +116,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(canSelectTiles(gameState, 0, "blue")).toBe(true);
+      expect(engine.canSelectTiles(gameState, 0, "blue")).toBe(true);
     });
 
     test("should return false if factory has no tiles of selected color", () => {
@@ -130,7 +132,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(canSelectTiles(gameState, 0, "yellow")).toBe(false);
+      expect(engine.canSelectTiles(gameState, 0, "yellow")).toBe(false);
     });
 
     test("should return true if center has tiles of selected color", () => {
@@ -146,7 +148,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(canSelectTiles(gameState, null, "blue")).toBe(true);
+      expect(engine.canSelectTiles(gameState, null, "blue")).toBe(true);
     });
 
     test("should return false if center has no tiles of selected color", () => {
@@ -162,7 +164,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(canSelectTiles(gameState, null, "yellow")).toBe(false);
+      expect(engine.canSelectTiles(gameState, null, "yellow")).toBe(false);
     });
   });
 
@@ -180,7 +182,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(canPlaceTiles(gameState, 0, [createTile("blue")])).toBe(false);
+      expect(engine.canPlaceTiles(gameState, 0, [createTile("blue")])).toBe(false);
     });
 
     test("should return false if player is not found", () => {
@@ -196,7 +198,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(canPlaceTiles(gameState, 0, [createTile("blue")])).toBe(false);
+      expect(engine.canPlaceTiles(gameState, 0, [createTile("blue")])).toBe(false);
     });
 
     test("should always allow placement on floor line (pattern line index -1)", () => {
@@ -212,7 +214,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(canPlaceTiles(gameState, -1, [createTile("blue")])).toBe(true);
+      expect(engine.canPlaceTiles(gameState, -1, [createTile("blue")])).toBe(true);
     });
 
     test("should return false for invalid pattern line index", () => {
@@ -228,8 +230,8 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(canPlaceTiles(gameState, 999, [createTile("blue")])).toBe(false);
-      expect(canPlaceTiles(gameState, -2, [createTile("blue")])).toBe(false);
+      expect(engine.canPlaceTiles(gameState, 999, [createTile("blue")])).toBe(false);
+      expect(engine.canPlaceTiles(gameState, -2, [createTile("blue")])).toBe(false);
     });
 
     test("should return false if no tiles are selected", () => {
@@ -245,7 +247,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(canPlaceTiles(gameState, 0, [])).toBe(false);
+      expect(engine.canPlaceTiles(gameState, 0, [])).toBe(false);
     });
 
     test("should return false if pattern line already has a different color", () => {
@@ -265,7 +267,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(canPlaceTiles(gameState, 0, [createTile("blue")])).toBe(false);
+      expect(engine.canPlaceTiles(gameState, 0, [createTile("blue")])).toBe(false);
     });
 
     test("should return true if pattern line has same color as selected tiles", () => {
@@ -285,7 +287,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(canPlaceTiles(gameState, 0, [createTile("blue")])).toBe(true);
+      expect(engine.canPlaceTiles(gameState, 0, [createTile("blue")])).toBe(true);
     });
 
     test("should return true if pattern line is empty and has space", () => {
@@ -301,7 +303,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(canPlaceTiles(gameState, 0, [createTile("blue")])).toBe(true);
+      expect(engine.canPlaceTiles(gameState, 0, [createTile("blue")])).toBe(true);
     });
 
     test("should return false if pattern line is full", () => {
@@ -321,7 +323,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(canPlaceTiles(gameState, 0, [createTile("blue")])).toBe(false);
+      expect(engine.canPlaceTiles(gameState, 0, [createTile("blue")])).toBe(false);
     });
 
     test("should return false if color is already on wall in the same row", () => {
@@ -345,7 +347,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(canPlaceTiles(gameState, 0, [createTile("blue")])).toBe(false);
+      expect(engine.canPlaceTiles(gameState, 0, [createTile("blue")])).toBe(false);
     });
   });
 
@@ -363,7 +365,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(mustPlaceInFloorLine(gameState, [])).toBe(false);
+      expect(engine.mustPlaceInFloorLine(gameState, [])).toBe(false);
     });
 
     test("should return false if player is not found", () => {
@@ -379,7 +381,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(mustPlaceInFloorLine(gameState, [createTile("blue")])).toBe(false);
+      expect(engine.mustPlaceInFloorLine(gameState, [createTile("blue")])).toBe(false);
     });
 
     test("should return false if there is at least one valid pattern line", () => {
@@ -395,7 +397,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(mustPlaceInFloorLine(gameState, [createTile("blue")])).toBe(false);
+      expect(engine.mustPlaceInFloorLine(gameState, [createTile("blue")])).toBe(false);
     });
 
     test("should return true if all pattern lines of matching color are full", () => {
@@ -421,7 +423,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(mustPlaceInFloorLine(gameState, [createTile("blue")])).toBe(true);
+      expect(engine.mustPlaceInFloorLine(gameState, [createTile("blue")])).toBe(true);
     });
 
     test("should return true if all valid pattern lines already have the color on wall", () => {
@@ -447,7 +449,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(mustPlaceInFloorLine(gameState, [createTile("blue")])).toBe(true);
+      expect(engine.mustPlaceInFloorLine(gameState, [createTile("blue")])).toBe(true);
     });
 
     test("should return true if all pattern lines either have different colors or are full", () => {
@@ -500,7 +502,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(mustPlaceInFloorLine(gameState, [createTile("blue")])).toBe(true);
+      expect(engine.mustPlaceInFloorLine(gameState, [createTile("blue")])).toBe(true);
     });
 
     test("should return false if at least one pattern line can accept the color", () => {
@@ -539,7 +541,7 @@ describe("Game Moves", () => {
         roundNumber: 1,
       };
 
-      expect(mustPlaceInFloorLine(gameState, [createTile("blue")])).toBe(false);
+      expect(engine.mustPlaceInFloorLine(gameState, [createTile("blue")])).toBe(false);
     });
   });
 
@@ -556,7 +558,7 @@ describe("Game Moves", () => {
         firstPlayerToken: null,
         roundNumber: 1,
       };
-      expect(canSelectTiles(gameState, 0, "blue")).toBe(false);
+      expect(engine.canSelectTiles(gameState, 0, "blue")).toBe(false);
     });
 
     test("canPlaceTiles returns false if patternLineIndex is out of bounds", () => {
@@ -571,8 +573,8 @@ describe("Game Moves", () => {
         firstPlayerToken: null,
         roundNumber: 1,
       };
-      expect(canPlaceTiles(gameState, 5, [createTile("blue")])).toBe(false);
-      expect(canPlaceTiles(gameState, -5, [createTile("blue")])).toBe(false);
+      expect(engine.canPlaceTiles(gameState, 5, [createTile("blue")])).toBe(false);
+      expect(engine.canPlaceTiles(gameState, -5, [createTile("blue")])).toBe(false);
     });
 
     test("canPlaceTiles returns false if pattern line is full even if color matches", () => {
@@ -595,7 +597,7 @@ describe("Game Moves", () => {
         firstPlayerToken: null,
         roundNumber: 1,
       };
-      expect(canPlaceTiles(gameState, 2, [createTile("blue")])).toBe(false);
+      expect(engine.canPlaceTiles(gameState, 2, [createTile("blue")])).toBe(false);
     });
 
     test("mustPlaceInFloorLine returns false if selectedTiles is empty", () => {
@@ -610,7 +612,7 @@ describe("Game Moves", () => {
         firstPlayerToken: null,
         roundNumber: 1,
       };
-      expect(mustPlaceInFloorLine(gameState, [])).toBe(false);
+      expect(engine.mustPlaceInFloorLine(gameState, [])).toBe(false);
     });
 
     test("mustPlaceInFloorLine returns false if player not found", () => {
@@ -625,7 +627,7 @@ describe("Game Moves", () => {
         firstPlayerToken: null,
         roundNumber: 1,
       };
-      expect(mustPlaceInFloorLine(gameState, [createTile("blue")])).toBe(false);
+      expect(engine.mustPlaceInFloorLine(gameState, [createTile("blue")])).toBe(false);
     });
 
     test("mustPlaceInFloorLine returns true if all pattern lines are full or blocked", () => {
@@ -647,7 +649,7 @@ describe("Game Moves", () => {
         firstPlayerToken: null,
         roundNumber: 1,
       };
-      expect(mustPlaceInFloorLine(gameState, [createTile("blue")])).toBe(true);
+      expect(engine.mustPlaceInFloorLine(gameState, [createTile("blue")])).toBe(true);
     });
   });
 });

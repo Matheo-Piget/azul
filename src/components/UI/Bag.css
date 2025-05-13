@@ -1,0 +1,60 @@
+.game-info-panel {
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  margin: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background-color: #f5f5f5;
+  transition: all 0.2s ease;
+}
+
+.info-item:hover {
+  background-color: #e8f4ff;
+  transform: translateY(-2px);
+}
+
+.info-label {
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
+}
+
+.info-value {
+  background-color: #2c3e50;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.bag-icon, .discard-icon {
+  margin-right: 8px;
+  font-size: 1.1rem;
+}
+
+/* Animation pour montrer les changements de valeurs */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.value-change {
+  animation: pulse 0.4s ease;
+}

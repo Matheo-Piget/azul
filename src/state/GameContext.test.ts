@@ -1,11 +1,11 @@
 import { initializeGame } from '../../src/game-logic/setup';
 import { getAIMove, AIDifficulty } from '../../src/game-logic/ai/aiPlayer';
-import { calculateFinalScores } from '../../src/game-logic/scoring';
 import { GameState } from '../../src/models/types';
 import fs from 'fs';
 import path from 'path';
-const scoring = require('../../src/game-logic/scoring');
-
+import { AzulGameEngine } from './../models/AzulGameEngine';
+import { ClassicAzulEngine } from '../../src/game-logic/engines/classicEngine';
+const engine = new ClassicAzulEngine();
 
 function simulateAIGame(playerCount: number, difficulty: AIDifficulty): number[] {
   let gameState = initializeGame(playerCount);
@@ -76,7 +76,7 @@ function simulateAIGame(playerCount: number, difficulty: AIDifficulty): number[]
         );
         if (anyWallRowComplete) {
           gameState.gamePhase = "gameEnd";
-          gameState = calculateFinalScores(gameState);
+          gameState = engine.calculateFinalScores(gameState);
         } else {
           gameState.roundNumber += 1;
           gameState.gamePhase = "drafting";

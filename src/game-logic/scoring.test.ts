@@ -1,12 +1,5 @@
+import { ClassicAzulEngine } from "./engines/classicEngine";
 import {
-  calculateTilePlacementScore,
-  applyFloorPenalties,
-  transferCompletedLinesToWall,
-  calculateRoundScores,
-  calculateFinalScores,
-} from "./scoring";
-import {
-  
   GameState,
   Player,
   PlayerBoard,
@@ -14,6 +7,8 @@ import {
   TileColor,
   WallSpace,
 } from "../models/types";
+
+const engine = new ClassicAzulEngine();
 
 // Utility functions to help create test fixtures
 const createEmptyWall = (): WallSpace[][] => {
@@ -172,7 +167,7 @@ describe("Scoring Tests", () => {
       const player = createPlayer("p1", "Player 1");
       const gameState = createBasicGameState([player]);
 
-      const result = calculateFinalScores(gameState);
+      const result = engine.calculateFinalScores(gameState);
 
       expect(result.players[0].board.score).toBe(0);
     });
@@ -185,7 +180,7 @@ describe("Scoring Tests", () => {
       const player = createPlayer("p1", "Player 1", { wall: filledWall });
       const gameState = createBasicGameState([player]);
 
-      const result = calculateFinalScores(gameState);
+      const result = engine.calculateFinalScores(gameState);
 
       expect(result.players[0].board.score).toBe(2);
     });
@@ -198,7 +193,7 @@ describe("Scoring Tests", () => {
       const player = createPlayer("p1", "Player 1", { wall: filledWall });
       const gameState = createBasicGameState([player]);
 
-      const result = calculateFinalScores(gameState);
+      const result = engine.calculateFinalScores(gameState);
 
       expect(result.players[0].board.score).toBe(7);
     });
@@ -211,7 +206,7 @@ describe("Scoring Tests", () => {
       const player = createPlayer("p1", "Player 1", { wall: filledWall });
       const gameState = createBasicGameState([player]);
 
-      const result = calculateFinalScores(gameState);
+      const result = engine.calculateFinalScores(gameState);
 
       expect(result.players[0].board.score).toBe(10);
     });
@@ -225,7 +220,7 @@ describe("Scoring Tests", () => {
       const player = createPlayer("p1", "Player 1", { wall: filledWall });
       const gameState = createBasicGameState([player]);
 
-      const result = calculateFinalScores(gameState);
+      const result = engine.calculateFinalScores(gameState);
 
       expect(result.players[0].board.score).toBe(4); // 2 points per row × 2 rows
     });
@@ -239,7 +234,7 @@ describe("Scoring Tests", () => {
       const player = createPlayer("p1", "Player 1", { wall: filledWall });
       const gameState = createBasicGameState([player]);
 
-      const result = calculateFinalScores(gameState);
+      const result = engine.calculateFinalScores(gameState);
 
       expect(result.players[0].board.score).toBe(14); // 7 points per column × 2 columns
     });
@@ -253,7 +248,7 @@ describe("Scoring Tests", () => {
       const player = createPlayer("p1", "Player 1", { wall: filledWall });
       const gameState = createBasicGameState([player]);
 
-      const result = calculateFinalScores(gameState);
+      const result = engine.calculateFinalScores(gameState);
 
       expect(result.players[0].board.score).toBe(20); // 10 points per color × 2 colors
     });
@@ -271,7 +266,7 @@ describe("Scoring Tests", () => {
       });
       const gameState = createBasicGameState([player]);
 
-      const result = calculateFinalScores(gameState);
+      const result = engine.calculateFinalScores(gameState);
 
       // Initial score (5) + row bonus (2) + column bonus (7) + color bonus (10)
       expect(result.players[0].board.score).toBe(24);
@@ -297,7 +292,7 @@ describe("Scoring Tests", () => {
 
       const gameState = createBasicGameState([player1, player2]);
 
-      const result = calculateFinalScores(gameState);
+      const result = engine.calculateFinalScores(gameState);
 
       expect(result.players[0].board.score).toBe(12); // 10 + 2
       expect(result.players[1].board.score).toBe(22); // 15 + 7
@@ -317,7 +312,7 @@ describe("Scoring Tests", () => {
       const player = createPlayer("p1", "Player 1", { wall: filledWall });
       const gameState = createBasicGameState([player]);
 
-      const result = calculateFinalScores(gameState);
+      const result = engine.calculateFinalScores(gameState);
 
       // 5 rows (2 points each) + 5 columns (7 points each) + 5 colors (10 points each)
       const expectedBonus = 5 * 2 + 5 * 7 + 5 * 10; // = 10 + 35 + 50 = 95
@@ -356,7 +351,7 @@ describe("Scoring Tests", () => {
       };
 
       // Calculate round scores first
-      const roundScoredState = calculateRoundScores(gameState);
+      const roundScoredState = engine.calculateRoundScores(gameState);
 
       // Check if the pattern line was transferred to wall correctly
       const scoredPlayer = roundScoredState.players[0];
@@ -427,7 +422,7 @@ describe("Scoring Tests", () => {
       };
 
       // Calculate final scores
-      const finalState = calculateFinalScores(gameState);
+      const finalState = engine.calculateFinalScores(gameState);
 
       // Check the final score calculation
       // Initial score (35) + row bonus (2) + column bonus (7) + color bonus (10) = 54
@@ -452,7 +447,7 @@ describe("Scoring Tests", () => {
       gameState.gamePhase = "scoring";
 
       // Calculate round scores should do nothing as no line is complete
-      const roundScoredState = calculateRoundScores(gameState);
+      const roundScoredState = engine.calculateRoundScores(gameState);
       expect(roundScoredState.players[0].board.score).toBe(0);
 
       // Pattern lines should remain unchanged
@@ -477,7 +472,7 @@ describe("Scoring Tests", () => {
       gameState.gamePhase = "scoring";
 
       // Calculate round scores
-      const roundScoredState = calculateRoundScores(gameState);
+      const roundScoredState = engine.calculateRoundScores(gameState);
 
       // Max penalties is -1-1-2-2-2-3-3 = -14, from 10 should be -4 but clamped to 0
       expect(roundScoredState.players[0].board.score).toBe(0);
@@ -507,7 +502,7 @@ describe("Scoring Tests", () => {
 
       const gameState = createBasicGameState([player1, player2]);
 
-      const result = calculateFinalScores(gameState);
+      const result = engine.calculateFinalScores(gameState);
 
       expect(result.players[0].board.score).toBe(17); // 15 + 2
       expect(result.players[1].board.score).toBe(17); // 13 + 4
@@ -519,26 +514,26 @@ describe("Scoring Tests", () => {
     describe("calculateTilePlacementScore", () => {
       it("returns 1 for isolated tile", () => {
         const board = makePlayerBoard();
-        expect(calculateTilePlacementScore(board, 2, 2)).toBe(1);
+        expect(engine.calculateTilePlacementScore(board, 2, 2)).toBe(1);
       });
       it("counts horizontal adjacency", () => {
         const board = makePlayerBoard();
         board.wall[2][1].filled = true;
         board.wall[2][3].filled = true;
-        expect(calculateTilePlacementScore(board, 2, 2)).toBe(3); // 1 left + 1 right + 1 placed
+        expect(engine.calculateTilePlacementScore(board, 2, 2)).toBe(3); // 1 left + 1 right + 1 placed
       });
       it("counts vertical adjacency", () => {
         const board = makePlayerBoard();
         board.wall[1][2].filled = true;
         board.wall[3][2].filled = true;
-        expect(calculateTilePlacementScore(board, 2, 2)).toBe(3); // 1 up + 1 down + 1 placed
+        expect(engine.calculateTilePlacementScore(board, 2, 2)).toBe(3); // 1 up + 1 down + 1 placed
       });
       it("counts both directions", () => {
         const board = makePlayerBoard();
         board.wall[2][1].filled = true;
         board.wall[2][3].filled = true;
         board.wall[1][2].filled = true;
-        expect(calculateTilePlacementScore(board, 2, 2)).toBe(5); // 3 horizontal + 2 vertical
+        expect(engine.calculateTilePlacementScore(board, 2, 2)).toBe(5); // 3 horizontal + 2 vertical
       });
     });
 
@@ -551,7 +546,7 @@ describe("Scoring Tests", () => {
           { color: "yellow" } as Tile,
         ];
         player.board.score = 5;
-        const updated = applyFloorPenalties(player);
+        const updated = engine.applyFloorPenalties(player);
         expect(updated.board.score).toBe(1); // -1 -1 -2 = -4
         expect(updated.board.floorLine).toEqual([]);
       });
@@ -559,13 +554,13 @@ describe("Scoring Tests", () => {
         const player = makePlayer();
         player.board.floorLine = Array(7).fill({ color: "blue" } as Tile);
         player.board.score = 2;
-        const updated = applyFloorPenalties(player);
+        const updated = engine.applyFloorPenalties(player);
         expect(updated.board.score).toBe(0);
       });
       it("no penalty if floorLine is empty", () => {
         const player = makePlayer();
         player.board.score = 3;
-        const updated = applyFloorPenalties(player);
+        const updated = engine.applyFloorPenalties(player);
         expect(updated.board.score).toBe(3);
       });
     });
@@ -590,7 +585,7 @@ describe("Scoring Tests", () => {
           roundNumber: 1,
         };
         const { player: updated, discardedTiles } =
-          transferCompletedLinesToWall(player, gameState);
+          engine.transferCompletedLinesToWall(player, gameState);
         expect(updated.board.wall[0][0].filled).toBe(true);
         expect(updated.board.patternLines[0].tiles).toEqual([]);
         expect(updated.board.patternLines[0].color).toBeNull();
@@ -618,7 +613,7 @@ describe("Scoring Tests", () => {
           roundNumber: 1,
         };
         const { player: updated, discardedTiles } =
-          transferCompletedLinesToWall(player, gameState);
+          engine.transferCompletedLinesToWall(player, gameState);
         expect(updated.board.wall[1].some((s) => s.filled)).toBe(false);
         expect(discardedTiles).toEqual([]);
       });
@@ -649,7 +644,7 @@ describe("Scoring Tests", () => {
           firstPlayerToken: null,
           roundNumber: 1,
         };
-        const updated = calculateRoundScores(gameState);
+        const updated = engine.calculateRoundScores(gameState);
         expect(updated.players[0].board.score).toBeGreaterThanOrEqual(4); // 5 + at least 1 - 1
         expect(updated.players[1].board.score).toBe(1); // 3 -1 -1 = 1, but never below 0
         expect(updated.discardPile.length).toBeGreaterThanOrEqual(3);
@@ -679,7 +674,7 @@ describe("Scoring Tests", () => {
           firstPlayerToken: null,
           roundNumber: 5,
         };
-        const updated = calculateFinalScores(gameState);
+        const updated = engine.calculateFinalScores(gameState);
         // 2 (ligne) + 7 (colonne) + 10 (couleur) = 19
         expect(updated.players[0].board.score).toBe(29);
       });
@@ -697,7 +692,7 @@ describe("Scoring Tests", () => {
           firstPlayerToken: null,
           roundNumber: 5,
         };
-        const updated = calculateFinalScores(gameState);
+        const updated = engine.calculateFinalScores(gameState);
         expect(updated.players[0].board.score).toBe(5);
       });
     });

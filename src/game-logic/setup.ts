@@ -1,4 +1,5 @@
 import { GameState, Tile, TileColor, WallSpace, PatternLine, PlayerBoard, Player, Factory } from '../models/types';
+import { ClassicAzulEngine } from './engines/classicEngine';
 
 /**
  * Generates a random unique identifier
@@ -151,46 +152,13 @@ export const distributeFactoryTiles = (gameState: GameState): GameState => {
 };
 
 /**
- * Initializes a new game of Azul
- * @param {number} playerCount - Number of players (2-4)
- * @returns {GameState} Initial game state
+ * Initialise une partie avec le moteur Azul classique
+ * @param {number} playerCount - Nombre de joueurs
+ * @returns {GameState} L'état initial du jeu
  */
 export const initializeGame = (playerCount: number): GameState => {
-
-  if (playerCount < 2 || playerCount > 4) {
-    throw new Error('Player count must be between 2 and 4');
-  }
-
-  // Create players
-  const players: Player[] = [];
-  for (let i = 0; i < playerCount; i++) {
-    players.push(createPlayer(generateId(), `Player ${i + 1}`));
-  }
-  
-  // Create all tiles
-  const tiles = createTiles();
-  
-  // Shuffle the tiles
-  const shuffledTiles = shuffle(tiles);
-  
-  // Create factories
-  const factories = createFactories(playerCount);
-  
-  // Create initial game state
-  let gameState: GameState = {
-    players,
-    factories,
-    center: [],
-    bag: shuffledTiles,
-    discardPile: [],
-    currentPlayer: players[0].id,
-    gamePhase: 'drafting',
-    firstPlayerToken: null,
-    roundNumber: 1
-  };
-  
-  // Distribute tiles to factories
-  gameState = distributeFactoryTiles(gameState);
-  
-  return gameState;
+  const engine = new ClassicAzulEngine();
+  // Génère des noms génériques (Joueur 1, Joueur 2, ...)
+  const playerNames = Array.from({ length: playerCount }, (_, i) => `Joueur ${i + 1}`);
+  return engine.initializeGame(playerNames);
 };

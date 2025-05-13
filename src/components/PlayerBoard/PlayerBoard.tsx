@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Tile from "../Tile/Tile";
 import { useGame } from "../../state/GameContext";
-import { mustPlaceInFloorLine } from "../../game-logic/moves";
 import { audioService } from "../../utils/SoundService";
 import "./Playerboard.css";
 import { TileColor } from "../../models/types";
@@ -37,7 +36,7 @@ const PlayerBoard: React.FC<PlayerBoardProps> = ({
   patternLineRef,
   floorLineRef,
 }) => {
-    const { gameState, selectedTiles, placeTiles, aiPlayers, scoringAnimations, clearScoringAnimations, addScoringAnimation } = useGame();
+    const { gameState, selectedTiles, placeTiles, aiPlayers, scoringAnimations, clearScoringAnimations, addScoringAnimation, mustPlaceInFloorLine } = useGame();
   const [mustUseFloorLine, setMustUseFloorLine] = useState(false);
   const { showNotification } = useNotification();
 
@@ -57,7 +56,7 @@ const PlayerBoard: React.FC<PlayerBoardProps> = ({
    */
   useEffect(() => {
     if (player && canPlace && selectedTiles.length > 0) {
-      setMustUseFloorLine(mustPlaceInFloorLine(gameState, selectedTiles));
+      setMustUseFloorLine(mustPlaceInFloorLine(selectedTiles));
     } else {
       setMustUseFloorLine(false);
     }

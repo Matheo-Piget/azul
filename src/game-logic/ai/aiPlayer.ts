@@ -1,6 +1,5 @@
 import { GameState, TileColor, Tile } from "../../models/types";
-import { canSelectTiles, canPlaceTiles, mustPlaceInFloorLine } from "../moves";
-import { calculateTilePlacementScore } from "../scoring";
+import { ClassicAzulEngine } from "../engines/classicEngine";
 
 /**
  * Represents the difficulty levels for AI players
@@ -54,6 +53,8 @@ class ScoreCache {
     this.accessCount.clear();
   }
 }
+
+const engine = new ClassicAzulEngine();
 
 /**
  * Gets the best move for the AI player based on the current game state and difficulty level
@@ -254,7 +255,7 @@ const getAllPossibleMoves = (gameState: GameState): AIMove[] => {
 
       // Check each pattern line
       for (let i = 0; i < currentPlayer.board.patternLines.length; i++) {
-        if (canPlaceTiles(gameState, i, mockTiles)) {
+        if (engine.canPlaceTiles(gameState, i, mockTiles)) {
           validPlacements.push(i);
         }
       }
@@ -300,7 +301,7 @@ const getPossibleSelections = (
 
     // Add a selection for each color in this factory
     for (const color of Array.from(colors)) {
-      if (canSelectTiles(gameState, factory.id, color)) {
+      if (engine.canSelectTiles(gameState, factory.id, color)) {
         selections.push({ factoryId: factory.id, color });
       }
     }
@@ -314,7 +315,7 @@ const getPossibleSelections = (
     }
 
     for (const color of Array.from(centerColors)) {
-      if (canSelectTiles(gameState, null, color)) {
+      if (engine.canSelectTiles(gameState, null, color)) {
         selections.push({ factoryId: null, color });
       }
     }
@@ -420,7 +421,7 @@ const evaluateMove = (
     });
 
     // If this is our only option, it's better than nothing
-    if (mustPlaceInFloorLine(gameState, mockTiles)) {
+    if (engine.mustPlaceInFloorLine(gameState, mockTiles)) {
       score += difficulty === "hard" ? 2 : difficulty === "medium" ? 3 : 4; // Better offset for easier AIs
     }
   } else {
@@ -676,7 +677,7 @@ const estimatePlacementScore = (
   board.wall[row][col].filled = true;
 
   // Use the game's scoring function
-  const score = calculateTilePlacementScore(board, row, col);
+  const score = engine.calculateTilePlacementScore(board, row, col);
 
   // Restore the original state
   board.wall[row][col].filled = wasFilledBefore;
