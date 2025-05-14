@@ -1,7 +1,7 @@
 /**
  * Represents the available tile colors in the game
  */
-export type TileColor = 'blue' | 'yellow' | 'red' | 'black' | 'teal' | 'green' | 'joker';
+export type TileColor = 'blue' | 'yellow' | 'red' | 'black' | 'teal' | 'green' | 'purple' | 'orange';
 
 /**
  * Represents an individual tile in the game

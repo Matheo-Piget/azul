@@ -287,7 +287,20 @@ export const GameProvider: React.FC<GameProviderProps> = ({
         return;
       }
 
-      // Use functional updates to avoid stale state issues
+      // Pour Summer Pavilion, nous allons directement appeler applyMove
+      if (variant === 'summerPavilion') {
+        setGameState(prevState => {
+          if (!prevState) return null;
+          // Appel à applyMove du moteur avec le move contenant factoryId et color
+          return engine!.applyMove(prevState, { factoryId, color });
+        });
+        // Pour Summer Pavilion nous vidons immédiatement la sélection après
+        setSelectedTiles([]);
+        setSelectedSource(null);
+        return;
+      }
+
+      // Pour le mode classique, continuer comme avant
       setGameState((prevState) => {
         if (!prevState) return null;
 
@@ -343,7 +356,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({
         return newGameState;
       });
     },
-    [] // No dependencies as we use refs
+    [variant, engine] // Ajouter engine comme dépendance
   );
 
   /**

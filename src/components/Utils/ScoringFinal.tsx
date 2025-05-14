@@ -100,7 +100,7 @@ const FinalScoringAnimation: React.FC<FinalScoringAnimationProps> = ({
       // Color bonuses
       if (details.colorsCompleted > 0) {
         const colorElements: {color: TileColor}[] = [];
-        const colors: TileColor[] = ['blue', 'yellow', 'red', 'black', 'teal'];
+        const colors: TileColor[] = ['blue', 'yellow', 'red', 'black', 'teal', 'purple', 'orange'];
         
         colors.forEach(color => {
           const colorCount = player.board.wall
@@ -236,7 +236,8 @@ const FinalScoringAnimation: React.FC<FinalScoringAnimationProps> = ({
       black: '#424242',
       teal: '#00897b',
       green: '#43a047',
-      joker: '#b388ff',
+      purple: '#9c27b0',
+      orange: '#ff9800',
     };
     return colorMap[color];
   };

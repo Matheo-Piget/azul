@@ -2,21 +2,21 @@ import { AzulGameEngine } from '../../models/AzulGameEngine';
 import { GameState, TileColor, Tile, Player } from '../../models/types';
 import { calculateSummerPavilionScore } from '../scoring/summerScoring';
 
-// Couleurs Summer Pavilion (ajoute le joker)
-const SUMMER_COLORS: TileColor[] = ['blue', 'yellow', 'red', 'black', 'teal', 'green'];
+// Couleurs Summer Pavilion officielles (violet, vert, orange, jaune, bleu, rouge)
+const SUMMER_COLORS: TileColor[] = ['purple', 'green', 'orange', 'yellow', 'blue', 'red'];
 const JOKER_COLOR = 'joker';
 const MAX_ROUNDS = 6;
 
-// Ordre des couleurs joker pour les 6 manches
-const JOKER_COLORS: TileColor[] = ['joker', 'blue', 'yellow', 'red', 'black', 'teal', 'green'];
+// Ordre des couleurs joker pour les 6 manches (officiel)
+const JOKER_COLORS: TileColor[] = ['purple', 'green', 'orange', 'yellow', 'blue', 'red'];
 
 // Coût des espaces (1 à 6)
 const SPACE_COSTS = [1, 2, 3, 4, 5, 6];
 
 function getJokerColorForRound(round: number): TileColor {
-  // On s'assure que round est entre 1 et 6
+  // round: 1 à 6 => index 0 à 5
   const safeRound = Math.max(1, Math.min(6, round));
-  return JOKER_COLORS[safeRound] || 'joker';
+  return JOKER_COLORS[safeRound - 1];
 }
 
 function createSummerTiles(): Tile[] {
@@ -34,7 +34,6 @@ function createSummerTiles(): Tile[] {
 }
 
 function createSummerPlayer(id: string, name: string): Player {
-  // TODO: Plateau hexagonal, rosettes, etc.
   return {
     id,
     name,
@@ -87,7 +86,7 @@ export class SummerPavilionEngine implements AzulGameEngine {
     if (!hasColor) return false;
 
     // La couleur joker actuelle
-    const jokerColor = gameState.jokerColor || 'joker';
+    const jokerColor = gameState.jokerColor;
 
     // Si on essaie de sélectionner la couleur joker directement
     if (color === jokerColor) {
@@ -113,7 +112,7 @@ export class SummerPavilionEngine implements AzulGameEngine {
       }
 
       const { factoryId, color } = move;
-      const jokerColor = newState.jokerColor || 'joker';
+      const jokerColor = newState.jokerColor;
 
       if (factoryId !== null) {
         // Sélection depuis une fabrique
@@ -132,12 +131,17 @@ export class SummerPavilionEngine implements AzulGameEngine {
           if (jokerTiles.length > 0) {
             selectedTiles.push(jokerTiles[0]);
           }
+        } else {
+          // Si on sélectionne des jokers directement, on ne peut en prendre qu'un seul
+          // (uniquement possible s'il n'y a que des jokers dans la fabrique)
+          while (selectedTiles.length > 1) {
+            selectedTiles.pop();
+          }
         }
         
         // Retire toutes les tuiles sélectionnées de la fabrique
         const remainingTiles = factory.tiles.filter(t => 
-          t.color !== color && (color !== jokerColor || t.color !== jokerColor) &&
-          (!selectedTiles.includes(t))
+          !selectedTiles.includes(t)
         );
         
         // Ajoute les tuiles sélectionnées au joueur
@@ -155,22 +159,27 @@ export class SummerPavilionEngine implements AzulGameEngine {
         newState.center = [...newState.center, ...remainingTiles];
       } else {
         // Sélection depuis le centre
+        // Sélectionne toutes les tuiles de la couleur choisie
+        const selectedTiles = newState.center.filter(t => t.color === color);
+        
         // Si on prend au centre et que personne n'a encore pris le marqueur premier joueur
         let pointPenalty = 0;
         if (newState.firstPlayerToken === null) {
           newState.firstPlayerToken = currentPlayer.id;
+          
           // Pénalité de points égale au nombre de tuiles prises
-          const selectedFromCenter = newState.center.filter(t => t.color === color);
-          const jokerInCenter = newState.center.filter(t => t.color === jokerColor);
-          pointPenalty = selectedFromCenter.length + (color !== jokerColor && jokerInCenter.length > 0 ? 1 : 0);
+          pointPenalty = selectedTiles.length;
+          
+          // Si on prend une couleur normale et qu'il y a des jokers, on en prend un
+          const jokerInCenter = newState.center.find(t => t.color === jokerColor);
+          if (color !== jokerColor && jokerInCenter) {
+            pointPenalty += 1; // Un joker de plus
+          }
           
           // Pénalité limitée par la position de score (pas en dessous de 1)
           const newScore = Math.max(1, currentPlayer.board.score - pointPenalty);
           currentPlayer.board.score = newScore;
         }
-        
-        // Sélectionne toutes les tuiles de la couleur choisie
-        const selectedTiles = newState.center.filter(t => t.color === color);
         
         // Si on ne sélectionne pas directement des jokers, il faut prendre une tuile joker si présente
         if (color !== jokerColor) {
@@ -179,13 +188,17 @@ export class SummerPavilionEngine implements AzulGameEngine {
           if (jokerTiles.length > 0) {
             selectedTiles.push(jokerTiles[0]);
           }
+        } else {
+          // Si on sélectionne des jokers directement, on ne peut en prendre qu'un seul
+          // (uniquement possible s'il n'y a que des jokers dans le centre)
+          while (selectedTiles.length > 1) {
+            selectedTiles.pop();
+          }
         }
         
         // Retire toutes les tuiles sélectionnées du centre
         newState.center = newState.center.filter(t => 
-          !selectedTiles.includes(t) && 
-          (t.color !== color) && 
-          (color === jokerColor || t.color !== jokerColor || selectedTiles.includes(t))
+          !selectedTiles.includes(t)
         );
         
         // Ajoute les tuiles sélectionnées au joueur

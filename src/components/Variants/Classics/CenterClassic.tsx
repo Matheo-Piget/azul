@@ -15,7 +15,7 @@ const CenterClassic = React.forwardRef<HTMLDivElement, CenterProps>(({ isAISelec
     const timer = setTimeout(() => setIsVisible(true), 100);
     return () => clearTimeout(timer);
   }, []);
-  if (gameState.center.length === 0) {
+  if (gameState.center.length === 0 && gameState.firstPlayerToken !== null) {
     return (
       <div className="center-container empty" ref={ref}>
         <div className="center center-empty">
@@ -31,7 +31,8 @@ const CenterClassic = React.forwardRef<HTMLDivElement, CenterProps>(({ isAISelec
     black: 0,
     teal: 0,
     green: 0,
-    joker: 0,
+    purple: 0,
+    orange: 0,
   };
   gameState.center.forEach(tile => {
     tilesByColor[tile.color]++;
@@ -39,21 +40,27 @@ const CenterClassic = React.forwardRef<HTMLDivElement, CenterProps>(({ isAISelec
   const hasSelectedTiles = selectedTiles && selectedTiles.length > 0;
   const selectedColor = hasSelectedTiles ? selectedTiles[0].color : null;
   const totalTiles = Object.values(tilesByColor).reduce((sum, count) => sum + count, 0);
+  const hasFirstPlayerToken = gameState.firstPlayerToken === null;
   return (
     <div 
-      className={`center-container ${gameState.center.length === 0 ? 'empty' : ''} ${isAISelecting ? 'ai-selecting' : ''}`}
+      className={`center-container ${gameState.center.length === 0 && !hasFirstPlayerToken ? 'empty' : ''} ${isAISelecting ? 'ai-selecting' : ''}`}
       ref={ref}
     >
       <div className={`center ${isVisible ? 'visible' : ''}`}>
-        {gameState.firstPlayerToken === null && (
-          <div className="first-player-token" title="Premier joueur">
-            <span className="marker-icon">1</span>
-          </div>
-        )}
         <div className="center-tiles">
+          {/* First Player Tile */}
+          {hasFirstPlayerToken && (
+            <div 
+              className="first-player-tile-group"
+              title="Tuile Premier Joueur - Le joueur qui la prend commencera le prochain tour"
+            >
+              <div className="first-player-tile">1</div>
+            </div>
+          )}
+          
           {Object.entries(tilesByColor).map(([color, count]) => {
             if (count === 0) return null;
-            const isSelectable = !hasSelectedTiles || selectedColor === color || !hasSelectedTiles && gameState.gamePhase === 'drafting';
+            const isSelectable = !hasSelectedTiles || selectedColor === color || (!hasSelectedTiles && gameState.gamePhase === 'drafting');
             const isSelected = selectedColor === color && hasSelectedTiles;
             return (
               <div 

@@ -79,7 +79,7 @@ describe('Game Setup', () => {
 
             // Count tiles by color
             const colorCounts: Record<TileColor, number> = {
-                blue: 0, yellow: 0, red: 0, black: 0, teal: 0, green: 0, joker: 0
+                blue: 0, yellow: 0, red: 0, black: 0, teal: 0, green: 0, purple: 0, orange: 0
             };
 
             totalTiles.forEach(tile => {
@@ -197,7 +197,7 @@ describe('Game Setup', () => {
             const tiles = createTiles();
             expect(tiles.length).toBe(100);
             const colorCounts: Record<TileColor, number> = {
-                blue: 0, yellow: 0, red: 0, black: 0, teal: 0, green: 0, joker: 0
+                blue: 0, yellow: 0, red: 0, black: 0, teal: 0, green: 0, purple: 0, orange: 0
             };
             tiles.forEach(tile => colorCounts[tile.color]++);
             Object.values(colorCounts).forEach(count => expect(count).toBe(20));

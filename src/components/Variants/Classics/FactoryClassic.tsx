@@ -27,7 +27,8 @@ const FactoryClassic = React.forwardRef<HTMLDivElement, FactoryProps>(({ factory
     black: 0,
     teal: 0,
     green: 0,
-    joker: 0,
+    purple: 0,
+    orange: 0,
   };
   factory.tiles.forEach(tile => {
     tilesByColor[tile.color]++;

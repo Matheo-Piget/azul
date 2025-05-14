@@ -192,44 +192,53 @@
     60% { transform: translateY(-2px); }
   }
   
-  .first-player-token {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 46px;
-    height: 46px;
-    border-radius: 50%;
+  /* Nouvelle tuile "Premier Joueur" */
+  .first-player-tile {
+    width: 36px;
+    height: 36px;
+    border-radius: 2px;
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 5;
     background: radial-gradient(circle, #1a3c5b 0%, #2e6ca4 100%);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25), 0 0 0 3px rgba(255, 255, 255, 0.6);
-    animation: float 3s ease-in-out infinite;
-  }
-  
-  @keyframes float {
-    0% { transform: translate(-50%, -50%); }
-    50% { transform: translate(-50%, -55%); }
-    100% { transform: translate(-50%, -50%); }
-  }
-  
-  .marker-icon {
     color: white;
     font-weight: bold;
-    font-size: 20px;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    font-size: 18px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+    margin: 2px;
+    position: relative;
+    overflow: hidden;
+    cursor: default;
+    transition: all 0.3s ease;
   }
   
-  .first-player-token::before {
+  .first-player-tile::before {
     content: '';
     position: absolute;
     width: 100%;
     height: 100%;
     top: 0;
     left: 0;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
-    border-radius: 50%;
-    opacity: 0.5;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
+    border-radius: 2px;
+  }
+  
+  .first-player-tile-group {
+    animation: pulse 2s infinite alternate;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 6px;
+    border-radius: 4px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    margin: 5px;
+  }
+  
+  @keyframes pulse {
+    0% { box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15); }
+    100% { box-shadow: 0 5px 15px rgba(26, 60, 91, 0.4); }
+  }
+
+  /* Ancienne version qui est maintenant masquée */
+  .first-player-token {
+    display: none; /* Caché car remplacé par la tuile */
   }

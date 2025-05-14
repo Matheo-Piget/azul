@@ -170,6 +170,15 @@
   opacity: 0.13;
   z-index: 0;
 }
+.summer-star.star-purple::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, #9c27b0 0%, #9c27b0 60%, transparent 100%);
+  opacity: 0.13;
+  z-index: 0;
+}
 
 /* Couleurs des étoiles */
 .star-blue { border: 2px solid #1565c0; }
@@ -215,7 +224,10 @@
 .tile-blue { background-color: #1976d2; }
 .tile-yellow { background-color: #ffc107; }
 .tile-red { background-color: #f44336; }
+.tile-black { background-color: #37474f; }
+.tile-teal { background-color: #00897b; }
 .tile-green { background-color: #4caf50; }
+.tile-joker { background-color: #b388ff; }
 .tile-purple { background-color: #9c27b0; }
 .tile-orange { background-color: #ff9800; }
 .tile-empty { 
@@ -425,4 +437,160 @@
 .star-tile-pos.placeable:hover {
   box-shadow: 0 0 0 6px #43a047, 0 4px 16px rgba(67,160,71,0.25);
   filter: brightness(1.08);
+}
+
+/* Styles pour la sélection des tuiles */
+.factory-color-group.selectable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.factory-color-group.selectable:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+}
+
+.factory-color-group.selectable .diamond-tile {
+  position: relative;
+}
+
+.factory-color-group.selectable .diamond-tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 70%);
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.factory-color-group.selectable:hover .diamond-tile::after {
+  opacity: 1;
+}
+
+/* Styles pour le centre */
+.tile-group.selectable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tile-group.selectable:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  z-index: 5;
+}
+
+.tile-group.selected {
+  background: rgba(240, 248, 255, 0.9);
+  box-shadow: 0 0 0 2px #3a8bc5, 0 6px 15px rgba(58, 139, 197, 0.2);
+  transform: translateY(-3px) scale(1.03);
+}
+
+.selectable {
+  animation: pulseSelectable 2s infinite alternate;
+}
+
+@keyframes pulseSelectable {
+  0% { box-shadow: 0 0 0 0 rgba(0, 137, 123, 0); }
+  100% { box-shadow: 0 0 5px 2px rgba(0, 137, 123, 0.3); }
+}
+
+/* Joker Indicator */
+.joker-indicator {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e1e8ed;
+  position: relative;
+  overflow: hidden;
+}
+
+.joker-indicator::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #1e88e5, #e53935, #fdd835, #00897b, #424242, #43a047);
+  opacity: 0.8;
+}
+
+.joker-indicator-label {
+  font-weight: 600;
+  color: #1a3c5b;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.joker-color-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.joker-display-tile {
+  transform: scale(1.2);
+  border: 2px solid #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  animation: pulsate 2s infinite;
+}
+
+.joker-color-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.joker-info {
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Marqueur premier joueur */
+.first-player-marker {
+  display: inline-block;
+  background-color: #1a3c5b;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Penalty Animation */
+@keyframes penaltyFlash {
+  0% { background-color: rgba(255, 0, 0, 0.1); }
+  50% { background-color: rgba(255, 0, 0, 0.2); }
+  100% { background-color: rgba(255, 0, 0, 0.1); }
+}
+
+.penalty-animation {
+  animation: penaltyFlash 0.8s ease-in-out 3;
+}
+
+/* Style pour l'indicateur de pénalité */
+.penalty-indicator {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background-color: #e53935;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 10;
 }

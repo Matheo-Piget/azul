@@ -2,6 +2,7 @@ import React from "react";
 import PlayerBoardSummer from "./PlayerBoardSummer";
 import FactorySummer from "./FactorySummer";
 import CenterSummer from "./CenterSummer";
+import JokerIndicator from "./JokerIndicator";
 import { useGame } from "../../../state/GameContext";
 import "../Classics/Gameboard.css";
 import AIPlayerConfig from "../../AI/AIPlayerConfig";
@@ -13,6 +14,11 @@ const GameBoardSummer: React.FC = () => {
   const currentPlayer = gameState.players.find(
     (p) => p.id === gameState.currentPlayer
   );
+
+  // Vérifier si un joueur a le marqueur premier joueur
+  const firstPlayerName = gameState.firstPlayerToken 
+    ? gameState.players.find(p => p.id === gameState.firstPlayerToken)?.name
+    : null;
 
   return (
     <div className="game-board game-board-summer">
@@ -41,11 +47,25 @@ const GameBoardSummer: React.FC = () => {
             </div>
             <div className="status-item current-player-info">
               <span className="status-label">Joueur actif</span>
-              <span className="status-value">{currentPlayer?.name}</span>
+              <span className="status-value">
+                {currentPlayer?.name}
+                {gameState.firstPlayerToken === currentPlayer?.id && (
+                  <span className="first-player-marker" title="Premier joueur">1</span>
+                )}
+              </span>
             </div>
+            {firstPlayerName && gameState.firstPlayerToken && (
+              <div className="status-item">
+                <span className="status-label">Premier joueur</span>
+                <span className="status-value">{firstPlayerName}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      <JokerIndicator />
+
       <div className="main-area">
         <div className="factories-area">
           <h2>Fabriques</h2>
@@ -64,7 +84,12 @@ const GameBoardSummer: React.FC = () => {
           <h2>Plateaux des joueurs</h2>
           <div className="players-container">
             {gameState.players.map((player) => (
-              <PlayerBoardSummer key={player.id} playerId={player.id} />
+              <div 
+                key={player.id}
+                className={`player-board-container ${player.id === gameState.currentPlayer ? 'active-player' : ''}`}
+              >
+                <PlayerBoardSummer playerId={player.id} />
+              </div>
             ))}
           </div>
         </div>

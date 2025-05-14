@@ -7,14 +7,15 @@ interface PlayerBoardSummerProps {
   playerId: string;
 }
 
-// Couleurs des 6 fleurs du Azul Summer Pavilion
+// Couleurs des 7 fleurs du Azul Summer Pavilion
 const FLOWER_COLORS: TileColor[] = [
   "blue",
   "yellow",
   "red",
   "black",
   "teal",
-  "green"
+  "green",
+  "purple"
 ];
 
 // Nombre de tuiles par fleur (6 positions, pas de centre)
@@ -244,10 +245,10 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
           ))}
         </div>
         
-        {/* 6 fleurs colorées autour */}
+        {/* 7 fleurs colorées autour */}
         {FLOWER_COLORS.map((color, flowerIdx) => {
           // Calculer la position de cette fleur autour du centre
-          const angle = (Math.PI / 3) * flowerIdx;
+          const angle = (2 * Math.PI / FLOWER_COLORS.length) * flowerIdx;
           const flowerCenterX = centerPoint + flowerRadius * Math.cos(angle);
           const flowerCenterY = centerPoint + flowerRadius * Math.sin(angle);
           // Obtenir les positions des tuiles pour cette fleur
