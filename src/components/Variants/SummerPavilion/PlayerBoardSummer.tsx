@@ -23,13 +23,14 @@ const TILES_PER_FLOWER = 6;
 // Coordonnées pour placer les tuiles en fleur hexagonale
 const getFlowerPositions = (centerX: number, centerY: number, tileSize: number) => {
   const positions = [];
-  const hexRadius = tileSize; // Augmenté pour un meilleur espacement
+  // Réduire hexRadius pour coller les tuiles
+  const hexRadius = tileSize * 0.8; // Réduit pour que les tuiles se touchent parfaitement
   
   // Positions des 6 tuiles formant une fleur hexagonale
   for (let i = 0; i < 6; i++) {
     const angle = (Math.PI / 3) * i;
     
-    // Ajuster pour que les losanges se touchent par un côté
+    // Ajuster pour que les losanges se touchent complètement
     positions.push({
       left: centerX + hexRadius * Math.cos(angle),
       top: centerY + hexRadius * Math.sin(angle),
@@ -112,8 +113,9 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
   // Dimensions et positionnement amélioré
   const boardSize = 500; // Taille du plateau
   const centerPoint = boardSize / 2;
-  const flowerRadius = 140; // Rayon pour les fleurs extérieures
-  const tileSize = 34; // Taille légèrement augmentée
+  // Réduire le rayon pour rapprocher les fleurs
+  const flowerRadius = 110; // Réduit pour que les fleurs soient plus proches du centre
+  const tileSize = 34; // Taille maintenue
   
   // Handler : sélection d'une tuile du sac
   const handleSelectBagTile = (idx: number) => {
@@ -223,7 +225,7 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
             position: 'absolute',
             left: '50%',
             top: '50%',
-            transform: 'translate(-33%, 100%)',
+            transform: 'translate(-33%, 90%)',
             rotate: '90deg',
             zIndex: 5
           }}
@@ -282,7 +284,8 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
                 position: 'absolute',
                 left: `${flowerCenterX}px`,
                 top: `${flowerCenterY}px`,
-                transform: 'translate(-50%, -100%)',
+                transform: 'translate(-100%, 125%)',
+                rotate: '90deg'
               }}
             >
               {positions.map((pos, posIdx) => {
