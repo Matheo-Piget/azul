@@ -223,7 +223,8 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
             position: 'absolute',
             left: '50%',
             top: '50%',
-            transform: 'translate(-50%, -50%)',
+            transform: 'translate(-33%, 100%)',
+            rotate: '90deg',
             zIndex: 5
           }}
         >
