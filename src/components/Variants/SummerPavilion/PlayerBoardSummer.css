@@ -66,7 +66,6 @@
 }
 
 .summer-star {
-  border-radius: 50%;
   position: relative;
   width: 130px;
   height: 130px;
@@ -86,57 +85,6 @@
   background-clip: padding-box;
   position: relative;
   overflow: hidden;
-}
-
-/* Halo coloré sous chaque fleur - Amélioré avec plus d'opacité */
-.summer-star.star-blue::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0.3;
-  z-index: 0;
-}
-.summer-star.star-yellow::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0.3;
-  z-index: 0;
-}
-.summer-star.star-red::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0.3;
-  z-index: 0;
-}
-.summer-star.star-black::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0.3;
-  z-index: 0;
-}
-.summer-star.star-teal::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0.3;
-  z-index: 0;
-}
-.summer-star.star-purple::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0.3;
-  z-index: 0;
-}
-.star-white::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0.2;
-  z-index: 0;
 }
 
 
@@ -220,16 +168,6 @@
   }
 }
 
-/* Position des emplacements - amélioré */
-.star-tile-pos {
-  position: absolute;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2;
-  transition: all 0.2s ease;
-}
-
 /* Effet de surbrillance au hover pour voir où placer les tuiles */
 .star-tile-pos:hover .tile-empty {
   opacity: 0.9;
@@ -255,11 +193,6 @@
 .joker-glow {
   box-shadow: 0 0 15px #b388ff, 0 0 25px rgba(179, 136, 255, 0.5);
   animation: pulsate-joker 1.5s infinite alternate;
-}
-
-.rosette-glow {
-  box-shadow: 0 0 15px gold, 0 0 25px rgba(255, 215, 0, 0.5);
-  animation: pulsate-rosette 1.5s infinite alternate;
 }
 
 @keyframes pulsate-joker {
