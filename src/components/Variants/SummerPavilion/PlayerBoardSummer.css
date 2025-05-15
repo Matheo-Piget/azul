@@ -1,18 +1,18 @@
 .player-board.summer-pavilion-board {
   position: relative;
-  width: 550px;
-  height: 550px;
+  width: 650px;
+  height: 650px;
   background-color: #f5f5dc;
   border-radius: 16px;
-  padding: 18px;
+  padding: 20px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 550px;
-  min-height: 550px;
+  min-width: 650px;
+  min-height: 650px;
   margin: 0 auto 32px auto;
 }
 
@@ -44,8 +44,8 @@
 
 .summer-stars-container {
   position: relative;
-  width: 400px;
-  height: 400px;
+  width: 500px;
+  height: 500px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -67,14 +67,14 @@
 
 .summer-star {
   position: relative;
-  width: 130px;
-  height: 130px;
+  width: 160px;
+  height: 160px;
 }
 
 /* Étoile centrale plus grande et plus visible */
 .center-star {
-  width: 140px !important;
-  height: 140px !important;
+  width: 175px !important;
+  height: 175px !important;
   z-index: 15 !important;
 }
 
@@ -91,8 +91,8 @@
 /* Tile styling */
 .diamond-tile {
   clip-path: polygon(50% 0%, 75% 50%, 50% 100%, 25% 50%);
-  width: 58px;
-  height: 58px;
+  width: 68px;
+  height: 68px;
   position: relative;
   transform-origin: center;
   transition: all 0.2s ease;
@@ -200,10 +200,6 @@
   100% { box-shadow: 0 0 16px #b388ff, 0 0 0 5px rgba(179, 136, 255, 0.5); }
 }
 
-@keyframes pulsate-rosette {
-  0% { box-shadow: 0 0 8px gold, 0 0 0 3px rgba(255, 215, 0, 0.3); }
-  100% { box-shadow: 0 0 16px gold, 0 0 0 5px rgba(255, 215, 0, 0.5); }
-}
 
 /* Sac personnel et tuiles sauvegardées */
 .player-status {

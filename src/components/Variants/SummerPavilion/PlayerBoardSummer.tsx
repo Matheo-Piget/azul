@@ -23,8 +23,8 @@ const TILES_PER_FLOWER = 6;
 // Coordonnées pour placer les tuiles en fleur hexagonale
 const getFlowerPositions = (centerX: number, centerY: number, tileSize: number) => {
   const positions = [];
-  // Réduire hexRadius pour coller les tuiles
-  const hexRadius = tileSize * 0.8; // Réduit pour que les tuiles se touchent parfaitement
+  // Ajuster hexRadius en fonction de la nouvelle taille des tuiles tout en gardant les tuiles collées
+  const hexRadius = tileSize * 0.82; // Légèrement ajusté pour maintenir le même effet de tuiles collées
   
   // Positions des 6 tuiles formant une fleur hexagonale
   for (let i = 0; i < 6; i++) {
@@ -111,11 +111,11 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
   };
 
   // Dimensions et positionnement amélioré
-  const boardSize = 500; // Taille du plateau
+  const boardSize = 600; // Augmenté pour correspondre à la nouvelle taille du plateau
   const centerPoint = boardSize / 2;
   // Réduire le rayon pour rapprocher les fleurs
-  const flowerRadius = 99; // Réduit pour que les fleurs soient plus proches du centre
-  const tileSize = 34; // Taille maintenue
+  const flowerRadius = 120; // Augmenté proportionnellement
+  const tileSize = 40; // Augmenté pour correspondre à la nouvelle taille des tuiles
   
   // Handler : sélection d'une tuile du sac
   const handleSelectBagTile = (idx: number) => {
@@ -225,7 +225,7 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
             position: 'absolute',
             left: '50%',
             top: '50%',
-            transform: 'translate(-22%, 85%)',
+            transform: 'translate(-35%, 94%)',
             rotate: '90deg',
             zIndex: 5
           }}
@@ -279,7 +279,7 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
           return (
             <div
               key={`flower-${color}`}
-              className={`summer-star star-${color} ${jokerColor === color ? 'joker-glow' : ''} ${isFlowerComplete(flowerIdx) ? 'rosette-glow' : ''}`}
+              className={`summer-star star-${color}`}
               style={{
                 position: 'absolute',
                 left: `${flowerCenterX}px`,
