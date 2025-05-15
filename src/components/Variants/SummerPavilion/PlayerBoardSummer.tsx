@@ -114,8 +114,8 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
   const boardSize = 600; // Augmenté pour correspondre à la nouvelle taille du plateau
   const centerPoint = boardSize / 2;
   // Réduire le rayon pour rapprocher les fleurs
-  const flowerRadius = 120; // Augmenté proportionnellement
-  const tileSize = 40; // Augmenté pour correspondre à la nouvelle taille des tuiles
+  const flowerRadius = 111; // Augmenté proportionnellement
+  const tileSize = 37; // Augmenté pour correspondre à la nouvelle taille des tuiles
   
   // Handler : sélection d'une tuile du sac
   const handleSelectBagTile = (idx: number) => {
@@ -225,7 +225,7 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
             position: 'absolute',
             left: '50%',
             top: '50%',
-            transform: 'translate(-35%, 94%)',
+            transform: 'translate(-33%, 94%)',
             rotate: '90deg',
             zIndex: 5
           }}

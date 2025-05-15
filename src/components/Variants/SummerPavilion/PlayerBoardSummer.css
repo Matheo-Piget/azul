@@ -79,20 +79,24 @@
 }
 
 .summer-star .diamond-tile {
-  box-shadow: 0 2px 10px rgba(0,0,0,0.13), 0 0 0 2px rgba(255,255,255,0.13);
-  border-radius: 8px;
-  margin: 2px;
-  background-clip: padding-box;
+  clip-path: polygon(50% 0%, 80% 50%, 50% 100%, 20% 50%);
+  width: 60px;
+  height: 60px;
   position: relative;
-  overflow: hidden;
+  transform-origin: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  margin: 0;
+  border: 5px solid rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
 }
 
 
 /* Tile styling */
 .diamond-tile {
-  clip-path: polygon(50% 0%, 75% 50%, 50% 100%, 25% 50%);
-  width: 68px;
-  height: 68px;
+  clip-path: polygon(50% 0%, 80% 50%, 50% 100%, 20% 50%);
+  width: 60px;
+  height: 60px;
   position: relative;
   transform-origin: center;
   transition: all 0.2s ease;
