@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import GameBoard from './components/Board/GameBoard';
 import GameBoardSummer from './components/Variants/SummerPavilion/GameBoardSummer';
-import { GameProvider } from './state/GameContext';
+import { GameProvider, useGame } from './state/GameContext';
 import { NotificationProvider } from './components/UI/NotificationSystem';
 import { TutorialProvider } from './components/Tutorial/TutorialSystem';
 import './App.css';
@@ -11,6 +11,24 @@ const VARIANTS = [
   { value: "summer", label: "Azul : Pavillon d'été" },
   // { value: "sintra", label: "Azul : Les vitraux de Sintra" },
 ];
+
+// Composant conteneur pour gérer le changement de variante
+const GameContainer: React.FC<{ variant: string }> = ({ variant }) => {
+  const { setVariant, startNewGame } = useGame();
+  const prevVariantRef = useRef(variant);
+  
+  // Effet pour changer la variante et démarrer une nouvelle partie
+  useEffect(() => {
+    if (variant !== prevVariantRef.current) {
+      setVariant(variant);
+      // Démarrer une nouvelle partie avec 2 joueurs par défaut
+      startNewGame(2);
+      prevVariantRef.current = variant;
+    }
+  }, [variant, setVariant, startNewGame]);
+
+  return variant === 'summer' ? <GameBoardSummer /> : <GameBoard />;
+};
 
 const App: React.FC = () => {
   const [variant, setVariant] = useState("classic");
@@ -31,9 +49,13 @@ const App: React.FC = () => {
                 <option key={v.value} value={v.value}>{v.label}</option>
               ))}
             </select>
+            <div style={{ fontSize: 13, color: '#666', marginTop: 6 }}>
+              Changer de variante lancera automatiquement une nouvelle partie.
+              Chaque variante a ses propres règles et mécaniques.
+            </div>
           </div>
           <GameProvider initialVariant={variant}>
-            {variant === 'summer' ? <GameBoardSummer /> : <GameBoard />}
+            <GameContainer variant={variant} />
           </GameProvider>
         </TutorialProvider>
       </NotificationProvider>

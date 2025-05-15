@@ -1,6 +1,7 @@
 import { AzulGameEngine } from '../../models/AzulGameEngine';
 import { GameState, TileColor, Tile, Player } from '../../models/types';
 import { calculateSummerPavilionScore } from '../scoring/summerScoring';
+import { shuffle } from '../utils';
 
 // Couleurs Summer Pavilion officielles (violet, vert, orange, jaune, bleu, rouge)
 const SUMMER_COLORS: TileColor[] = ['purple', 'green', 'orange', 'yellow', 'blue', 'red'];
@@ -46,30 +47,58 @@ function createSummerPlayer(id: string, name: string): Player {
   };
 }
 
+const createSummerFactories = (playerCount: number) => {
+  const factoryCount = playerCount * 2 + 1;
+  const factories = [];
+  
+  for (let i = 0; i < factoryCount; i++) {
+    factories.push({
+      id: i,
+      tiles: []
+    });
+  }
+  
+  return factories;
+};
+
 export class SummerPavilionEngine implements AzulGameEngine {
   initializeGame(players: string[]): GameState {
     // Création des joueurs
     const playerObjs: Player[] = players.map((name, i) =>
       createSummerPlayer(`summer-${i}`, name)
     );
+    
     // Création des tuiles
     const tiles = createSummerTiles();
+
+    // Shuffle the tiles
+    const shuffledTiles = shuffle(tiles);
+
+    // Create factories
+    const factories = createSummerFactories(players.length);
+
     // Manche 1, couleur joker initiale
     const roundNumber = 1;
-    const jokerColor = getJokerColorForRound(roundNumber);
-    return {
+
+    // Create initial game state
+    let gameState: GameState = {
       players: playerObjs,
-      factories: [], // À remplir
+      factories: factories,
       center: [],
-      bag: tiles,
+      bag: shuffledTiles,
       discardPile: [],
       currentPlayer: playerObjs[0].id,
-      gamePhase: 'drafting',
+      gamePhase: "drafting",
       firstPlayerToken: null,
-      roundNumber,
-      jokerColor,
+      roundNumber: 1,
+      jokerColor: getJokerColorForRound(roundNumber),
       maxRounds: MAX_ROUNDS,
     };
+
+    // Distribute tiles to factories
+    gameState = this.distributeFactoryTiles(gameState);
+
+    return gameState;
   }
 
   canSelectTiles(gameState: GameState, factoryId: number | null, color: TileColor): boolean {
@@ -504,12 +533,7 @@ export class SummerPavilionEngine implements AzulGameEngine {
   }
   
   shuffle<T>(array: T[]): T[] {
-    const newArray = [...array];
-    for (let i = newArray.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-    }
-    return newArray;
+    return shuffle(array);
   }
   
   calculateFinalScore(gameState: GameState): GameState {

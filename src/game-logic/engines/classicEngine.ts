@@ -1,15 +1,100 @@
 import { AzulGameEngine } from "../../models/AzulGameEngine";
 import { GameState, TileColor, Tile, Player, PlayerBoard } from "../../models/types";
-import {
-  createPlayerBoard,
-  createTiles,
-  createPlayer,
-  generateId,
-  shuffle,
-  createFactories,
-  distributeFactoryTiles,
-} from "./../setup";
+import { shuffle } from '../utils';
 import { calculateClassicScore } from '../scoring/classicScoring';
+
+// Ces fonctions sont importées ici pour éviter les références circulaires
+const generateId = (): string => {
+  return Math.random().toString(36).substring(2, 10);
+};
+
+// Fonction auxiliaire pour créer un plateau de joueur
+const createClassicPlayerBoard = (): PlayerBoard => {
+  // Create pattern lines (1 to 5 spaces)
+  const patternLines = [];
+  for (let i = 0; i < 5; i++) {
+    patternLines.push({
+      spaces: i + 1,
+      tiles: [],
+      color: null
+    });
+  }
+  
+  // Create wall (5x5)
+  const wallColorPattern: TileColor[][] = [
+    ['blue', 'yellow', 'red', 'black', 'teal'],
+    ['teal', 'blue', 'yellow', 'red', 'black'],
+    ['black', 'teal', 'blue', 'yellow', 'red'],
+    ['red', 'black', 'teal', 'blue', 'yellow'],
+    ['yellow', 'red', 'black', 'teal', 'blue']
+  ];
+  
+  const wall = [];
+  for (let row = 0; row < 5; row++) {
+    const wallRow = [];
+    // Shift each row to create the wall pattern
+    const shiftedColors = [...wallColorPattern[row]];
+    
+    for (let col = 0; col < 5; col++) {
+      wallRow.push({
+        row,
+        column: col,
+        color: shiftedColors[col],
+        filled: false
+      });
+    }
+    wall.push(wallRow);
+  }
+  
+  return {
+    patternLines,
+    wall,
+    floorLine: [],
+    score: 0
+  };
+};
+
+// Fonction auxiliaire pour créer un joueur
+const createClassicPlayer = (id: string, name: string): Player => {
+  return {
+    id,
+    name,
+    board: createClassicPlayerBoard()
+  };
+};
+
+// Fonction auxiliaire pour créer des tuiles
+const createClassicTiles = (): Tile[] => {
+  const colors: TileColor[] = ['blue', 'yellow', 'red', 'black', 'teal'];
+  const tiles: Tile[] = [];
+  
+  // 20 tiles of each color
+  for (const color of colors) {
+    for (let i = 0; i < 20; i++) {
+      tiles.push({
+        id: generateId(),
+        color
+      });
+    }
+  }
+  
+  return shuffle(tiles);
+};
+
+// Fonction auxiliaire pour créer des fabriques
+const createClassicFactories = (playerCount: number) => {
+  const factoryCount = playerCount * 2 + 1;
+  const factories = [];
+  
+  for (let i = 0; i < factoryCount; i++) {
+    factories.push({
+      id: i,
+      tiles: []
+    });
+  }
+  
+  return factories;
+};
 
 export class ClassicAzulEngine implements AzulGameEngine {
   initializeGame = (players: string[]): GameState => {
@@ -20,17 +105,17 @@ export class ClassicAzulEngine implements AzulGameEngine {
     }
 
     const playerObjs: Player[] = players.map((name, i) =>
-      createPlayer(generateId(), name)
+      createClassicPlayer(generateId(), name)
     );
 
     // Create all tiles
-    const tiles = createTiles();
+    const tiles = createClassicTiles();
 
     // Shuffle the tiles
     const shuffledTiles = shuffle(tiles);
 
     // Create factories
-    const factories = createFactories(playerCount);
+    const factories = createClassicFactories(playerCount);
 
     // Create initial game state
     let gameState: GameState = {
@@ -46,10 +131,35 @@ export class ClassicAzulEngine implements AzulGameEngine {
     };
 
     // Distribute tiles to factories
-    gameState = distributeFactoryTiles(gameState);
+    gameState = this.distributeFactoryTiles(gameState);
 
     return gameState;
   };
+
+  distributeFactoryTiles = (gameState: GameState): GameState => {
+    // Create a safe deep copy of the state
+    const newState = JSON.parse(JSON.stringify(gameState)) as GameState;
+    
+    // For each factory
+    for (const factory of newState.factories) {
+      // Clear existing tiles
+      factory.tiles = [];
+      
+      // Add 4 tiles (or as many as available)
+      for (let i = 0; i < 4 && newState.bag.length > 0; i++) {
+        // Get a random tile from the bag
+        const randomIndex = Math.floor(Math.random() * newState.bag.length);
+        const tile = newState.bag[randomIndex];
+        
+        // Add to factory and remove from bag
+        factory.tiles.push(tile);
+        newState.bag.splice(randomIndex, 1);
+      }
+    }
+    
+    return newState;
+  };
+
   canSelectTiles = (
     gameState: GameState,
     factoryId: number | null,
@@ -362,7 +472,7 @@ export class ClassicAzulEngine implements AzulGameEngine {
           newState.discardPile = [];
           newState.bag = shuffle(newState.bag);
         }
-        newState = distributeFactoryTiles(newState);
+        newState = this.distributeFactoryTiles(newState);
         newState.gamePhase = "drafting";
       }
       return newState;

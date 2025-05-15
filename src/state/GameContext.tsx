@@ -7,7 +7,7 @@ import React, {
   useRef,
   useMemo,
 } from "react";
-import { GameState, TileColor, Tile } from "../models/types";
+import { GameState, TileColor, Tile, Player } from "../models/types";
 import { initializeGame, distributeFactoryTiles } from "../game-logic/setup";
 import { getAIMove, AIDifficulty } from "../game-logic/ai/aiPlayer";
 import { saveGameStats, generateGameId } from "../utils/SaveService";
@@ -238,8 +238,13 @@ export const GameProvider: React.FC<GameProviderProps> = ({
    */
   const startNewGame = useCallback(
     (playerCount: number, keepAiSettings = false) => {
+      if (!engine) return;
+
       const currentAiPlayers = aiPlayersRef.current;
-      const newGameState = initializeGame(playerCount);
+      
+      // Utilisation de l'engine en cours plutôt que ClassicAzulEngine
+      const playerNames = Array.from({ length: playerCount }, (_, i) => `Joueur ${i + 1}`);
+      const newGameState = engine.initializeGame(playerNames);
 
       setGameState(newGameState);
       setSelectedTiles([]);
@@ -252,7 +257,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({
         const newAiPlayers: Record<string, AIDifficulty> = {};
 
         // Pour chaque nouveau joueur
-        newGameState.players.forEach((player, index) => {
+        newGameState.players.forEach((player: Player, index: number) => {
           // Récupérer le joueur précédent à la même position s'il existe
           const previousPlayers = gameStateRef.current?.players || [];
           if (index < previousPlayers.length) {
@@ -269,7 +274,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({
         setAIPlayers({});
       }
     },
-    []
+    [engine] // Ajout de engine comme dépendance
   );
 
   /**
@@ -444,42 +449,76 @@ export const GameProvider: React.FC<GameProviderProps> = ({
           );
         }
 
-        // Start animation
-        setAiAnimation({
-          playerId: currentPlayerId,
-          sourceType: aiDecision.factoryId !== null ? "factory" : "center",
-          sourceId: aiDecision.factoryId,
-          tiles: tilesToSelect,
-          targetType:
-            aiDecision.patternLineIndex === -1 ? "floorLine" : "patternLine",
-          targetIndex: aiDecision.patternLineIndex,
-          color: aiDecision.color,
-          isAnimating: true,
-        });
-
-        // Delay based on AI speed setting
+        // Animation delay based on speed setting
         const delayMap = {
           fast: 500,
           normal: 1000,
           slow: 1800,
         };
 
-        // Select tiles after a brief delay to show the selection
-        setTimeout(() => {
-          selectTiles(aiDecision.factoryId, aiDecision.color);
+        if (variant === 'classic') {
+          // Classic Azul animation flow
+          setAiAnimation({
+            playerId: currentPlayerId,
+            sourceType: aiDecision.factoryId !== null ? "factory" : "center",
+            sourceId: aiDecision.factoryId,
+            tiles: tilesToSelect,
+            targetType:
+              aiDecision.patternLineIndex === -1 ? "floorLine" : "patternLine",
+            targetIndex: aiDecision.patternLineIndex,
+            color: aiDecision.color,
+            isAnimating: true,
+          });
 
-          // Place tiles after animation completes
+          // Select tiles after a brief delay to show the selection
           setTimeout(() => {
-            placeTiles(aiDecision.patternLineIndex);
-            setAiAnimation(null);
-          }, delayMap[aiSpeed] / 2);
-        }, 300);
+            selectTiles(aiDecision.factoryId, aiDecision.color);
+
+            // Place tiles after animation completes
+            setTimeout(() => {
+              placeTiles(aiDecision.patternLineIndex);
+              setAiAnimation(null);
+            }, delayMap[aiSpeed] / 2);
+          }, 300);
+        } else if (variant === 'summer') {
+          // Summer Pavilion AI flow - simplified for now
+          // Phase 1: Sélection des tuiles
+          if (currentGameState.gamePhase === 'drafting') {
+            selectTiles(aiDecision.factoryId, aiDecision.color);
+          } 
+          // Phase 2: Placement des tuiles (basique pour l'instant)
+          else if (currentGameState.gamePhase === 'tiling') {
+            // Logique simplifiée: placer une tuile dans une fleur aléatoire au coût minimum
+            const player = currentGameState.players.find(p => p.id === currentPlayerId);
+            if (player && player.board.collectedTiles && player.board.collectedTiles.length > 0) {
+              // Prendre la 1ère tuile disponible et la placer dans une position valide
+              const availableTile = player.board.collectedTiles[0];
+              // Trouver une position valide (pour une implémentation plus avancée, la recherche serait plus sophistiquée)
+              // Pour l'instant: placer sur sa fleur correspondante au coût minimum (1)
+              const flowerIndex = ['blue', 'yellow', 'red', 'black', 'teal', 'green', 'purple'].indexOf(availableTile.color);
+              if (flowerIndex >= 0) {
+                placeTiles({
+                  color: availableTile.color,
+                  targetFlower: flowerIndex,
+                  targetPos: 0,  // Position 0 = coût 1
+                  cost: 1        // Coût minimum
+                });
+              } else {
+                // Si la couleur n'est pas dans la liste, ou c'est un joker, passer son tour
+                placeTiles({ pass: true });
+              }
+            } else {
+              // Aucune tuile disponible, passer
+              placeTiles({ pass: true });
+            }
+          }
+        }
       } catch (error) {
         console.error("Error during AI turn:", error);
         setAiAnimation(null);
       }
     }
-  }, [selectTiles, placeTiles, aiSpeed]);
+  }, [selectTiles, placeTiles, aiSpeed, variant]);
 
   /**
    * Effect to trigger AI turns automatically when it's an AI player's turn

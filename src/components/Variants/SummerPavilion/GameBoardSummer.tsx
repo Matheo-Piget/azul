@@ -1,14 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import PlayerBoardSummer from "./PlayerBoardSummer";
 import FactorySummer from "./FactorySummer";
 import CenterSummer from "./CenterSummer";
 import JokerIndicator from "./JokerIndicator";
 import { useGame } from "../../../state/GameContext";
-import "../Classics/Gameboard.css";
+import "./GameboardSummer.css";
 import AIPlayerConfig from "../../AI/AIPlayerConfig";
 
 const GameBoardSummer: React.FC = () => {
-  const { gameState } = useGame();
+  const { gameState, startNewGame } = useGame();
+  const [playerCount, setPlayerCount] = useState(2);
 
   // Trouver le joueur actif
   const currentPlayer = gameState.players.find(
@@ -19,6 +20,13 @@ const GameBoardSummer: React.FC = () => {
   const firstPlayerName = gameState.firstPlayerToken 
     ? gameState.players.find(p => p.id === gameState.firstPlayerToken)?.name
     : null;
+
+  /**
+   * Gère le clic sur le bouton nouvelle partie
+   */
+  const handleNewGame = () => {
+    startNewGame(playerCount);
+  };
 
   return (
     <div className="game-board game-board-summer">
@@ -60,6 +68,28 @@ const GameBoardSummer: React.FC = () => {
                 <span className="status-value">{firstPlayerName}</span>
               </div>
             )}
+          </div>
+
+          <div className="game-controls">
+            <select
+              id="player-count-select"
+              value={playerCount}
+              onChange={(e) => setPlayerCount(parseInt(e.target.value))}
+              className="player-select"
+              aria-label="Sélectionner le nombre de joueurs"
+            >
+              <option value="2">2 joueurs</option>
+              <option value="3">3 joueurs</option>
+              <option value="4">4 joueurs</option>
+            </select>
+            <button
+              onClick={handleNewGame}
+              className="new-game-btn"
+              aria-label="Démarrer une nouvelle partie"
+            >
+              <span className="btn-icon">+</span>
+              <span>Nouvelle partie</span>
+            </button>
           </div>
         </div>
       </div>

@@ -1,0 +1,311 @@
+* --- GameBoard Summer Pavilion --- */
+.game-board-summer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 0 32px 0;
+  font-family: 'Libre Baskerville', 'Segoe UI', serif;
+  background: linear-gradient(135deg, #e0f7fa 0%, #f5f7fa 100%);
+  color: #2c3e50;
+  min-height: 100vh;
+  position: relative;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+  overflow-x: hidden;
+}
+.game-board-summer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231a3c5b' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.13;
+  z-index: 0;
+  border-radius: 18px;
+  pointer-events: none;
+}
+
+.factories-center-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 48px;
+  margin-bottom: 36px;
+  position: relative;
+  z-index: 1;
+}
+
+.factories {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  background: rgba(255,255,255,0.85);
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  padding: 24px 18px;
+  min-width: 320px;
+}
+
+.player-boards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 36px;
+  justify-content: center;
+  margin-top: 32px;
+  z-index: 1;
+}
+
+/* Titre pour la zone factories et joueurs */
+.factories::before {
+  content: 'Fabriques';
+  display: block;
+  font-size: 22px;
+  color: #00796b;
+  font-weight: 700;
+  margin-bottom: 18px;
+  letter-spacing: 1px;
+  text-align: center;
+}
+.player-boards::before {
+  content: 'Plateaux des joueurs';
+  display: block;
+  font-size: 22px;
+  color: #1a3c5b;
+  font-weight: 700;
+  margin-bottom: 18px;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .factories-center-row {
+    flex-direction: column;
+    gap: 24px;
+    align-items: center;
+  }
+  .factories {
+    min-width: unset;
+    width: 100%;
+    padding: 18px 6px;
+  }
+  .player-boards {
+    gap: 18px;
+    margin-top: 18px;
+  }
+}
+
+@media (max-width: 600px) {
+  .game-board-summer {
+    padding: 8px 0 8px 0;
+  }
+  .factories {
+    flex-direction: column;
+    gap: 12px;
+    padding: 10px 2px;
+  }
+  .player-boards {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+/* Bag personnel sous le plateau Summer Pavilion */
+.bag-summer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 18px auto 0 auto;
+  padding: 8px 18px;
+  background: rgba(255,255,255,0.85);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  min-width: 120px;
+  max-width: 260px;
+  font-size: 15px;
+  gap: 10px;
+}
+.bag-label {
+  color: #1a3c5b;
+  font-weight: 600;
+  margin-right: 8px;
+}
+.bag-tiles {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.bag-tile {
+  width: 28px;
+  height: 28px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+  border-radius: 6px;
+}
+.bag-empty {
+  color: #bbb;
+  font-style: italic;
+  font-size: 14px;
+}
+
+.bag-tile.selected {
+  border: 3px solid #43a047;
+  box-shadow: 0 0 0 4px #b2dfdb;
+  filter: brightness(1.15);
+  z-index: 3;
+}
+
+/* Styles pour la sélection des tuiles */
+.factory-color-group.selectable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.factory-color-group.selectable:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+}
+
+.factory-color-group.selectable .diamond-tile {
+  position: relative;
+}
+
+.factory-color-group.selectable .diamond-tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 70%);
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.factory-color-group.selectable:hover .diamond-tile::after {
+  opacity: 1;
+}
+
+/* Styles pour le centre */
+.tile-group.selectable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tile-group.selectable:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  z-index: 5;
+}
+
+.tile-group.selected {
+  background: rgba(240, 248, 255, 0.9);
+  box-shadow: 0 0 0 2px #3a8bc5, 0 6px 15px rgba(58, 139, 197, 0.2);
+  transform: translateY(-3px) scale(1.03);
+}
+
+.selectable {
+  animation: pulseSelectable 2s infinite alternate;
+}
+
+@keyframes pulseSelectable {
+  0% { box-shadow: 0 0 0 0 rgba(0, 137, 123, 0); }
+  100% { box-shadow: 0 0 5px 2px rgba(0, 137, 123, 0.3); }
+}
+
+/* Joker Indicator */
+.joker-indicator {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e1e8ed;
+  position: relative;
+  overflow: hidden;
+}
+
+.joker-indicator::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #1e88e5, #e53935, #fdd835, #00897b, #424242, #43a047);
+  opacity: 0.8;
+}
+
+.joker-indicator-label {
+  font-weight: 600;
+  color: #1a3c5b;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.joker-color-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.joker-display-tile {
+  transform: scale(1.2);
+  border: 2px solid #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  animation: pulsate 2s infinite;
+}
+
+.joker-color-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.joker-info {
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Marqueur premier joueur */
+.first-player-marker {
+  display: inline-block;
+  background-color: #1a3c5b;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Penalty Animation */
+@keyframes penaltyFlash {
+  0% { background-color: rgba(255, 0, 0, 0.1); }
+  50% { background-color: rgba(255, 0, 0, 0.2); }
+  100% { background-color: rgba(255, 0, 0, 0.1); }
+}
+
+.penalty-animation {
+  animation: penaltyFlash 0.8s ease-in-out 3;
+}
+
+/* Style pour l'indicateur de pénalité */
+.penalty-indicator {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background-color: #e53935;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
