@@ -21,20 +21,16 @@ const FLOWER_COLORS: TileColor[] = [
 const TILES_PER_FLOWER = 6;
 
 // Coordonnées pour placer les tuiles en fleur hexagonale
-const getFlowerPositions = (centerX: number, centerY: number, tileSize: number) => {
+const getFlowerPositions = (tileSize: number) => {
   const positions = [];
-  // Ajuster hexRadius en fonction de la nouvelle taille des tuiles tout en gardant les tuiles collées
-  const hexRadius = tileSize * 0.82; // Légèrement ajusté pour maintenir le même effet de tuiles collées
+  const hexRadius = tileSize * 0.85; // Ajusté pour que les tuiles se touchent
   
-  // Positions des 6 tuiles formant une fleur hexagonale
   for (let i = 0; i < 6; i++) {
     const angle = (Math.PI / 3) * i;
-    
-    // Ajuster pour que les losanges se touchent complètement
     positions.push({
-      left: centerX + hexRadius * Math.cos(angle),
-      top: centerY + hexRadius * Math.sin(angle),
-      rotate: angle * (180 / Math.PI) + 90, // Orientation pour que les côtés se touchent
+      left: hexRadius * Math.cos(angle),
+      top: hexRadius * Math.sin(angle),
+      rotate: angle * (180 / Math.PI) + 90,
     });
   }
   
@@ -110,12 +106,7 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
     return placedTiles[flowerIdx].every(tile => tile !== "empty");
   };
 
-  // Dimensions et positionnement amélioré
-  const boardSize = 600; // Augmenté pour correspondre à la nouvelle taille du plateau
-  const centerPoint = boardSize / 2;
-  // Réduire le rayon pour rapprocher les fleurs
-  const flowerRadius = 111; // Augmenté proportionnellement
-  const tileSize = 37; // Augmenté pour correspondre à la nouvelle taille des tuiles
+  const tileSize = 36; // Augmenté pour correspondre à la nouvelle taille des tuiles
   
   // Handler : sélection d'une tuile du sac
   const handleSelectBagTile = (idx: number) => {
@@ -175,6 +166,10 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
   // Afficher les tuiles sauvegardées de la manche précédente
   const savedTiles = player?.board.savedTiles || [];
 
+  // Pour la transparence avant placement, on vérifie si la tuile sélectionnée est utilisable
+  const selectedTileColor = selectedBagIdx !== null && player?.board.collectedTiles ?
+    player.board.collectedTiles[selectedBagIdx]?.color : null;
+
   return (
     <div className="player-board summer-pavilion-board">
       <div className="player-board-header">
@@ -219,26 +214,10 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
 
       <div className="summer-stars-container">
         {/* Fleur centrale (neutre) */}
-        <div
-          className="summer-star center-star"
-          style={{
-            position: 'absolute',
-            left: '50%',
-            top: '50%',
-            transform: 'translate(-33%, 94%)',
-            rotate: '90deg',
-            zIndex: 5
-          }}
-        >
-          {getFlowerPositions(0, 0, tileSize).map((pos, i) => {
+        <div className="summer-star center-star">
+          {getFlowerPositions(tileSize).map((pos, i) => {
             const tileColor = placedTiles[6] ? placedTiles[6][i] : "empty";
-            
-            // Highlight si une tuile du bag est sélectionnée et la case est vide
             const isPlaceable = selectedBagIdx !== null && tileColor === "empty" && isCurrentPlayer;
-            
-            // Pour la transparence avant placement
-            const selectedTileColor = selectedBagIdx !== null && player?.board.collectedTiles ?
-              player.board.collectedTiles[selectedBagIdx]?.color : null;
             
             // On peut placer sur la centrale avec n'importe quelle couleur (règle du jeu)
             const canPlaceSelectedTile = isPlaceable;
@@ -249,85 +228,56 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
                 className={`star-tile-pos${isPlaceable ? ' placeable' : ''}${canPlaceSelectedTile ? ' can-place-selected' : ''}`}
                 style={{
                   position: 'absolute',
-                  left: pos.left - tileSize/2,
-                  top: pos.top - tileSize/2,
+                  left: `calc(50% + ${pos.left}px - 30px)`, // 30px = moitié de la largeur de la tuile
+                  top: `calc(50% + ${pos.top}px - 30px)`, // 30px = moitié de la hauteur de la tuile
+                  transform: `rotate(${pos.rotate}deg)`,
                   cursor: isPlaceable ? 'pointer' : 'default'
                 }}
                 onClick={() => isPlaceable && handlePlaceTile(6, i)}
                 title={tileColor === "empty" ? `Position centrale ${i+1}` : `Tuile ${tileColor} déjà placée`}
               >
-                <DiamondTile 
-                  color={tileColor} 
-                  size="medium" 
-                  rotate={pos.rotate}
-                />
+                <DiamondTile color={tileColor} size="medium" />
               </div>
             );
           })}
         </div>
         
         {/* 6 fleurs colorées autour */}
-        {FLOWER_COLORS.map((color, flowerIdx) => {
-          // Calculer la position de cette fleur autour du centre (répartition hexagonale)
-          const angle = (2 * Math.PI / FLOWER_COLORS.length) * flowerIdx;
-          const flowerCenterX = centerPoint + flowerRadius * Math.cos(angle);
-          const flowerCenterY = centerPoint + flowerRadius * Math.sin(angle);
-          
-          // Obtenir les positions des tuiles pour cette fleur
-          const positions = getFlowerPositions(0, 0, tileSize);
-          
-          return (
-            <div
-              key={`flower-${color}`}
-              className={`summer-star star-${color}`}
-              style={{
-                position: 'absolute',
-                left: `${flowerCenterX}px`,
-                top: `${flowerCenterY}px`,
-                transform: 'translate(-100%, 125%)',
-                rotate: '90deg'
-              }}
-            >
-              {positions.map((pos, posIdx) => {
-                const tileColor = placedTiles[flowerIdx][posIdx];
-                
-                // Highlight si une tuile du bag est sélectionnée et la case est vide
-                const isPlaceable = selectedBagIdx !== null && tileColor === "empty" && isCurrentPlayer;
-                
-                // Pour la transparence avant placement, on vérifie si la tuile sélectionnée est utilisable sur cette fleur
-                const selectedTileColor = selectedBagIdx !== null && player?.board.collectedTiles ?
-                  player.board.collectedTiles[selectedBagIdx]?.color : null;
-                
-                // Règle du jeu: on peut placer une tuile si elle est de la même couleur que la fleur
-                // OU si c'est un joker (tuile de la couleur du joker du tour)
-                const canPlaceSelectedTile = isPlaceable && 
-                  (selectedTileColor === color || selectedTileColor === jokerColor);
-                
-                return (
-                  <div
-                    key={`${color}-pos-${posIdx}`}
-                    className={`star-tile-pos${isPlaceable ? ' placeable' : ''}${canPlaceSelectedTile ? ' can-place-selected' : ''}`}
-                    style={{
-                      position: 'absolute',
-                      left: pos.left - tileSize/2,
-                      top: pos.top - tileSize/2,
-                      cursor: isPlaceable && canPlaceSelectedTile ? 'pointer' : 'default',
-                      zIndex: isPlaceable ? 5 : undefined,
-                    }}
-                    onClick={() => isPlaceable && canPlaceSelectedTile && handlePlaceTile(flowerIdx, posIdx)}
-                    title={tileColor === "empty" ? `Position ${posIdx+1} - ${color}` : `Tuile ${tileColor} déjà placée`}
-                  >
-                    <DiamondTile 
-                      color={tileColor} 
-                      size="medium" 
-                      rotate={pos.rotate}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
+        {FLOWER_COLORS.map((color, flowerIdx) => (
+          <div
+            key={`flower-${color}`}
+            className={`summer-star star-${color}`}
+          >
+            {getFlowerPositions(tileSize).map((pos, posIdx) => {
+              const tileColor = placedTiles[flowerIdx][posIdx];
+              const isPlaceable = selectedBagIdx !== null && tileColor === "empty" && isCurrentPlayer;
+              
+              // Règle du jeu: on peut placer une tuile si elle est de la même couleur que la fleur
+              // OU si c'est un joker (tuile de la couleur du joker du tour)
+              const canPlaceSelectedTile = isPlaceable && 
+                (selectedTileColor === color || selectedTileColor === jokerColor);
+              
+              return (
+                <div
+                  key={`${color}-pos-${posIdx}`}
+                  className={`star-tile-pos${isPlaceable ? ' placeable' : ''}${canPlaceSelectedTile ? ' can-place-selected' : ''}`}
+                  style={{
+                    position: 'absolute',
+                    left: `calc(50% + ${pos.left}px)`,
+                    top: `calc(50% + ${pos.top}px)`,
+                    transform: `translate(-50%, -50%) rotate(${pos.rotate}deg)`,
+                    cursor: isPlaceable && canPlaceSelectedTile ? 'pointer' : 'default',
+                    zIndex: isPlaceable ? 5 : undefined,
+                  }}
+                  onClick={() => isPlaceable && canPlaceSelectedTile && handlePlaceTile(flowerIdx, posIdx)}
+                  title={tileColor === "empty" ? `Position ${posIdx+1} - ${color}` : `Tuile ${tileColor} déjà placée`}
+                >
+                  <DiamondTile color={tileColor} size="medium" />
+                </div>
+              );
+            })}
+          </div>
+        ))}
       </div>
 
       {/* Bag personnel avec sélection */}
