@@ -26,11 +26,12 @@
 
 .player-board-header {
   text-align: center;
-  margin-bottom: 25px;
+  margin-bottom: 35px;
   font-size: 15px;
+  width: 100%;
   color: #1a3c5b;
   font-weight: 500;
-  z-index: 2;
+  z-index: 1;
   position: relative;
   text-shadow: 0 2px 8px rgba(255,255,255,0.18);
   background: rgba(255,255,255,0.7);
@@ -53,9 +54,9 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 380px;
-  height: 380px;
-  border: 3px solid rgba(26, 60, 91, 0.2);
+  width: 320px; /* Réduit de 380px à 360px pour mieux toucher les fleurs */
+  height: 320px;
+  border: 2px solid rgba(26, 60, 91, 0.3); /* Bordure plus visible */
   border-radius: 50%;
   z-index: -1;
 }
@@ -88,9 +89,12 @@
   width: 140px !important;
   height: 140px !important;
   z-index: 2 !important;
-  margin-left: -70px !important; /* Moitié de la largeur */
-  margin-top: -70px !important; /* Moitié de la hauteur */
+  margin-left: -70px !important;
+  margin-top: -70px !important;
+  /* Ajout d'un effet de halo subtil */
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.1));
 }
+
 .summer-star .diamond-tile {
   clip-path: polygon(50% 0%, 80% 50%, 50% 100%, 20% 50%);
   width: 60px;
@@ -125,19 +129,19 @@
   position: relative;
   transform-origin: center;
   transition: all 0.2s ease;
-  box-shadow: none;
-  overflow: hidden;
   margin: 0;
-  outline: 0.5px solid rgba(0, 0, 0, 0.1);
-  outline-offset: -0.5px;
+  outline: 1px solid rgba(0, 0, 0, 0.3); /* Bordure plus épaisse et contrastée */
+  outline-offset: -1px;
+  box-shadow: none;
+  border:none;
 }
 
-.star-blue { transform: translate(0, -110px); }
-.star-yellow { transform: translate(95px, -55px); }
-.star-red { transform: translate(95px, 55px); }
-.star-black { transform: translate(0, 110px); }
-.star-teal { transform: translate(-95px, 55px); }
-.star-purple { transform: translate(-95px, -55px); }
+.star-blue { transform: translate(0, -105px); } /* -110px à -105px */
+.star-yellow { transform: translate(91px, -52.5px); } /* 95px/55px à 91px/52.5px */
+.star-red { transform: translate(91px, 52.5px); }
+.star-black { transform: translate(0, 105px); }
+.star-teal { transform: translate(-91px, 52.5px); }
+.star-purple { transform: translate(-91px, -52.5px); }
 
 /* Couleurs des tuiles pleines */
 .tile-blue { background-color: #1976d2; }
@@ -152,7 +156,8 @@
 
 /* Tuiles vides : fond coloré semi-transparent pour mieux visualiser */
 .tile-empty {
-  background-color: rgba(255, 255, 255, 0.25);
+  outline: 1px solid rgba(0, 0, 0, 0.4);
+  background-color: rgba(255, 255, 255, 0.4);
   border: 2px dashed rgba(0, 0, 0, 0.3);
   opacity: 0.7;
   margin: 0;
