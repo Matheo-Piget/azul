@@ -2,7 +2,7 @@
   position: relative;
   width:500px;
   height: 500px;
-  background-color: #f5f5dc;
+  background-color: #f8f0e3;
   border-radius: 16px;
   padding: 20px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
@@ -29,11 +29,11 @@
   margin-bottom: 35px;
   font-size: 15px;
   width: 100%;
-  color: #1a3c5b;
+  color: #2a4e6e;
   font-weight: 500;
   z-index: 1;
   position: relative;
-  text-shadow: 0 2px 8px rgba(255,255,255,0.18);
+  text-shadow: 0 2px 8px rgba(255,255,255,0.3);
   background: rgba(255,255,255,0.7);
   border-radius: 12px;
   padding: 8px 0;
@@ -48,15 +48,61 @@
   z-index: 1;
 }
 
+.square-container {
+  position: absolute;
+  width: 322px;
+  height: 322px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px solid rgba(26, 60, 91, 0.5);
+  z-index: 0;
+}
+
+.corner-tile {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background-color: #c1b9c5;
+  clip-path: polygon(50% 0%, 80% 50%, 50% 100%, 20% 50%);
+  transform: rotate(45deg);
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Positionnement des tuiles de coin */
+.corner-tile.top-left {
+  top: 0px;
+  left: 0px;
+}
+
+.corner-tile.top-right {
+  top: 0px;
+  right: 0px;
+  rotate: 90deg;
+}
+
+.corner-tile.bottom-left {
+  bottom: 0px;
+  left: 0px;
+  rotate: 90deg;
+}
+
+.corner-tile.bottom-right {
+  bottom: 0px;
+  right: 0px;
+}
+
+
 .summer-stars-container::before {
   content: '';
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 320px; /* Réduit de 380px à 360px pour mieux toucher les fleurs */
+  width: 320px;
   height: 320px;
-  border: 2px solid rgba(26, 60, 91, 0.3); /* Bordure plus visible */
+  border: 2px solid rgba(26, 60, 91, 0.3);
   border-radius: 50%;
   z-index: -1;
 }
@@ -91,8 +137,7 @@
   z-index: 2 !important;
   margin-left: -70px !important;
   margin-top: -70px !important;
-  /* Ajout d'un effet de halo subtil */
-  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.1));
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
 }
 
 .summer-star .diamond-tile {
@@ -102,7 +147,7 @@
   position: relative;
   transform-origin: center;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   margin: 0;
   border: 5px solid rgba(0, 0, 0, 0.1);
   border-radius: 4px;
@@ -130,31 +175,58 @@
   transform-origin: center;
   transition: all 0.2s ease;
   margin: 0;
-  outline: 1px solid rgba(0, 0, 0, 0.3); /* Bordure plus épaisse et contrastée */
+  outline: 1px solid rgba(0, 0, 0, 0.3);
   outline-offset: -1px;
   box-shadow: none;
   border:none;
 }
 
-.star-blue { transform: translate(0, -105px); } /* -110px à -105px */
-.star-yellow { transform: translate(91px, -52.5px); } /* 95px/55px à 91px/52.5px */
+.star-blue { transform: translate(0, -105px); }
+.star-yellow { transform: translate(91px, -52.5px); }
 .star-red { transform: translate(91px, 52.5px); }
 .star-black { transform: translate(0, 105px); }
 .star-teal { transform: translate(-91px, 52.5px); }
 .star-purple { transform: translate(-91px, -52.5px); }
 
-/* Couleurs des tuiles pleines */
-.tile-blue { background-color: #1976d2; }
-.tile-yellow { background-color: #ffc107; }
-.tile-red { background-color: #f44336; }
-.tile-black { background-color: #37474f; }
-.tile-teal { background-color: #00897b; }
-.tile-joker { background-color: #b388ff; }
-.tile-purple { background-color: #9c27b0; }
-.tile-orange { background-color: #ff9800; }
-.tile-white { background-color: #f5f5f5; }
+/* Couleurs des tuiles pleines - palette harmonisée plus vibrante */
+.tile-blue { 
+  background-color: #1e88e5; 
+  box-shadow: inset 0 0 12px rgba(0, 110, 255, 0.4);
+}
+.tile-yellow { 
+  background-color: #ffc627; 
+  box-shadow: inset 0 0 12px rgba(255, 170, 0, 0.4);
+}
+.tile-red { 
+  background-color: #e53935; 
+  box-shadow: inset 0 0 12px rgba(255, 0, 0, 0.3);
+}
+.tile-black { 
+  background-color: #424242; 
+  box-shadow: inset 0 0 12px rgba(30, 30, 30, 0.5);
+}
+.tile-teal { 
+  background-color: #00acc1; 
+  box-shadow: inset 0 0 12px rgba(0, 150, 150, 0.4);
+}
+.tile-joker { 
+  background-color: #b39ddb; 
+  box-shadow: inset 0 0 15px rgba(170, 120, 255, 0.6);
+}
+.tile-purple { 
+  background-color: #9c27b0; 
+  box-shadow: inset 0 0 12px rgba(170, 0, 170, 0.4);
+}
+.tile-orange { 
+  background-color: #ff9800; 
+  box-shadow: inset 0 0 12px rgba(255, 140, 0, 0.5);
+}
+.tile-white { 
+  background-color: #f5f5f5; 
+  box-shadow: inset 0 0 12px rgba(200, 200, 200, 0.6);
+}
 
-/* Tuiles vides : fond coloré semi-transparent pour mieux visualiser */
+/* Tuiles vides améliorées avec des effets subtils */
 .tile-empty {
   outline: 1px solid rgba(0, 0, 0, 0.4);
   background-color: rgba(255, 255, 255, 0.4);
@@ -162,35 +234,50 @@
   opacity: 0.7;
   margin: 0;
   border: none;
+  transition: all 0.3s ease;
 }
 .star-blue .tile-empty { 
   border-color: #1976d2; 
-  background-color: rgba(25, 118, 210, 0.2);
+  background-color: rgba(25, 118, 210, 0.15);
+  background-image: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 25%, transparent 25%, transparent 50%, rgba(25, 118, 210, 0.05) 50%, rgba(25, 118, 210, 0.05) 75%, transparent 75%, transparent);
+  background-size: 20px 20px;
 }
 .star-yellow .tile-empty { 
   border-color: #ffc107;
-  background-color: rgba(255, 193, 7, 0.2);
+  background-color: rgba(255, 193, 7, 0.15);
+  background-image: linear-gradient(135deg, rgba(255, 193, 7, 0.05) 25%, transparent 25%, transparent 50%, rgba(255, 193, 7, 0.05) 50%, rgba(255, 193, 7, 0.05) 75%, transparent 75%, transparent);
+  background-size: 20px 20px;
 }
 .star-red .tile-empty { 
   border-color: #f44336;
-  background-color: rgba(244, 67, 54, 0.2);
+  background-color: rgba(244, 67, 54, 0.15);
+  background-image: linear-gradient(135deg, rgba(244, 67, 54, 0.05) 25%, transparent 25%, transparent 50%, rgba(244, 67, 54, 0.05) 50%, rgba(244, 67, 54, 0.05) 75%, transparent 75%, transparent);
+  background-size: 20px 20px;
 }
 .star-black .tile-empty { 
   border-color: #37474f;
-  background-color: rgba(55, 71, 79, 0.2);
+  background-color: rgba(55, 71, 79, 0.15);
+  background-image: linear-gradient(135deg, rgba(55, 71, 79, 0.05) 25%, transparent 25%, transparent 50%, rgba(55, 71, 79, 0.05) 50%, rgba(55, 71, 79, 0.05) 75%, transparent 75%, transparent);
+  background-size: 20px 20px;
 }
 .star-teal .tile-empty { 
   border-color: #00796b;
-  background-color: rgba(0, 121, 107, 0.2);
+  background-color: rgba(0, 121, 107, 0.15);
+  background-image: linear-gradient(135deg, rgba(0, 121, 107, 0.05) 25%, transparent 25%, transparent 50%, rgba(0, 121, 107, 0.05) 50%, rgba(0, 121, 107, 0.05) 75%, transparent 75%, transparent);
+  background-size: 20px 20px;
 }
 .star-purple .tile-empty { 
   border-color: #9c27b0;
-  background-color: rgba(156, 39, 176, 0.2);
+  background-color: rgba(156, 39, 176, 0.15);
+  background-image: linear-gradient(135deg, rgba(156, 39, 176, 0.05) 25%, transparent 25%, transparent 50%, rgba(156, 39, 176, 0.05) 50%, rgba(156, 39, 176, 0.05) 75%, transparent 75%, transparent);
+  background-size: 20px 20px;
 }
 /* Centrale (white) */
 .center-star .tile-empty {
   border-color: #757575;
   background-color: rgba(117, 117, 117, 0.1);
+  background-image: linear-gradient(135deg, rgba(117, 117, 117, 0.05) 25%, transparent 25%, transparent 50%, rgba(117, 117, 117, 0.05) 50%, rgba(117, 117, 117, 0.05) 75%, transparent 75%, transparent);
+  background-size: 20px 20px;
 }
 
 /* Effet visuel pour les tuiles qui peuvent accueillir la tuile sélectionnée */
@@ -241,8 +328,14 @@
 }
 
 @keyframes pulsate-joker {
-  0% { box-shadow: 0 0 8px #b388ff, 0 0 0 3px rgba(179, 136, 255, 0.3); }
-  100% { box-shadow: 0 0 16px #b388ff, 0 0 0 5px rgba(179, 136, 255, 0.5); }
+  0% { 
+    box-shadow: 0 0 8px #b388ff, 0 0 0 3px rgba(179, 136, 255, 0.3);
+    transform: scale(1);
+  }
+  100% { 
+    box-shadow: 0 0 16px #b388ff, 0 0 0 5px rgba(179, 136, 255, 0.5);
+    transform: scale(1.05);
+  }
 }
 
 
@@ -264,12 +357,13 @@
   background: rgba(255, 255, 255, 0.7);
   padding: 8px 12px;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 .saved-label {
   font-weight: 600;
-  color: #1a3c5b;
+  color: #2a4e6e;
   font-size: 14px;
 }
 
@@ -281,6 +375,11 @@
 .saved-tile {
   transform: scale(0.8);
   margin: 0 2px;
+  transition: transform 0.2s ease;
+}
+
+.saved-tile:hover {
+  transform: scale(0.9);
 }
 
 /* Dialog pour passer son tour */
@@ -289,7 +388,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: white;
+  background: linear-gradient(to bottom, #ffffff, #f8f0e3);
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
@@ -297,11 +396,12 @@
   width: 80%;
   max-width: 400px;
   text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 .keep-tiles-dialog h4 {
   margin-top: 0;
-  color: #1a3c5b;
+  color: #2a4e6e;
   font-size: 16px;
 }
 
@@ -349,7 +449,7 @@
 }
 
 .confirm-pass-button {
-  background: #1a3c5b;
+  background: #2a4e6e;
   color: white;
   border: none;
   padding: 8px 16px;
@@ -360,8 +460,9 @@
 }
 
 .confirm-pass-button:hover {
-  background: #2c5282;
+  background: #3c6895;
   transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
 }
 
 .pass-button {
@@ -373,5 +474,12 @@
   cursor: pointer;
   font-size: 14px;
   margin-left: 10px;
+  transition: all 0.2s;
+}
+
+.pass-button:hover {
+  background: #f44336;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
 }
 

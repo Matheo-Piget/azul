@@ -213,6 +213,16 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
       )}
 
       <div className="summer-stars-container">
+
+      <div className="square-container">
+        <div className="corner-tile top-left"
+        />
+        <div className="corner-tile top-right"
+        />
+        <div className="corner-tile bottom-left" 
+        />
+        <div className="corner-tile bottom-right" />
+      </div>
         {/* Fleur centrale (neutre) */}
         <div className="summer-star center-star">
           {getFlowerPositions(tileSize).map((pos, i) => {
