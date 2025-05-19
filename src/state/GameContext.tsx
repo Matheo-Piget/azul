@@ -294,14 +294,46 @@ export const GameProvider: React.FC<GameProviderProps> = ({
 
       // Pour Summer Pavilion, nous allons directement appeler applyMove
       if (variant === 'summerPavilion') {
-        setGameState(prevState => {
-          if (!prevState) return null;
-          // Appel à applyMove du moteur avec le move contenant factoryId et color
-          return engine!.applyMove(prevState, { factoryId, color });
-        });
-        // Pour Summer Pavilion nous vidons immédiatement la sélection après
-        setSelectedTiles([]);
-        setSelectedSource(null);
+        // Mettre à jour l'état de sélection temporairement pour les effets visuels
+        let tilesToSelect: Tile[] = [];
+        if (factoryId !== null) {
+          const factory = currentGameState.factories.find(f => f.id === factoryId);
+          if (factory) {
+            tilesToSelect = factory.tiles.filter(t => t.color === color);
+            const jokerColor = currentGameState.jokerColor;
+            if (color !== jokerColor) {
+              const jokers = factory.tiles.filter(t => t.color === jokerColor);
+              if (jokers.length > 0) tilesToSelect.push(jokers[0]);
+            }
+          }
+        } else {
+          tilesToSelect = currentGameState.center.filter(t => t.color === color);
+          const jokerColor = currentGameState.jokerColor;
+          if (color !== jokerColor) {
+            const jokers = currentGameState.center.filter(t => t.color === jokerColor);
+            if (jokers.length > 0) tilesToSelect.push(jokers[0]);
+          }
+        }
+        
+        // Mettre à jour les références pour d'autres fonctions
+        selectedTilesRef.current = tilesToSelect;
+        selectedSourceRef.current = { factoryId, color };
+        
+        // Mise à jour visuelle temporaire
+        setSelectedTiles(tilesToSelect);
+        setSelectedSource({ factoryId, color });
+        
+        // Appliquer le mouvement après un court délai pour permettre l'animation
+        setTimeout(() => {
+          setGameState(prevState => {
+            if (!prevState) return null;
+            // Appel à applyMove du moteur avec le move contenant factoryId et color
+            return engine!.applyMove(prevState, { factoryId, color });
+          });
+          // Pour Summer Pavilion nous vidons la sélection visuelle après
+          setSelectedTiles([]);
+          setSelectedSource(null);
+        }, 100);
         return;
       }
 
@@ -361,7 +393,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({
         return newGameState;
       });
     },
-    [variant, engine] // Ajouter engine comme dépendance
+    [variant, engine]
   );
 
   /**
@@ -480,13 +512,29 @@ export const GameProvider: React.FC<GameProviderProps> = ({
               setAiAnimation(null);
             }, delayMap[aiSpeed] / 2);
           }, 300);
-        } else if (variant === 'summer') {
-          // Summer Pavilion AI flow - simplified for now
+        } else if (variant === 'summerPavilion') {
+          // Summer Pavilion AI flow
           // Phase 1: Sélection des tuiles
           if (currentGameState.gamePhase === 'drafting') {
-            selectTiles(aiDecision.factoryId, aiDecision.color);
+            // Définir l'animation
+            setAiAnimation({
+              playerId: currentPlayerId,
+              sourceType: aiDecision.factoryId !== null ? "factory" : "center",
+              sourceId: aiDecision.factoryId,
+              tiles: tilesToSelect,
+              targetType: "patternLine", // On réutilise ce type pour Summer
+              targetIndex: 0,
+              color: aiDecision.color,
+              isAnimating: true,
+            });
+            
+            // Sélectionner les tuiles avec une animation
+            setTimeout(() => {
+              selectTiles(aiDecision.factoryId, aiDecision.color);
+              setAiAnimation(null);
+            }, 300);
           } 
-          // Phase 2: Placement des tuiles (basique pour l'instant)
+          // Phase 2: Placement des tuiles
           else if (currentGameState.gamePhase === 'tiling') {
             // Logique simplifiée: placer une tuile dans une fleur aléatoire au coût minimum
             const player = currentGameState.players.find(p => p.id === currentPlayerId);

@@ -1,55 +1,85 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { useGame } from "../../state/GameContext";
 import { AIDifficulty } from "../../game-logic/ai/aiPlayer";
 import "./AIPlayerConfig.css";
 
 /**
- * AIPlayerConfig Component
- *
- * @component
- * @description Provides an interface to configure AI players in the game.
- * This component allows users to:
- * - Toggle AI control for any player
- * - Select difficulty level for AI players (easy, medium, hard)
- *
- * @returns {React.ReactElement|null} The AI configuration UI or null if game is not initialized
+ * Configuration des joueurs IA dans le jeu Azul
+ * 
+ * @component AIPlayerConfig
+ * @description Fournit une interface pour configurer les joueurs IA dans le jeu.
+ * Ce composant permet aux utilisateurs de:
+ * - Activer/désactiver le contrôle IA pour chaque joueur
+ * - Sélectionner le niveau de difficulté des IA (facile, moyen, difficile)
+ * - Ajuster la vitesse globale des actions de l'IA
+ * 
+ * @returns {React.ReactElement|null} L'interface de configuration de l'IA ou null si le jeu n'est pas initialisé
  */
 const AIPlayerConfig: React.FC = () => {
-  // Déplacer tous les appels à useGame en début de composant
-  const { gameState, aiPlayers, addAIPlayer, removeAIPlayer, aiSpeed, setAISpeed } = useGame();
-
-  // Don't render if game isn't initialized
-  if (!gameState) return null;
+  // Récupération du contexte du jeu
+  const { 
+    gameState, 
+    aiPlayers, 
+    addAIPlayer, 
+    removeAIPlayer, 
+    aiSpeed, 
+    setAISpeed 
+  } = useGame();
 
   /**
-   * Toggles AI control for a specific player
-   *
-   * @param {string} playerId - The unique identifier of the player
+   * Active/désactive le contrôle IA pour un joueur spécifique
+   * 
+   * @param {string} playerId - L'identifiant unique du joueur
    */
-  const handleToggleAI = (playerId: string) => {
+  const handleToggleAI = useCallback((playerId: string) => {
     if (aiPlayers[playerId]) {
       removeAIPlayer(playerId);
     } else {
       addAIPlayer(playerId, "medium");
     }
-  };
+  }, [aiPlayers, addAIPlayer, removeAIPlayer]);
 
   /**
-   * Changes the difficulty level for an AI player
-   *
-   * @param {string} playerId - The unique identifier of the player
-   * @param {AIDifficulty} difficulty - The difficulty level to set
+   * Change le niveau de difficulté d'un joueur IA
+   * 
+   * @param {string} playerId - L'identifiant unique du joueur
+   * @param {AIDifficulty} difficulty - Le niveau de difficulté à définir
    */
-  const handleChangeDifficulty = (
+  const handleChangeDifficulty = useCallback((
     playerId: string,
     difficulty: AIDifficulty
   ) => {
     removeAIPlayer(playerId);
     addAIPlayer(playerId, difficulty);
+  }, [removeAIPlayer, addAIPlayer]);
+
+  /**
+   * Change la vitesse globale des actions de l'IA
+   * 
+   * @param {"fast" | "normal" | "slow"} speed - La vitesse à appliquer
+   */
+  const handleSpeedChange = useCallback((speed: "fast" | "normal" | "slow") => {
+    setAISpeed(speed);
+  }, [setAISpeed]);
+
+  // Ne rien afficher si le jeu n'est pas initialisé
+  if (!gameState) return null;
+
+  // Constantes pour les traductions
+  const difficultyLabels = {
+    easy: "Facile",
+    medium: "Moyen",
+    hard: "Difficile"
+  };
+
+  const speedLabels = {
+    fast: "Rapide",
+    normal: "Normal", 
+    slow: "Lent"
   };
 
   return (
-    <div className="ai-player-config">
+    <div className="ai-player-config" role="region" aria-label="Configuration des IA">
       <h3>Configuration des IA</h3>
       <div className="ai-players-list">
         {gameState.players.map((player) => (
@@ -61,7 +91,7 @@ const AIPlayerConfig: React.FC = () => {
                   type="checkbox"
                   checked={!!aiPlayers[player.id]}
                   onChange={() => handleToggleAI(player.id)}
-                  aria-label={`Toggle AI for ${player.name}`}
+                  aria-label={`Activer l'IA pour ${player.name}`}
                 />
                 <span className="slider"></span>
               </label>
@@ -80,36 +110,31 @@ const AIPlayerConfig: React.FC = () => {
                     )
                   }
                 >
-                  <option value="easy">Facile</option>
-                  <option value="medium">Moyen</option>
-                  <option value="hard">Difficile</option>
+                  {Object.entries(difficultyLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
                 </select>
               </div>
             )}
           </div>
         ))}
       </div>
+      
       <div className="ai-global-settings">
         <h4>Vitesse de l'IA</h4>
         <div className="ai-speed-setting">
-          <button
-            className={`speed-btn ${aiSpeed === "fast" ? "active" : ""}`}
-            onClick={() => setAISpeed("fast")}
-          >
-            Rapide
-          </button>
-          <button
-            className={`speed-btn ${aiSpeed === "normal" ? "active" : ""}`}
-            onClick={() => setAISpeed("normal")}
-          >
-            Normal
-          </button>
-          <button
-            className={`speed-btn ${aiSpeed === "slow" ? "active" : ""}`}
-            onClick={() => setAISpeed("slow")}
-          >
-            Lent
-          </button>
+          {Object.entries(speedLabels).map(([speed, label]) => (
+            <button
+              key={speed}
+              className={`speed-btn ${aiSpeed === speed ? "active" : ""}`}
+              onClick={() => handleSpeedChange(speed as "fast" | "normal" | "slow")}
+              aria-pressed={aiSpeed === speed}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
     </div>

@@ -1,14 +1,26 @@
-.tile {
-  border-radius: 2px;
-  position: relative;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
-  margin: 2px;
-  overflow: hidden;
-  gap : 0;
+/* Variables globales pour les tuiles */
+:root {
+  --tile-shadow-default: 0 2px 5px rgba(0, 0, 0, 0.25);
+  --tile-shadow-selected: 0 8px 15px rgba(0, 0, 0, 0.25);
+  --tile-shadow-placed: inset 0 0 4px rgba(0, 0, 0, 0.4);
+  --tile-transition: all 0.25s ease;
+  --tile-border-radius: 2px;
+  --tile-pattern-opacity: 0.35;
 }
 
+/* ------- STYLES DE BASE ------- */
+.tile {
+  border-radius: var(--tile-border-radius);
+  position: relative;
+  cursor: pointer;
+  transition: var(--tile-transition);
+  box-shadow: var(--tile-shadow-default);
+  margin: 2px;
+  overflow: hidden;
+  gap: 0;
+}
+
+/* ------- VARIANTES DE TAILLE ------- */
 .tile-small {
   width: 24px;
   height: 24px;
@@ -24,25 +36,31 @@
   height: 48px;
 }
 
+/* ------- ÉTATS DES TUILES ------- */
+/* Tuile sélectionnée */
 .tile.selected {
   transform: translateY(-5px) scale(1.05);
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--tile-shadow-selected);
   z-index: 10;
 }
 
+/* Tuile désactivée */
 .tile.disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
+/* Tuile placée sur le mur */
 .tile.placed {
   transform: none;
   opacity: 1;
   border-radius: 0;
   margin: 1px;
-  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--tile-shadow-placed);
 }
 
+/* ------- DÉCORATION DES TUILES ------- */
+/* Motif de base pour les tuiles */
 .tile-pattern {
   position: absolute;
   top: 0;
@@ -51,7 +69,7 @@
   bottom: 0;
   background-image: radial-gradient(
     circle at center,
-    rgba(255, 255, 255, 0.35) 5%,
+    rgba(255, 255, 255, var(--tile-pattern-opacity)) 5%,
     transparent 65%
   );
   pointer-events: none;
@@ -78,13 +96,21 @@
   z-index: 2;
 }
 
-/* Animations pour les tuiles */
+/* ------- FORMES SPÉCIALES ------- */
+/* Tuile en forme de losange (pour certaines variantes) */
+.tile-diamond {
+  clip-path: polygon(50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%);
+}
+
+/* ------- ANIMATIONS ------- */
+/* Animation lors de la sélection */
 @keyframes selectTile {
   0% { transform: scale(1); }
   50% { transform: scale(1.1); }
   100% { transform: scale(1); }
 }
 
+/* Animation lors du déplacement */
 @keyframes moveTile {
   0% {
     transform: translate(0, 0) scale(1);
@@ -96,24 +122,27 @@
   }
 }
 
+/* Animation lors du placement */
 @keyframes placeTile {
   0% { transform: translateY(-20px); opacity: 0; }
   100% { transform: translateY(0); opacity: 1; }
 }
 
+/* Animation pour le scoring */
 @keyframes scoringGlow {
   0% { box-shadow: 0 0 5px rgba(255, 215, 0, 0.5); }
   50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
   100% { box-shadow: 0 0 5px rgba(255, 215, 0, 0.5); }
 }
 
+/* Animation pour l'apparition des points */
 @keyframes pointsPopup {
   0% { transform: translateY(0) scale(1); opacity: 1; }
   50% { transform: translateY(-30px) scale(1.2); opacity: 1; }
   100% { transform: translateY(-50px) scale(1); opacity: 0; }
 }
 
-/* Classes animation pour les tuiles */
+/* ------- CLASSES D'ANIMATION ------- */
 .tile-animate-select {
   animation: selectTile 0.3s ease-in-out;
 }
@@ -151,9 +180,4 @@
 
 .theme-transition {
   animation: themeTransition 0.8s ease-in-out;
-}
-
-.tile-diamond {
-  clip-path: polygon(50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%);
-  /* Un losange étiré, plus haut que large */
 }

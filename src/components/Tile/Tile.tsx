@@ -1,34 +1,48 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { TileColor } from '../../models/types';
 import './Tile.css';
 
 /**
- * Props for the Tile component used in the Azul game
- * @interface TileProps
- * @property {TileColor} color - The color of the tile
- * @property {'small' | 'medium' | 'large'} [size='medium'] - Size of the tile
- * @property {() => void} [onClick] - Callback function when tile is clicked
- * @property {boolean} [selected=false] - Whether the tile is currently selected
- * @property {boolean} [disabled=false] - Whether the tile is disabled for interaction
- * @property {boolean} [placed=false] - Whether the tile has been placed on the wall
+ * Props pour le composant Tile utilisé dans le jeu Azul
  */
 interface TileProps {
+  /** Couleur de la tuile */
   color: TileColor;
+  /** Taille de la tuile ('small', 'medium' ou 'large') */
   size?: 'small' | 'medium' | 'large';
+  /** Callback appelé quand la tuile est cliquée */
   onClick?: () => void;
+  /** Indique si la tuile est actuellement sélectionnée */
   selected?: boolean;
+  /** Indique si la tuile est désactivée pour l'interaction */
   disabled?: boolean;
+  /** Indique si la tuile a été placée sur le mur */
   placed?: boolean;
 }
 
 /**
- * Tile component for the Azul board game
+ * Mapping des couleurs du jeu vers des valeurs CSS
+ * Utilise les couleurs authentiques du jeu Azul
+ */
+const TILE_COLORS: Record<TileColor, string> = {
+  blue: '#1e88e5',   // Bleu azulejo
+  yellow: '#fdd835', // Jaune azulejo
+  red: '#e53935',    // Rouge azulejo
+  black: '#424242',  // Noir azulejo
+  teal: '#00897b',   // Turquoise azulejo
+  green: '#43a047',  // Vert
+  purple: '#9c27b0', // Violet
+  orange: '#ff9800', // Orange
+};
+
+/**
+ * Composant Tile pour le jeu de société Azul
  * 
- * Renders a colored tile with decorative Azulejo-style pattern based on the provided props.
- * Supports different sizes, selection states, and placement states.
+ * Représente une tuile colorée avec motif décoratif de style Azulejo selon les props fournies.
+ * Supporte différentes tailles, états de sélection et de placement.
  * 
- * @param {TileProps} props - The component props
- * @returns {React.ReactElement} A styled tile component
+ * @param {TileProps} props - Les props du composant
+ * @returns {React.ReactElement} Un composant de tuile stylisé
  */
 const Tile: React.FC<TileProps> = ({
   color,
@@ -38,18 +52,6 @@ const Tile: React.FC<TileProps> = ({
   disabled = false,
   placed = false
 }) => {
-  // Color mapping for authentic Azul game colors
-  const colorMap: Record<TileColor, string> = {
-    blue: '#1e88e5',   // Azulejo blue
-    yellow: '#fdd835', // Azulejo yellow
-    red: '#e53935',    // Azulejo red
-    black: '#424242',  // Azulejo black
-    teal: '#00897b',   // Azulejo turquoise
-    green: '#43a047',  // Vert
-    purple: '#9c27b0', // Violet
-    orange: '#ff9800', // Orange
-  };
-  
   const sizeClasses = {
     small: 'tile-small',
     medium: 'tile-medium',
@@ -57,8 +59,8 @@ const Tile: React.FC<TileProps> = ({
   };
   
   /**
-   * Handles click events on the tile
-   * Only triggers the onClick callback if the tile is not disabled
+   * Gère les événements de clic sur la tuile
+   * Ne déclenche le callback onClick que si la tuile n'est pas désactivée
    */
   const handleClick = () => {
     if (!disabled && onClick) {
@@ -78,15 +80,18 @@ const Tile: React.FC<TileProps> = ({
   return (
     <div 
       className={tileClasses}
-      style={{ backgroundColor: colorMap[color] }}
+      style={{ backgroundColor: TILE_COLORS[color] }}
       onClick={handleClick}
       aria-disabled={disabled}
       aria-selected={selected}
+      role="button"
+      tabIndex={disabled ? -1 : 0}
     >
-      {/* Decorative pattern to mimic azulejos style */}
+      {/* Motif décoratif pour imiter le style azulejos */}
       <div className="tile-pattern"></div>
     </div>
   );
 };
 
-export default Tile;
+// Utilisation de memo pour éviter les re-rendus inutiles
+export default memo(Tile);

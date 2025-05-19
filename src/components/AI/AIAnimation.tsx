@@ -3,16 +3,33 @@ import Tile from "../Tile/Tile";
 import { Tile as TileType, TileColor } from "../../models/types";
 import "./AIAnimation.css";
 
+/**
+ * Props pour le composant d'animation des actions de l'IA
+ * @interface AIAnimationProps
+ */
 interface AIAnimationProps {
+  /** Élément DOM source du mouvement (factory ou center) */
   sourceElement: HTMLElement | null;
+  /** Élément DOM cible du mouvement (patternLine ou floorLine) */
   targetElement: HTMLElement | null;
+  /** Tuiles à animer */
   tiles: TileType[];
+  /** Couleur des tuiles */
   color: TileColor;
+  /** Type de cible ('patternLine' ou 'floorLine') */
   targetType: "patternLine" | "floorLine";
+  /** Index de la ligne ciblée (pour les pattern lines) */
   targetIndex: number;
+  /** Callback appelé quand l'animation est terminée */
   onAnimationComplete: () => void;
 }
 
+/**
+ * Composant qui anime les mouvements de l'IA dans le jeu Azul.
+ * Gère l'animation des tuiles d'une source (fabrique/centre) vers une destination (ligne).
+ * 
+ * @component
+ */
 const AIAnimation: React.FC<AIAnimationProps> = ({
   sourceElement,
   targetElement,
@@ -22,6 +39,7 @@ const AIAnimation: React.FC<AIAnimationProps> = ({
   targetIndex,
   onAnimationComplete,
 }) => {
+  // États pour gérer les positions et les phases de l'animation
   const [positions, setPositions] = useState<{
     startX: number;
     startY: number;
@@ -31,68 +49,77 @@ const AIAnimation: React.FC<AIAnimationProps> = ({
   const [animationState, setAnimationState] = useState<"moving" | "landing" | "complete">("moving");
   const [showPath, setShowPath] = useState(false);
 
-  // Calculate positions on mount with improved targeting
+  /**
+   * Calcule les positions de départ et d'arrivée pour l'animation
+   * Ajuste la position d'arrivée en fonction du type de cible
+   */
   useEffect(() => {
     if (sourceElement && targetElement) {
       const sourceRect = sourceElement.getBoundingClientRect();
       const targetRect = targetElement.getBoundingClientRect();
 
-      // Source position (center of factory or center)
+      // Position de départ (centre de la source)
       const startX = sourceRect.left + sourceRect.width / 2;
       const startY = sourceRect.top + sourceRect.height / 2;
 
-      // Target position with adjustments based on target type
+      // Position d'arrivée avec ajustements basés sur le type de cible
       let endX, endY;
 
       if (targetType === "patternLine") {
-        // For pattern lines, calculate position based on existing tiles
-        const availableSpots = targetIndex + 1; // Pattern lines have 1-5 spaces
+        // Pour les lignes de motif, calcule la position basée sur les tuiles existantes
+        const availableSpots = targetIndex + 1; // Les lignes ont 1-5 espaces
         const filledSpots = targetElement.querySelectorAll(".tile").length;
 
-        // Calculate offset for right-to-left filling
+        // Calcule le décalage pour le remplissage de droite à gauche
         const tileWidth = 28;
         const tileMargin = 4;
         const offsetX = (availableSpots - filledSpots - 1) * (tileWidth + tileMargin);
 
-        // Position at the right side of the pattern line, minus the offset
+        // Positionne à droite de la ligne, moins le décalage
         endX = targetRect.right - 20 - offsetX;
         endY = targetRect.top + targetRect.height / 2;
       } else {
-        // For floor line, position based on existing tiles
+        // Pour la ligne de pénalité, positionne en fonction des tuiles existantes
         const floorTiles = targetElement.querySelectorAll(".tile").length;
         const tileWidth = 28;
         const tileMargin = 5;
 
-        // Floor line fills from left to right
+        // La ligne de pénalité se remplit de gauche à droite
         endX = targetRect.left + 20 + floorTiles * (tileWidth + tileMargin);
         endY = targetRect.top + targetRect.height / 2;
       }
 
+      // Stocke les positions calculées
       setPositions({
         startX,
         startY,
-        endX: endX - startX, // Calculate offset for CSS transform
-        endY: endY - startY, // Calculate offset for CSS transform
+        endX: endX - startX, // Calcule le décalage pour la transformation CSS
+        endY: endY - startY, // Calcule le décalage pour la transformation CSS
       });
       
-      // Show path effect after a short delay
+      // Affiche l'effet de chemin après un court délai
       setTimeout(() => setShowPath(true), 100);
     }
   }, [sourceElement, targetElement, targetType, targetIndex]);
 
-  // Multi-stage animation sequence
+  /**
+   * Gère la séquence d'animation en plusieurs phases
+   * 1. Moving: déplacement des tuiles de la source vers la cible
+   * 2. Landing: effet d'impact à l'arrivée
+   * 3. Complete: fin de l'animation et callback
+   */
   useEffect(() => {
     if (positions) {
-      // First phase: moving
+      // Première phase: déplacement
       const landingTimer = setTimeout(() => {
         setAnimationState("landing");
         setShowPath(false);
         
-        // Second phase: landing with impact
+        // Deuxième phase: atterrissage avec impact
         const completeTimer = setTimeout(() => {
           setAnimationState("complete");
           
-          // Finally: complete the animation
+          // Finalement: complète l'animation
           setTimeout(onAnimationComplete, 300);
         }, 400);
         
@@ -103,15 +130,16 @@ const AIAnimation: React.FC<AIAnimationProps> = ({
     }
   }, [positions, onAnimationComplete]);
 
+  // Ne rend rien si les positions ne sont pas calculées
   if (!positions) return null;
 
-  // Calculate the angle for the movement path
+  // Calcule l'angle pour le chemin de mouvement
   const angle = Math.atan2(positions.endY, positions.endX) * (180 / Math.PI);
   const distance = Math.sqrt(positions.endX * positions.endX + positions.endY * positions.endY);
 
   return (
     <div className="ai-animation-container">
-      {/* Animated Movement Path */}
+      {/* Chemin animé du mouvement */}
       {showPath && (
         <div
           className="ai-move-path"
@@ -124,7 +152,7 @@ const AIAnimation: React.FC<AIAnimationProps> = ({
         />
       )}
       
-      {/* Ripple effect at the source */}
+      {/* Effet d'ondulation à la source */}
       {animationState === "moving" && (
         <div
           className="ai-ripple"
@@ -135,7 +163,7 @@ const AIAnimation: React.FC<AIAnimationProps> = ({
         />
       )}
       
-      {/* Animated tiles */}
+      {/* Tuiles animées */}
       {Array(Math.min(tiles.length, 5))
         .fill(0)
         .map((_, i) => (
@@ -157,7 +185,7 @@ const AIAnimation: React.FC<AIAnimationProps> = ({
           </div>
         ))}
 
-      {/* Impact effect when tiles land */}
+      {/* Effet d'impact quand les tuiles atterrissent */}
       {animationState === "landing" && (
         <div
           className="tile-impact-effect"
@@ -168,7 +196,7 @@ const AIAnimation: React.FC<AIAnimationProps> = ({
         />
       )}
       
-      {/* Ripple effect at the target during landing */}
+      {/* Effet d'ondulation à la cible pendant l'atterrissage */}
       {animationState === "landing" && (
         <div
           className="ai-ripple"
