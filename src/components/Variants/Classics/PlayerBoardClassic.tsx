@@ -101,7 +101,6 @@ const PlayerBoardClassic: React.FC<PlayerBoardProps> = ({
       data-testid={`player-board-${playerId}`}
     >
       <h3 className="player-name" data-testid={`player-name-${playerId}`}>
-        {player.name} ({player.board.score} pts)
         {aiPlayers[player.id] && (
           <span
             className="ai-badge"
