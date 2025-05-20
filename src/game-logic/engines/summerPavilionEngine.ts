@@ -183,9 +183,12 @@ export class SummerPavilionEngine implements AzulGameEngine {
         );
         
         // Ajoute les tuiles sélectionnées au joueur
+        const existingIds = new Set(currentPlayer.board.collectedTiles?.map(t => t.id) || []);
+        const uniqueNewTiles = selectedTiles.filter(t => !existingIds.has(t.id));
+        
         currentPlayer.board.collectedTiles = [
-          ...currentPlayer.board.collectedTiles,
-          ...selectedTiles
+          ...(currentPlayer.board.collectedTiles || []),
+          ...uniqueNewTiles
         ];
         
         // Met à jour la fabrique et le centre
@@ -240,9 +243,12 @@ export class SummerPavilionEngine implements AzulGameEngine {
         );
         
         // Ajoute les tuiles sélectionnées au joueur
+        const existingIds = new Set(currentPlayer.board.collectedTiles?.map(t => t.id) || []);
+        const uniqueNewTiles = selectedTiles.filter(t => !existingIds.has(t.id));
+        
         currentPlayer.board.collectedTiles = [
-          ...currentPlayer.board.collectedTiles,
-          ...selectedTiles
+          ...(currentPlayer.board.collectedTiles || []),
+          ...uniqueNewTiles
         ];
       }
 
