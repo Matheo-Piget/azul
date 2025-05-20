@@ -350,15 +350,6 @@
   background-size: 20px 20px;
 }
 
-/* Effet visuel pour les tuiles qui peuvent accueillir la tuile sélectionnée */
-.star-tile-pos.can-place-selected .tile-empty {
-  animation: highlight-placeable 1.5s infinite alternate;
-  box-shadow: 0 0 12px rgba(67, 160, 71, 0.8);
-  border-style: solid;
-  opacity: 0.9;
-  z-index: 20;
-}
-
 @keyframes highlight-placeable {
   0% { 
     transform: scale(1);

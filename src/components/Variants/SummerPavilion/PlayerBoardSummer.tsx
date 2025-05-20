@@ -53,24 +53,6 @@ const DiamondTile: React.FC<{
   );
 };
 
-// Composant pour afficher le sac du joueur (bag personnel)
-const BagSummer: React.FC<{ tiles: { color: TileColor }[] }> = ({ tiles }) => {
-  return (
-    <div className="bag-summer">
-      <span className="bag-label">Sac :</span>
-      <div className="bag-tiles">
-        {tiles.length === 0 ? (
-          <span className="bag-empty">(vide)</span>
-        ) : (
-          tiles.map((tile, i) => (
-            <div key={i} className={`diamond-tile tile-${tile.color} bag-tile`} />
-          ))
-        )}
-      </div>
-    </div>
-  );
-};
-
 const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
   const { gameState, placeTiles } = useGame();
   const player = gameState.players.find(p => p.id === playerId);
