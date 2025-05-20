@@ -12,7 +12,7 @@ import { initializeGame, distributeFactoryTiles } from "../game-logic/setup";
 import { getAIMove, AIDifficulty } from "../game-logic/ai/aiPlayer";
 import { saveGameStats, generateGameId } from "../utils/SaveService";
 import AIAnimation from "./../components/AI/AIAnimation";
-import { ENGINES } from '../game-logic/engines';
+import { ENGINES } from "../game-logic/engines";
 
 interface ScoringEvent {
   playerId: string;
@@ -27,8 +27,6 @@ interface ScoringEvent {
  * Provides game state and functions to interact with the game
  */
 interface GameContextType {
-
-
   /** Current state of the game */
   gameState: GameState;
 
@@ -53,14 +51,18 @@ interface GameContextType {
    * Function to place selected tiles on a pattern line
    * @param patternLineIndex - Index of the pattern line, or -1 for floor line
    */
-  placeTiles: (arg: number | { 
-    color?: TileColor; 
-    targetFlower?: number; 
-    targetPos?: number;
-    cost?: number;
-    pass?: boolean;
-    keepTiles?: Tile[];
-  }) => void;
+  placeTiles: (
+    arg:
+      | number
+      | {
+          color?: TileColor;
+          targetFlower?: number;
+          targetPos?: number;
+          cost?: number;
+          pass?: boolean;
+          keepTiles?: Tile[];
+        }
+  ) => void;
 
   /**
    * Function to start a new game
@@ -216,8 +218,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({
 
   const setIsRoundTransition = useCallback((isTransition: boolean) => {
     setIsRoundTransitioning(isTransition);
-  }
-  , []);
+  }, []);
 
   /**
    * Removes an AI player, converting it back to human control
@@ -241,9 +242,12 @@ export const GameProvider: React.FC<GameProviderProps> = ({
       if (!engine) return;
 
       const currentAiPlayers = aiPlayersRef.current;
-      
+
       // Utilisation de l'engine en cours plutôt que ClassicAzulEngine
-      const playerNames = Array.from({ length: playerCount }, (_, i) => `Joueur ${i + 1}`);
+      const playerNames = Array.from(
+        { length: playerCount },
+        (_, i) => `Joueur ${i + 1}`
+      );
       const newGameState = engine.initializeGame(playerNames);
 
       setGameState(newGameState);
@@ -293,47 +297,15 @@ export const GameProvider: React.FC<GameProviderProps> = ({
       }
 
       // Pour Summer Pavilion, nous allons directement appeler applyMove
-      if (variant === 'summer') {
-        // Mettre à jour l'état de sélection temporairement pour les effets visuels
-        let tilesToSelect: Tile[] = [];
-        if (factoryId !== null) {
-          const factory = currentGameState.factories.find(f => f.id === factoryId);
-          if (factory) {
-            tilesToSelect = factory.tiles.filter(t => t.color === color);
-            const jokerColor = currentGameState.jokerColor;
-            if (color !== jokerColor) {
-              const jokers = factory.tiles.filter(t => t.color === jokerColor);
-              if (jokers.length > 0) tilesToSelect.push(jokers[0]);
-            }
-          }
-        } else {
-          tilesToSelect = currentGameState.center.filter(t => t.color === color);
-          const jokerColor = currentGameState.jokerColor;
-          if (color !== jokerColor) {
-            const jokers = currentGameState.center.filter(t => t.color === jokerColor);
-            if (jokers.length > 0) tilesToSelect.push(jokers[0]);
-          }
-        }
-        
-        // Mettre à jour les références pour d'autres fonctions
-        selectedTilesRef.current = tilesToSelect;
-        selectedSourceRef.current = { factoryId, color };
-        
-        // Mise à jour visuelle temporaire
-        setSelectedTiles(tilesToSelect);
-        setSelectedSource({ factoryId, color });
-        
-        // Appliquer le mouvement après un court délai pour permettre l'animation
-        setTimeout(() => {
-          setGameState(prevState => {
-            if (!prevState) return null;
-            // Appel à applyMove du moteur avec le move contenant factoryId et color
-            return engine!.applyMove(prevState, { factoryId, color });
-          });
-          // Pour Summer Pavilion nous vidons la sélection visuelle après
-          setSelectedTiles([]);
-          setSelectedSource(null);
-        }, 100);
+      if (variant === "summer") {
+        setGameState((prevState) => {
+          if (!prevState) return null;
+          // Appel à applyMove du moteur avec le move contenant factoryId et color
+          return engine!.applyMove(prevState, { factoryId, color });
+        });
+        // Pour Summer Pavilion nous vidons la sélection visuelle après
+        setSelectedTiles([]);
+        setSelectedSource(null);
         return;
       }
 
@@ -412,20 +384,27 @@ export const GameProvider: React.FC<GameProviderProps> = ({
    * @param patternLineIndex - Index de la ligne OU move Summer Pavilion
    */
   const placeTiles = useCallback(
-    (arg: number | { 
-      color?: TileColor; 
-      targetFlower?: number; 
-      targetPos?: number;
-      cost?: number;
-      pass?: boolean;
-      keepTiles?: Tile[];
-    }) => {
-      setGameState(prev => {
+    (
+      arg:
+        | number
+        | {
+            color?: TileColor;
+            targetFlower?: number;
+            targetPos?: number;
+            cost?: number;
+            pass?: boolean;
+            keepTiles?: Tile[];
+          }
+    ) => {
+      setGameState((prev) => {
         if (!prev) return prev;
         let newState = prev;
-        if (typeof arg === 'number') {
+        if (typeof arg === "number") {
           // Classique : patternLineIndex
-          newState = engine!.applyMove(prev, { patternLineIndex: arg, selectedTiles: selectedTilesRef.current });
+          newState = engine!.applyMove(prev, {
+            patternLineIndex: arg,
+            selectedTiles: selectedTilesRef.current,
+          });
         } else {
           // Summer Pavilion : move complet
           newState = engine!.applyMove(prev, arg);
@@ -434,7 +413,9 @@ export const GameProvider: React.FC<GameProviderProps> = ({
         if (
           newState &&
           newState.gamePhase === "drafting" &&
-          newState.factories.every((f: { tiles: Tile[] }) => f.tiles.length === 0) &&
+          newState.factories.every(
+            (f: { tiles: Tile[] }) => f.tiles.length === 0
+          ) &&
           newState.center.length === 0
         ) {
           newState = { ...newState, gamePhase: "tiling" };
@@ -446,7 +427,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({
     },
     [engine]
   );
-  
+
   /**
    * Executes a turn for the current AI player with animations
    */
@@ -488,7 +469,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({
           slow: 1800,
         };
 
-        if (variant === 'classic') {
+        if (variant === "classic") {
           // Classic Azul animation flow
           setAiAnimation({
             playerId: currentPlayerId,
@@ -512,10 +493,10 @@ export const GameProvider: React.FC<GameProviderProps> = ({
               setAiAnimation(null);
             }, delayMap[aiSpeed] / 2);
           }, 300);
-        } else if (variant === 'summer') {
+        } else if (variant === "summer") {
           // Summer Pavilion AI flow
           // Phase 1: Sélection des tuiles
-          if (currentGameState.gamePhase === 'drafting') {
+          if (currentGameState.gamePhase === "drafting") {
             // Définir l'animation
             setAiAnimation({
               playerId: currentPlayerId,
@@ -527,28 +508,41 @@ export const GameProvider: React.FC<GameProviderProps> = ({
               color: aiDecision.color,
               isAnimating: true,
             });
-            
+
             // Sélectionner les tuiles avec une animation
             setTimeout(() => {
               selectTiles(aiDecision.factoryId, aiDecision.color);
               setAiAnimation(null);
             }, 300);
-          } 
-          else if (currentGameState.gamePhase === 'tiling') {
+          } else if (currentGameState.gamePhase === "tiling") {
             // Logique simplifiée: placer une tuile dans une fleur aléatoire au coût minimum
-            const player = currentGameState.players.find(p => p.id === currentPlayerId);
-            if (player && player.board.collectedTiles && player.board.collectedTiles.length > 0) {
+            const player = currentGameState.players.find(
+              (p) => p.id === currentPlayerId
+            );
+            if (
+              player &&
+              player.board.collectedTiles &&
+              player.board.collectedTiles.length > 0
+            ) {
               // Prendre la 1ère tuile disponible et la placer dans une position valide
               const availableTile = player.board.collectedTiles[0];
               // Trouver une position valide (pour une implémentation plus avancée, la recherche serait plus sophistiquée)
               // Pour l'instant: placer sur sa fleur correspondante au coût minimum (1)
-              const flowerIndex = ['blue', 'yellow', 'red', 'black', 'teal', 'green', 'purple'].indexOf(availableTile.color);
+              const flowerIndex = [
+                "blue",
+                "yellow",
+                "red",
+                "black",
+                "teal",
+                "green",
+                "purple",
+              ].indexOf(availableTile.color);
               if (flowerIndex >= 0) {
                 placeTiles({
                   color: availableTile.color,
                   targetFlower: flowerIndex,
-                  targetPos: 0,  // Position 0 = coût 1
-                  cost: 1        // Coût minimum
+                  targetPos: 0, // Position 0 = coût 1
+                  cost: 1, // Coût minimum
                 });
               } else {
                 // Si la couleur n'est pas dans la liste, ou c'est un joker, passer son tour
@@ -654,7 +648,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({
     if (gameState.gamePhase === "tiling") {
       // Laisse le temps aux animations si besoin, sinon mets 0
       setTimeout(() => {
-        setGameState(prev => prev ? handleRoundEnd(prev) : prev);
+        setGameState((prev) => (prev ? handleRoundEnd(prev) : prev));
       }, 500); // 500ms pour laisser place à une éventuelle animation
     }
   }, [gameState, handleRoundEnd]);
@@ -662,10 +656,13 @@ export const GameProvider: React.FC<GameProviderProps> = ({
   /**
    * Vérifie si les tuiles sélectionnées doivent obligatoirement aller dans la ligne de sol
    */
-  const mustPlaceInFloorLine = useCallback((selectedTiles: Tile[]) => {
-    if (!engine || !gameState) return false;
-    return engine.mustPlaceInFloorLine(gameState, selectedTiles);
-  }, [engine, gameState]);
+  const mustPlaceInFloorLine = useCallback(
+    (selectedTiles: Tile[]) => {
+      if (!engine || !gameState) return false;
+      return engine.mustPlaceInFloorLine(gameState, selectedTiles);
+    },
+    [engine, gameState]
+  );
 
   // Create value object for context
   const contextValue: GameContextType = {
