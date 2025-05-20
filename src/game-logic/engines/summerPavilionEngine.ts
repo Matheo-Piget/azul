@@ -101,6 +101,15 @@ export class SummerPavilionEngine implements AzulGameEngine {
     return gameState;
   }
 
+  handleRoundEnd(gameState: GameState): GameState {
+    let newState = { ...gameState };
+    if (gameState.gamePhase === 'drafting') {
+      newState.gamePhase = 'tiling';
+      return newState;
+    }
+    return newState;
+  }
+
   canSelectTiles(gameState: GameState, factoryId: number | null, color: TileColor): boolean {
     // Vérifications de base
     if (gameState.gamePhase !== 'drafting') return false;

@@ -170,6 +170,14 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
   const selectedTileColor = selectedBagIdx !== null && player?.board.collectedTiles ?
     player.board.collectedTiles[selectedBagIdx]?.color : null;
 
+  // Distribution des tuiles conservées dans les coins
+  const cornerTiles: Tile[][] = [[], [], [], []]; // top-left, top-right, bottom-left, bottom-right
+  
+  savedTiles.forEach((tile, index) => {
+    const cornerIndex = index % 4;
+    cornerTiles[cornerIndex].push(tile);
+  });
+
   return (
     <div className="player-board summer-pavilion-board">
       <div className="player-board-header">
@@ -215,13 +223,42 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
       <div className="summer-stars-container">
 
       <div className="square-container">
-        <div className="corner-tile top-left"
-        />
-        <div className="corner-tile top-right"
-        />
-        <div className="corner-tile bottom-left" 
-        />
-        <div className="corner-tile bottom-right" />
+        <div className="corner-tile top-left" data-count={cornerTiles[0].length || ''}>
+          {cornerTiles[0].map((tile, idx) => (
+            <div 
+              key={`tl-${idx}`} 
+              className={`diamond-tile tile-${tile.color} corner-saved-tile`} 
+              title={`Tuile ${tile.color} conservée pour la prochaine manche`}
+            />
+          ))}
+        </div>
+        <div className="corner-tile top-right" data-count={cornerTiles[1].length || ''}>
+          {cornerTiles[1].map((tile, idx) => (
+            <div 
+              key={`tr-${idx}`} 
+              className={`diamond-tile tile-${tile.color} corner-saved-tile`} 
+              title={`Tuile ${tile.color} conservée pour la prochaine manche`}
+            />
+          ))}
+        </div>
+        <div className="corner-tile bottom-left" data-count={cornerTiles[2].length || ''}>
+          {cornerTiles[2].map((tile, idx) => (
+            <div 
+              key={`bl-${idx}`} 
+              className={`diamond-tile tile-${tile.color} corner-saved-tile`} 
+              title={`Tuile ${tile.color} conservée pour la prochaine manche`}
+            />
+          ))}
+        </div>
+        <div className="corner-tile bottom-right" data-count={cornerTiles[3].length || ''}>
+          {cornerTiles[3].map((tile, idx) => (
+            <div 
+              key={`br-${idx}`} 
+              className={`diamond-tile tile-${tile.color} corner-saved-tile`} 
+              title={`Tuile ${tile.color} conservée pour la prochaine manche`}
+            />
+          ))}
+        </div>
       </div>
         {/* Fleur centrale (neutre) */}
         <div className="summer-star center-star">
@@ -292,21 +329,6 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
 
       {/* Bag personnel avec sélection */}
       <div className="player-status">
-        {savedTiles.length > 0 && (
-          <div className="saved-tiles">
-            <span className="saved-label">Conservées :</span>
-            <div className="saved-tiles-container">
-              {savedTiles.map((tile, i) => (
-                <div
-                  key={i}
-                  className={`diamond-tile tile-${tile.color} saved-tile`}
-                  title={`Tuile ${tile.color} conservée de la manche précédente`}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-        
         <div className="bag-summer">
           <span className="bag-label">Sac :</span>
           <div className="bag-tiles">
