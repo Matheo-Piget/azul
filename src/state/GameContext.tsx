@@ -293,7 +293,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({
       }
 
       // Pour Summer Pavilion, nous allons directement appeler applyMove
-      if (variant === 'summerPavilion') {
+      if (variant === 'summer') {
         // Mettre à jour l'état de sélection temporairement pour les effets visuels
         let tilesToSelect: Tile[] = [];
         if (factoryId !== null) {
@@ -512,7 +512,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({
               setAiAnimation(null);
             }, delayMap[aiSpeed] / 2);
           }, 300);
-        } else if (variant === 'summerPavilion') {
+        } else if (variant === 'summer') {
           // Summer Pavilion AI flow
           // Phase 1: Sélection des tuiles
           if (currentGameState.gamePhase === 'drafting') {
@@ -534,7 +534,6 @@ export const GameProvider: React.FC<GameProviderProps> = ({
               setAiAnimation(null);
             }, 300);
           } 
-          // Phase 2: Placement des tuiles
           else if (currentGameState.gamePhase === 'tiling') {
             // Logique simplifiée: placer une tuile dans une fleur aléatoire au coût minimum
             const player = currentGameState.players.find(p => p.id === currentPlayerId);
