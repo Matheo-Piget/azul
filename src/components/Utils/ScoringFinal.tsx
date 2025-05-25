@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import './ScoringAnimation.css';
 import { Player, TileColor } from '../../models/types';
-import Tile from '../Tile/Tile';
+import './ScoringFinal.css';
 
 interface BonusItem {
   type: string;
@@ -30,6 +29,7 @@ const FinalScoringAnimation: React.FC<FinalScoringAnimationProps> = ({
   onComplete 
 }) => {
   const [currentStep, setCurrentStep] = useState(-1);
+  const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
   const [currentBonusIndex, setCurrentBonusIndex] = useState(-1);
   const [showFinalButton, setShowFinalButton] = useState(false);
   const [animatingElements, setAnimatingElements] = useState<{
@@ -38,11 +38,17 @@ const FinalScoringAnimation: React.FC<FinalScoringAnimationProps> = ({
     color?: TileColor;
   } | null>(null);
 
-  // Calculate winner
-  const maxScore = Math.max(...players.map(p => p.board.score));
-  const winners = players.filter(p => p.board.score === maxScore);
+  // Calculate winner and final standings
+  const finalStandings = useMemo(() => {
+    const sortedPlayers = [...players].sort((a, b) => b.board.score - a.board.score);
+    return sortedPlayers.map((player, index) => ({
+      ...player,
+      position: index + 1,
+      isWinner: index === 0
+    }));
+  }, [players]);
 
-  // Prepare player data with bonuses and their visual elements
+  // Prepare player data with bonuses
   const playersWithBonuses = useMemo(() => {
     return players.map(player => {
       const details = bonusDetails[player.id];
@@ -56,18 +62,17 @@ const FinalScoringAnimation: React.FC<FinalScoringAnimationProps> = ({
         type: 'base',
         label: 'Score de base',
         value: details.baseScore,
-        icon: '🧮'
+        icon: '🏛️'
       });
       
-      // Row bonuses with elements to highlight
+      // Row bonuses
       if (details.rowsCompleted > 0) {
         const rowElements: {row: number}[] = [];
-        // Find which rows are complete
-        player.board.wall.forEach((row, rowIndex) => {
-          if (row.every(space => space.filled)) {
-            rowElements.push({ row: rowIndex });
+        for (let row = 0; row < 5; row++) {
+          if (player.board.wall[row].every(space => space.filled)) {
+            rowElements.push({ row });
           }
-        });
+        }
         
         bonuses.push({
           type: 'rows',
@@ -81,7 +86,6 @@ const FinalScoringAnimation: React.FC<FinalScoringAnimationProps> = ({
       // Column bonuses
       if (details.columnsCompleted > 0) {
         const colElements: {col: number}[] = [];
-        // Find which columns are complete
         for (let col = 0; col < 5; col++) {
           if (player.board.wall.every(row => row[col].filled)) {
             colElements.push({ col });
@@ -100,7 +104,7 @@ const FinalScoringAnimation: React.FC<FinalScoringAnimationProps> = ({
       // Color bonuses
       if (details.colorsCompleted > 0) {
         const colorElements: {color: TileColor}[] = [];
-        const colors: TileColor[] = ['blue', 'yellow', 'red', 'black', 'teal', 'purple', 'orange'];
+        const colors: TileColor[] = ['blue', 'yellow', 'red', 'black', 'teal'];
         
         colors.forEach(color => {
           const colorCount = player.board.wall
@@ -129,42 +133,35 @@ const FinalScoringAnimation: React.FC<FinalScoringAnimationProps> = ({
   // Animation sequence
   useEffect(() => {
     if (currentStep === -1) {
-      // Start sequence after a short delay
-      setTimeout(() => setCurrentStep(0), 1000);
+      setTimeout(() => setCurrentStep(0), 800);
       return;
     }
     
-    if (currentStep >= playersWithBonuses.length) {
-      // All players' scores shown, show final button
+    if (currentPlayerIndex >= playersWithBonuses.length) {
       setShowFinalButton(true);
       return;
     }
     
-    // Get current player's bonuses
-    const currentPlayer = playersWithBonuses[currentStep];
+    const currentPlayer = playersWithBonuses[currentPlayerIndex];
     if (!currentPlayer) return;
     
     if (currentBonusIndex === -1) {
-      // Start with base score
-      setTimeout(() => setCurrentBonusIndex(0), 500);
+      setTimeout(() => setCurrentBonusIndex(0), 600);
       return;
     }
     
-    // Check if we've shown all bonuses for this player
     if (currentBonusIndex >= currentPlayer.bonuses.length) {
-      // Move to next player after a delay
       setTimeout(() => {
-        setCurrentStep(currentStep + 1);
+        setCurrentPlayerIndex(currentPlayerIndex + 1);
         setCurrentBonusIndex(-1);
         setAnimatingElements(null);
-      }, 1000);
+      }, 1200);
       return;
     }
     
-    // Get current bonus
     const currentBonus = currentPlayer.bonuses[currentBonusIndex];
     
-    // Set animation elements based on bonus type
+    // Set animation elements
     if (currentBonus.type === 'rows' && currentBonus.elements) {
       setAnimatingElements({
         type: 'row',
@@ -184,48 +181,10 @@ const FinalScoringAnimation: React.FC<FinalScoringAnimationProps> = ({
       setAnimatingElements(null);
     }
     
-    // Move to next bonus after a delay
     setTimeout(() => {
       setCurrentBonusIndex(currentBonusIndex + 1);
     }, 2000);
-  }, [currentStep, currentBonusIndex, playersWithBonuses]);
-
-  // Create a visual representation of a player's wall
-  const renderPlayerWall = (player: Player) => {
-    return (
-      <div className="final-scoring-wall">
-        {player.board.wall.map((row, rowIndex) => 
-          row.map((tile, colIndex) => (
-            <div 
-              key={`${rowIndex}-${colIndex}`}
-              className={`final-scoring-tile ${tile.filled ? 'filled' : ''}`}
-              style={{ 
-                backgroundColor: tile.filled ? 
-                  getTileColor(tile.color) : 
-                  'rgba(0, 0, 0, 0.05)'
-              }}
-            >
-              {/* Show animated highlights based on bonus type */}
-              {animatingElements && animatingElements.type === 'row' && 
-               animatingElements.index === rowIndex && tile.filled && (
-                <div className="row-highlight"></div>
-              )}
-              
-              {animatingElements && animatingElements.type === 'column' && 
-               animatingElements.index === colIndex && tile.filled && (
-                <div className="column-highlight"></div>
-              )}
-              
-              {animatingElements && animatingElements.type === 'color' && 
-               tile.color === animatingElements.color && tile.filled && (
-                <div className="color-highlight"></div>
-              )}
-            </div>
-          ))
-        )}
-      </div>
-    );
-  };
+  }, [currentStep, currentPlayerIndex, currentBonusIndex, playersWithBonuses]);
 
   // Helper function to get tile color
   const getTileColor = (color: TileColor): string => {
@@ -242,53 +201,120 @@ const FinalScoringAnimation: React.FC<FinalScoringAnimationProps> = ({
     return colorMap[color];
   };
 
-  return (
-    <div className="final-scoring-container">
-      <h2 className="final-scoring-header">Score Final</h2>
-      
-      {playersWithBonuses.map(({ player, bonuses }, index) => (
-        <div 
-          key={player.id}
-          className={`final-scoring-player ${
-            winners.some(w => w.id === player.id) ? 'final-scoring-winner' : ''
-          } ${currentStep >= index ? 'visible' : ''}`}
-        >
-          <div className="final-scoring-player-header">
-            <div className="final-scoring-player-name">{player.name}</div>
-            <div className="final-scoring-total">{player.board.score} points</div>
-          </div>
-          
-          <div className="final-scoring-board">
-            {renderPlayerWall(player)}
-            
-            <div className="final-scoring-bonus-list">
-              {bonuses.map((bonus, bonusIndex) => (
-                <div 
-                  key={bonus.type}
-                  className={`final-scoring-bonus-item ${
-                    currentStep === index && currentBonusIndex === bonusIndex ? 'highlight' : ''
-                  }`}
+  // Render a player's wall with highlighting
+  const renderPlayerWall = (player: Player, isCurrentlyAnimating: boolean) => {
+    return (
+      <div className="final-scoring-wall">
+        {player.board.wall.map((row, rowIdx) => (
+          <div key={rowIdx} className="wall-row">
+            {row.map((space, colIdx) => {
+              const isHighlighted = isCurrentlyAnimating && animatingElements && (
+                (animatingElements.type === 'row' && animatingElements.index === rowIdx) ||
+                (animatingElements.type === 'column' && animatingElements.index === colIdx) ||
+                (animatingElements.type === 'color' && animatingElements.color === space.color)
+              );
+              
+              return (
+                <div
+                  key={`${rowIdx}-${colIdx}`}
+                  className={`wall-space ${space.filled ? 'filled' : 'empty'} ${isHighlighted ? 'bonus-highlight' : ''}`}
+                  style={space.filled ? { backgroundColor: getTileColor(space.color) } : {}}
                 >
-                  <div className="final-scoring-bonus-label">
-                    <span className="final-scoring-bonus-icon">{bonus.icon}</span>
-                    <span>{bonus.label}</span>
+                  {isHighlighted && <div className="bonus-sparkle">✨</div>}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const currentPlayer = playersWithBonuses[currentPlayerIndex];
+  const currentBonus = currentPlayer?.bonuses[currentBonusIndex];
+
+  return (
+    <div className="final-scoring-overlay">
+      <div className="final-scoring-modal">
+        <div className="final-scoring-header">
+          <h2>🏆 Décompte Final des Points</h2>
+          <div className="scoring-progress">
+            {playersWithBonuses.map((_, index) => (
+              <div 
+                key={index} 
+                className={`progress-dot ${index < currentPlayerIndex ? 'completed' : index === currentPlayerIndex ? 'active' : ''}`}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="final-scoring-content">
+          {/* Section gauche: Plateau du joueur courant */}
+          {currentPlayer && (
+            <div className="current-player-section">
+              <div className="current-player-header">
+                <h3>{currentPlayer.player.name}</h3>
+                <div className="current-score">{currentPlayer.player.board.score} pts</div>
+              </div>
+              
+              {renderPlayerWall(currentPlayer.player, true)}
+              
+              {currentBonus && (
+                <div className="bonus-display">
+                  <div className="bonus-icon">{currentBonus.icon}</div>
+                  <div className="bonus-info">
+                    <div className="bonus-label">{currentBonus.label}</div>
+                    <div className="bonus-value">+{currentBonus.value} points</div>
                   </div>
-                  <div className="final-scoring-bonus-value">+{bonus.value}</div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Section droite: Liste des bonus */}
+          {currentPlayer && (
+            <div className="bonuses-section">
+              <h4>Détail des points bonus :</h4>
+              <div className="bonuses-list">
+                {currentPlayer.bonuses.map((bonus, index) => (
+                  <div 
+                    key={index} 
+                    className={`bonus-item ${index < currentBonusIndex ? 'revealed' : index === currentBonusIndex ? 'revealing' : 'hidden'}`}
+                  >
+                    <span className="bonus-icon-small">{bonus.icon}</span>
+                    <span className="bonus-text">{bonus.label}</span>
+                    <span className="bonus-points">+{bonus.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {showFinalButton && (
+          <div className="final-standings">
+            <h3>Classement Final</h3>
+            <div className="standings-list">
+              {finalStandings.map((player, index) => (
+                <div key={player.id} className={`standing-item ${player.isWinner ? 'winner' : ''}`}>
+                  <div className="standing-position">
+                    {player.position === 1 ? '🥇' : player.position === 2 ? '🥈' : player.position === 3 ? '🥉' : `${player.position}.`}
+                  </div>
+                  <div className="standing-name">{player.name}</div>
+                  <div className="standing-score">{player.board.score} points</div>
                 </div>
               ))}
             </div>
+            
+            <button 
+              className="continue-button"
+              onClick={onComplete}
+            >
+              Continuer
+            </button>
           </div>
-        </div>
-      ))}
-      
-      {showFinalButton && (
-        <button 
-          className="final-scoring-button"
-          onClick={onComplete}
-        >
-          Terminer
-        </button>
-      )}
+        )}
+      </div>
     </div>
   );
 };
