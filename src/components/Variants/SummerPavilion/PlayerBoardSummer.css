@@ -544,3 +544,318 @@
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
 }
 
+/* ------- PLATEAU SUMMER PAVILION ------- */
+.player-board-summer {
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(26, 60, 91, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  min-width: 300px;
+  position: relative;
+}
+
+.player-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(26, 60, 91, 0.1);
+}
+
+.player-info h3 {
+  margin: 0;
+  color: #1a3c5b;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.player-score {
+  background: linear-gradient(145deg, #1a3c5b, #3a8bc5);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(26, 60, 91, 0.2);
+}
+
+.summer-pavilion-content {
+  background: rgba(255, 255, 255, 0.5);
+  border: 2px dashed rgba(26, 60, 91, 0.2);
+  border-radius: 8px;
+  padding: 30px;
+  text-align: center;
+  margin-bottom: 20px;
+  color: #666;
+  font-style: italic;
+}
+
+/* ------- SAC PERSONNEL ------- */
+.personal-bag-container {
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 10px;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    0 2px 6px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  padding: 12px;
+  margin: 8px 0;
+  border: 1px solid rgba(26, 60, 91, 0.1);
+  position: relative;
+  overflow: hidden;
+  max-width: 200px;
+  min-height: 80px;
+}
+
+/* Motif décoratif subtil */
+.personal-bag-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 30px;
+  height: 30px;
+  background: radial-gradient(circle at center, rgba(26, 60, 91, 0.03) 0%, transparent 70%);
+  border-radius: 0 10px 0 100%;
+}
+
+.personal-bag-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(26, 60, 91, 0.08);
+}
+
+.personal-bag-icon {
+  font-size: 14px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #1e88e5, #42a5f5);
+  color: white;
+  box-shadow: 0 2px 4px rgba(26, 60, 91, 0.2);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.personal-bag-icon::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(255,255,255,0.2), transparent);
+}
+
+.personal-bag-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.personal-bag-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1a3c5b;
+  letter-spacing: 0.3px;
+  line-height: 1;
+}
+
+.personal-bag-total {
+  font-size: 9px;
+  color: #666;
+  font-weight: 500;
+  padding: 1px 4px;
+  background: rgba(26, 60, 91, 0.08);
+  border-radius: 6px;
+  display: inline-block;
+  margin-top: 2px;
+  max-width: fit-content;
+}
+
+.personal-bag-content {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.personal-bag-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  width: 100%;
+}
+
+.personal-tile-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 6px;
+  border: 1px solid rgba(26, 60, 91, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+  min-width: 32px;
+  position: relative;
+}
+
+.personal-tile-group:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  border-color: rgba(26, 60, 91, 0.12);
+}
+
+.personal-tile-sample {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.personal-tile-count {
+  font-size: 9px;
+  font-weight: 700;
+  color: #1a3c5b;
+  background: rgba(26, 60, 91, 0.1);
+  padding: 1px 4px;
+  border-radius: 6px;
+  min-width: 12px;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  line-height: 1;
+}
+
+.personal-bag-empty {
+  color: #999;
+  font-style: italic;
+  font-size: 10px;
+  padding: 12px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 6px;
+  border: 1px dashed rgba(0, 0, 0, 0.08);
+  width: 100%;
+}
+
+/* Variante pour le sac personnel */
+.personal-bag-container {
+  background: linear-gradient(145deg, rgba(30, 136, 229, 0.04), rgba(255, 255, 255, 0.8));
+}
+
+/* Animation subtile d'apparition pour les groupes de tuiles */
+.personal-tile-group {
+  animation: personalTileAppear 0.3s ease-out backwards;
+}
+
+.personal-tile-group:nth-child(1) { animation-delay: 0ms; }
+.personal-tile-group:nth-child(2) { animation-delay: 40ms; }
+.personal-tile-group:nth-child(3) { animation-delay: 80ms; }
+.personal-tile-group:nth-child(4) { animation-delay: 120ms; }
+.personal-tile-group:nth-child(5) { animation-delay: 160ms; }
+.personal-tile-group:nth-child(6) { animation-delay: 200ms; }
+.personal-tile-group:nth-child(7) { animation-delay: 240ms; }
+.personal-tile-group:nth-child(8) { animation-delay: 280ms; }
+
+@keyframes personalTileAppear {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Animation pour les changements de valeurs dans le sac personnel */
+@keyframes personalValueChange {
+  0% { 
+    transform: scale(1);
+    background: rgba(26, 60, 91, 0.1);
+  }
+  50% { 
+    transform: scale(1.1);
+    background: rgba(255, 193, 7, 0.3);
+  }
+  100% { 
+    transform: scale(1);
+    background: rgba(26, 60, 91, 0.1);
+  }
+}
+
+.personal-bag-total.value-change {
+  animation: personalValueChange 0.4s ease;
+}
+
+/* Responsive design pour écrans plus petits */
+@media (max-width: 768px) {
+  .personal-bag-container {
+    max-width: 180px;
+    padding: 10px;
+  }
+  
+  .personal-bag-tiles {
+    gap: 3px;
+  }
+  
+  .personal-tile-group {
+    min-width: 28px;
+    padding: 3px;
+  }
+  
+  .personal-bag-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+  }
+  
+  .personal-bag-title {
+    font-size: 10px;
+  }
+  
+  .personal-bag-total {
+    font-size: 8px;
+  }
+}
+
+/* Intégration harmonieuse dans le plateau Summer Pavilion */
+.player-board-summer .personal-bag-container {
+  margin-top: 12px;
+  align-self: flex-start;
+}
+
+/* Style spécifique pour le plateau actif */
+.player-board-summer.active .personal-bag-container {
+  border-color: rgba(58, 139, 197, 0.2);
+  box-shadow: 
+    0 4px 12px rgba(58, 139, 197, 0.1),
+    0 2px 6px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* Animation d'apparition pour le sac personnel */
+.personal-bag-container {
+  animation: personalBagSlideIn 0.4s ease-out;
+}
+
+@keyframes personalBagSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+

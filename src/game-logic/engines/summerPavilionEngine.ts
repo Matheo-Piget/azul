@@ -43,6 +43,9 @@ function createSummerPlayer(id: string, name: string): Player {
       wall: [], // À remplacer par la structure hexagonale
       floorLine: [],
       score: 0,
+      collectedTiles: [],
+      savedTiles: [],
+      placedTiles: []
     },
   };
 }
@@ -175,6 +178,12 @@ export class SummerPavilionEngine implements AzulGameEngine {
           while (selectedTiles.length > 1) {
             selectedTiles.pop();
           }
+
+
+        }
+
+        if (!currentPlayer.board.collectedTiles) {
+          currentPlayer.board.collectedTiles = [];
         }
         
         // Retire toutes les tuiles sélectionnées de la fabrique

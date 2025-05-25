@@ -51,7 +51,7 @@ const Tile: React.FC<TileProps> = ({
   selected = false,
   disabled = false,
   placed = false
-}) => {
+}: TileProps): React.ReactElement => {
   const sizeClasses = {
     small: 'tile-small',
     medium: 'tile-medium',
