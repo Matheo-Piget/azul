@@ -1,60 +1,252 @@
 .game-info-panel {
-  background-color: rgba(255, 255, 255, 0.9);
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  padding: 16px;
-  margin: 12px 0;
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 16px;
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.1),
+    0 4px 10px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  padding: 20px;
+  margin: 16px 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
   width: 100%;
-  max-width: 300px;
+  max-width: 320px;
+  border: 1px solid rgba(26, 60, 91, 0.1);
+  position: relative;
+  overflow: hidden;
 }
 
-.info-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background-color: #f5f5f5;
-  transition: all 0.2s ease;
+/* Motif décoratif subtil */
+.game-info-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 60px;
+  background: radial-gradient(circle at center, rgba(26, 60, 91, 0.03) 0%, transparent 70%);
+  border-radius: 0 16px 0 100%;
 }
 
-.info-item:hover {
-  background-color: #e8f4ff;
+.info-section {
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid rgba(26, 60, 91, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.info-section:hover {
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: rgba(26, 60, 91, 0.12);
 }
 
-.info-label {
-  font-weight: 600;
-  color: #333;
-  font-size: 1rem;
-}
-
-.info-value {
-  background-color: #2c3e50;
-  color: white;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: 500;
+.section-header {
   display: flex;
   align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(26, 60, 91, 0.1);
 }
 
-.bag-icon, .discard-icon {
-  margin-right: 8px;
-  font-size: 1.1rem;
+.section-icon {
+  font-size: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #1a3c5b, #3a8bc5);
+  color: white;
+  box-shadow: 0 3px 8px rgba(26, 60, 91, 0.3);
+  position: relative;
+}
+
+.section-icon::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(255,255,255,0.2), transparent);
+}
+
+.section-title h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a3c5b;
+  margin: 0 0 4px 0;
+  letter-spacing: 0.5px;
+}
+
+.total-count {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+  padding: 2px 8px;
+  background: rgba(26, 60, 91, 0.08);
+  border-radius: 10px;
+  display: inline-block;
+}
+
+.section-content {
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tile-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  width: 100%;
+}
+
+.tile-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  border: 1px solid rgba(26, 60, 91, 0.08);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+  min-width: 48px;
+  position: relative;
+}
+
+.tile-group:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+  border-color: rgba(26, 60, 91, 0.15);
+}
+
+.tile-sample {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.tile-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1a3c5b;
+  background: rgba(26, 60, 91, 0.1);
+  padding: 2px 6px;
+  border-radius: 8px;
+  min-width: 16px;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.empty-state {
+  color: #999;
+  font-style: italic;
+  font-size: 13px;
+  padding: 20px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  border: 1px dashed rgba(0, 0, 0, 0.1);
+  width: 100%;
 }
 
 /* Animation pour montrer les changements de valeurs */
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
+@keyframes valueChange {
+  0% { 
+    transform: scale(1);
+    background: rgba(26, 60, 91, 0.08);
+  }
+  50% { 
+    transform: scale(1.1);
+    background: rgba(255, 193, 7, 0.3);
+  }
+  100% { 
+    transform: scale(1);
+    background: rgba(26, 60, 91, 0.08);
+  }
 }
 
 .value-change {
-  animation: pulse 0.4s ease;
+  animation: valueChange 0.4s ease;
+}
+
+/* Variantes spécifiques aux sections */
+.bag-section {
+  background: linear-gradient(145deg, rgba(30, 136, 229, 0.05), rgba(255, 255, 255, 0.7));
+}
+
+.discard-section {
+  background: linear-gradient(145deg, rgba(0, 137, 123, 0.05), rgba(255, 255, 255, 0.7));
+}
+
+.bag-section .section-icon {
+  background: linear-gradient(145deg, #1e88e5, #42a5f5);
+}
+
+.discard-section .section-icon {
+  background: linear-gradient(145deg, #00897b, #26a69a);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .game-info-panel {
+    max-width: 100%;
+    padding: 16px;
+    gap: 16px;
+  }
+  
+  .info-section {
+    padding: 12px;
+  }
+  
+  .tile-groups {
+    gap: 6px;
+  }
+  
+  .tile-group {
+    min-width: 42px;
+    padding: 6px;
+  }
+  
+  .section-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+}
+
+/* Animation subtile d'apparition */
+.tile-group {
+  animation: tileGroupAppear 0.3s ease-out backwards;
+}
+
+.tile-group:nth-child(1) { animation-delay: 0ms; }
+.tile-group:nth-child(2) { animation-delay: 50ms; }
+.tile-group:nth-child(3) { animation-delay: 100ms; }
+.tile-group:nth-child(4) { animation-delay: 150ms; }
+.tile-group:nth-child(5) { animation-delay: 200ms; }
+.tile-group:nth-child(6) { animation-delay: 250ms; }
+.tile-group:nth-child(7) { animation-delay: 300ms; }
+.tile-group:nth-child(8) { animation-delay: 350ms; }
+
+@keyframes tileGroupAppear {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
