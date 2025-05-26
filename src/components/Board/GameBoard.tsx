@@ -32,7 +32,7 @@ import RoundScoringAnimation, {
 const GameBoard: React.FC = (): React.ReactElement => {
   const { gameState, startNewGame, variant } = useGame();
   const [playerCount, setPlayerCount] = useState(2);
-  const [aiPlayers, setAiPlayers] = useState<Record<string, boolean>>({});
+  const [aiPlayers] = useState<Record<string, boolean>>({});
   const [keepAiSettings, setKeepAiSettings] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
   const factoryRefs = useRef<Record<number, HTMLDivElement | null>>({});
@@ -140,7 +140,7 @@ const GameBoard: React.FC = (): React.ReactElement => {
         setShowFinalScoring(true);
       }, 500);
     }
-  }, [gameState?.gamePhase, gameState?.players, setShowFinalScoring]);
+  }, [gameState?.gamePhase, gameState?.players, setShowFinalScoring, gameState]);
 
   useEffect(() => {
     if (gameState?.gamePhase === "tiling") {
@@ -162,7 +162,7 @@ const GameBoard: React.FC = (): React.ReactElement => {
       setScoringSteps(steps);
       setShowRoundScoring(true);
     }
-  }, [gameState?.gamePhase]);
+  }, [gameState?.gamePhase, gameState?.players]);
 
   if (variant && variant !== 'classic') {
     return <div style={{ padding: 40, color: '#e53935', fontWeight: 600 }}>Variante non supportée ici. Utilisez le composant dédié.</div>;
@@ -351,24 +351,31 @@ const GameBoard: React.FC = (): React.ReactElement => {
     (p) => p.id === gameState.currentPlayer
   );
 
-  {showRoundScoring && (
-  <RoundScoringAnimation
-    player={gameState.players[0]} // ou la liste, à faire pour chaque joueur
-    steps={scoringSteps}
-    onComplete={() => {
-      setShowRoundScoring(false);
-      if (isRoundTransitioning) {
-        return (
-          <RoundTransition
-            roundNumber={gameState.roundNumber}
-            onComplete={() => setIsRoundTransitioning(false)}
-            autoProgress={true}
-          />
-        );
-      }
-      }}
-  />
-)}
+  if (showRoundScoring) {
+    return (
+      <RoundScoringAnimation
+        player={gameState.players[0]} // ou la liste, à faire pour chaque joueur
+        steps={scoringSteps}
+        onComplete={() => {
+          setShowRoundScoring(false);
+          if (isRoundTransitioning) {
+            // Move this logic outside or handle it properly
+            setIsRoundTransitioning(false);
+          }
+        }}
+      />
+    );
+  }
+
+  if (isRoundTransitioning) {
+    return (
+      <RoundTransition
+        roundNumber={gameState.roundNumber}
+        onComplete={() => setIsRoundTransitioning(false)}
+        autoProgress={true}
+      />
+    );
+  }
 
   return (
     <div className="game-board">

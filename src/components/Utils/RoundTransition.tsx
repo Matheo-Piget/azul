@@ -29,7 +29,7 @@ const RoundTransition: React.FC<RoundTransitionProps> = ({
     }, 500);
     
     return () => clearTimeout(showTimer);
-  }, [autoProgress, delay]);
+  });
   
   const handleContinue = () => {
     setVisible(false);

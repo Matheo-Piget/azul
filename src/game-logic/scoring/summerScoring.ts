@@ -15,28 +15,6 @@ export function calculateSummerPavilionScore(gameState: GameState): number {
   }, 0);
 }
 
-// Vérifie si une étoile est complète (toutes les 6 positions remplies)
-function isStarComplete(placedTiles: { color: TileColor; flower: number; pos: number }[], flowerIndex: number): boolean {
-  const tilesOnFlower = placedTiles.filter(t => t.flower === flowerIndex);
-  return tilesOnFlower.length === 6; // 6 positions par étoile
-}
-
-// Vérifie si tous les espaces d'un même coût sont remplis
-function allCostSpacesFilled(placedTiles: { color: TileColor; flower: number; pos: number }[], cost: number): boolean {
-  // Dans Summer Pavilion, chaque étoile a une position de chaque coût (1 à 6)
-  // On vérifie que pour chaque fleur, la position correspondant au coût est remplie
-  const flowers = [0, 1, 2, 3, 4, 5]; // Les 6 fleurs
-  
-  // Chaque position dans une fleur a un coût spécifique
-  // La position cost-1 correspond au coût 'cost'
-  const costPosition = cost - 1;
-  
-  // Vérifie si chaque fleur a une tuile à la position du coût spécifié
-  return flowers.every(flower => 
-    placedTiles.some(tile => tile.flower === flower && tile.pos === costPosition)
-  );
-}
-
 // Vérifie si on doit obtenir un bonus pilier (4 espaces adjacents à un pilier remplis)
 function checkPillarBonus(placedTiles: { color: TileColor; flower: number; pos: number }[], newTile: { flower: number; pos: number }): boolean {
   // Les piliers sont situés entre la fleur centrale (6) et les fleurs extérieures (0-5)

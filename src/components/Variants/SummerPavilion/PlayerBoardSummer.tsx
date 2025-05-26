@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from "react";
 import "./PlayerBoardSummer.css";
-import { Tile, TileColor, Tile as TileType } from "../../../models/types";
+import { Tile, TileColor } from "../../../models/types";
 import { useGame } from "../../../state/GameContext";
-import TileComponent from "../../Tile/Tile";
 
 interface PlayerBoardSummerProps {
   playerId: string;
@@ -183,20 +182,7 @@ const PlayerBoardSummer: React.FC<PlayerBoardSummerProps> = ({ playerId }) => {
     });
   }, [player]);
 
-  // Vérifier si une fleur est complète
-  const isFlowerComplete = (flowerIdx: number) => {
-    if (!placedTiles[flowerIdx]) return false;
-    return placedTiles[flowerIdx].every((tile) => tile !== "empty");
-  };
-
   const tileSize = 36; // Augmenté pour correspondre à la nouvelle taille des tuiles
-
-  // Handler : sélection d'une tuile du sac
-  const handleSelectBagTile = (idx: number) => {
-    // Ne peut pas sélectionner si on est en mode "passer"
-    if (passing) return;
-    setSelectedBagIdx(idx);
-  };
 
   // Handler : placement sur une case de fleur
   const handlePlaceTile = (flowerIdx: number, posIdx: number) => {

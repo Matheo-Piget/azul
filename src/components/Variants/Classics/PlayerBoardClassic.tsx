@@ -37,7 +37,7 @@ const PlayerBoardClassic: React.FC<PlayerBoardProps> = ({
     } else {
       setMustUseFloorLine(false);
     }
-  }, [gameState, selectedTiles, canPlace, player]);
+  }, [gameState, selectedTiles, canPlace, player, mustPlaceInFloorLine]);
 
   if (!player) {
     return <div data-testid="player-not-found">Player not found</div>;

@@ -83,7 +83,7 @@ const Tile: React.FC<TileProps> = ({
       style={{ backgroundColor: TILE_COLORS[color] }}
       onClick={handleClick}
       aria-disabled={disabled}
-      aria-selected={selected}
+      aria-pressed={selected}  // Changed from aria-selected to aria-pressed
       role="button"
       tabIndex={disabled ? -1 : 0}
     >

@@ -23,7 +23,6 @@ const ScoringAnimation: React.FC<ScoringAnimationProps> = ({
   delay = 0
 }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const [showHighlights, setShowHighlights] = useState(false);
   const animationRef = useRef<HTMLDivElement>(null);
 
   // Manage animation lifecycle with delays
@@ -34,7 +33,6 @@ const ScoringAnimation: React.FC<ScoringAnimationProps> = ({
       
       // Add highlight after animation starts
       const highlightTimer = setTimeout(() => {
-        setShowHighlights(true);
         
         highlightElements.forEach(el => {
           el.classList.add('highlight-placement');

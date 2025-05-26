@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Player, Tile } from "../../models/types";
+import { Player } from "../../models/types";
 import TileComponent from "../Tile/Tile";
 import "./ScoringAnimation.css";
 

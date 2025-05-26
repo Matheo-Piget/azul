@@ -1,6 +1,5 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import './TutorialSystem.css';
-import { useGame } from '../../state/GameContext';
 
 interface TutorialStep {
   id: number;

@@ -1,6 +1,5 @@
 import { AzulGameEngine } from "../../models/AzulGameEngine";
 import { GameState, TileColor, Tile, Player } from "../../models/types";
-import { calculateSummerPavilionScore } from "../scoring/summerScoring";
 import { shuffle } from "../utils";
 import { checkBonusesOnPlacement } from "../scoring/summerScoring";
 
@@ -25,33 +24,6 @@ const JOKER_COLORS: TileColor[] = [
   "blue",
   "red",
 ];
-
-// Coût des espaces (1 à 6)
-const SPACE_COSTS = [1, 2, 3, 4, 5, 6];
-
-interface BonusAchievement {
-  type: "pillar" | "window" | "statue";
-  reward: number; // Nombre de tuiles à prendre
-  description: string;
-}
-
-const BONUS_ACHIEVEMENTS: Record<string, BonusAchievement> = {
-  pillar: {
-    type: "pillar",
-    reward: 3,
-    description: "Pilier complet (toutes les fleurs à la même position)",
-  },
-  window: {
-    type: "window",
-    reward: 3,
-    description: "Fenêtre complète (3+ tuiles de même couleur dans une fleur)",
-  },
-  statue: {
-    type: "statue",
-    reward: 2,
-    description: "Statue complète (2 tuiles adjacentes de même couleur)",
-  },
-};
 
 function getJokerColorForRound(round: number): TileColor {
   // round: 1 à 6 => index 0 à 5
@@ -798,7 +770,12 @@ export class SummerPavilionEngine implements AzulGameEngine {
     // Si c'est une action "passer", c'est toujours valide
     if (placement.pass) return true;
 
+    
     const { color, targetFlower, targetPos, cost } = placement;
+
+    if (cost){
+
+    }
 
     // Vérifier si l'emplacement est libre
     const placedTiles = player.board.placedTiles || [];

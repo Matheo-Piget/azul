@@ -39,7 +39,6 @@ const CenterClassic = React.forwardRef<HTMLDivElement, CenterProps>(({ isAISelec
   });
   const hasSelectedTiles = selectedTiles && selectedTiles.length > 0;
   const selectedColor = hasSelectedTiles ? selectedTiles[0].color : null;
-  const totalTiles = Object.values(tilesByColor).reduce((sum, count) => sum + count, 0);
   const hasFirstPlayerToken = gameState.firstPlayerToken === null;
   return (
     <div 

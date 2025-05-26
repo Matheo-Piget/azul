@@ -8,10 +8,8 @@ import React, {
   useMemo,
 } from "react";
 import { GameState, TileColor, Tile, Player } from "../models/types";
-import { initializeGame, distributeFactoryTiles } from "../game-logic/setup";
 import { getAIMove, AIDifficulty } from "../game-logic/ai/aiPlayer";
 import { saveGameStats, generateGameId } from "../utils/SaveService";
-import AIAnimation from "./../components/AI/AIAnimation";
 import { ENGINES } from "../game-logic/engines";
 
 interface ScoringEvent {
@@ -634,7 +632,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({
 
       return () => clearTimeout(timer);
     }
-  }, [gameState, aiPlayers, executeAITurn, aiSpeed]);
+  }, [gameState, aiPlayers, executeAITurn, aiSpeed, gameStartTime, gameId]);
 
   // Initialize the game with 2 players by default if not initialized
   useEffect(() => {
