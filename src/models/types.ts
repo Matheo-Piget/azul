@@ -110,4 +110,5 @@ export interface GameState {
   maxRounds?: number;
   /** Flag indicating whether discarded tiles have been moved to the bag */
   discardMovedToBag?: boolean;
+  bonusTiles?: Tile[];
 }
