@@ -395,7 +395,7 @@ export class ClassicAzulEngine implements AzulGameEngine {
           wallRow[colIndex].filled = true;
           const placementScore = this.calculateTilePlacementScore(updatedPlayer.board, rowIndex, colIndex);
           scoreGained += placementScore;
-          const [keptTile, ...extraTiles] = line.tiles;
+          const [...extraTiles] = line.tiles;
           discardedTiles = [...discardedTiles, ...extraTiles];
           line.tiles = [];
           line.color = null;
