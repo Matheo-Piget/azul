@@ -26,7 +26,8 @@ app.post('/api/rooms/create', async (req, res) => {
     const result = await RoomModel.createRoom(playerName, settings);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+    res.status(500).json({ error: errorMessage });
   }
 });
 
@@ -41,7 +42,8 @@ app.post('/api/rooms/join', async (req, res) => {
     
     res.json(result);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+    res.status(500).json({ error: errorMessage });
   }
 });
 
@@ -53,7 +55,8 @@ app.get('/api/rooms/:roomId', async (req, res) => {
     }
     res.json(result);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+    res.status(500).json({ error: errorMessage });
   }
 });
 
