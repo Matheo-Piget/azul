@@ -4,6 +4,7 @@ import GameBoardSummer from './components/Variants/SummerPavilion/GameBoardSumme
 import { GameProvider, useGame } from './state/GameContext';
 import { NotificationProvider } from './components/UI/NotificationSystem';
 import { TutorialProvider } from './components/Tutorial/TutorialSystem';
+import RoomLobby from "./online/components/RoomLobby";
 import './App.css';
 
 const VARIANTS = [
@@ -32,9 +33,28 @@ const GameContainer: React.FC<{ variant: string }> = ({ variant }) => {
 
 const App: React.FC = () => {
   const [variant, setVariant] = useState("classic");
+  const [gameMode, setGameMode] = useState<'local' | 'online'>('local');
 
   return (
     <div className="App">
+      <div className="mode-selector">
+        <button 
+          className={`mode-btn ${gameMode === 'local' ? 'active' : ''}`}
+          onClick={() => setGameMode('local')}
+        >
+          🏠 Jeu Local
+        </button>
+        <button 
+          className={`mode-btn ${gameMode === 'online' ? 'active' : ''}`}
+          onClick={() => setGameMode('online')}
+        >
+          🌐 Multijoueur
+        </button>
+      </div>
+
+      {gameMode === 'local' ? (
+        
+
       <NotificationProvider>
         <TutorialProvider>
           <div className="variant-selector-container" style={{ padding: 16, background: '#f7f7f7', borderBottom: '1px solid #e1e8ed' }}>
@@ -59,6 +79,10 @@ const App: React.FC = () => {
           </GameProvider>
         </TutorialProvider>
       </NotificationProvider>
+
+      ) : (
+        <RoomLobby />
+      )}
     </div>
   );
 };
