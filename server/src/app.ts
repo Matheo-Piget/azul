@@ -18,7 +18,13 @@ const io = new Server(server, {
     methods: ["GET", "POST"]
   }
 });
-app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? [
+        "https://azul91.netlify.app",
+      ]
+    : "http://localhost:3000"
+}));
 app.use(express.json());
 
 app.get('/health', (req, res) => {

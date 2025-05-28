@@ -2,7 +2,7 @@ import io, { Socket } from 'socket.io-client';
 
 export class RoomService {
   private socket: Socket | null = null;
-  private serverUrl = 'http://localhost:3001';
+  private serverUrl = 'http://azul-production.up.railway.app';
 
   connect() {
     if (!this.socket) {
