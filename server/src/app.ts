@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { RoomModel } from './models/Room';
+import { setupDatabase } from './database/setupDb';
 
 dotenv.config();
 
