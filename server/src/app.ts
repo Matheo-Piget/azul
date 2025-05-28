@@ -38,27 +38,12 @@ app.post('/api/rooms/create', async (req, res) => {
     
     const { playerName, settings } = req.body;
     
-    // Test temporaire sans base de données
-    const mockResult = {
-      room: {
-        id: 'test-room-id',
-        code: 'ABCD12',
-        hostId: 'test-host-id',
-        status: 'waiting'
-      },
-      player: {
-        id: 'test-player-id',
-        name: playerName,
-        isHost: true
-      }
-    };
+    // Utilisez la vraie base de données
+    const result = await RoomModel.createRoom(playerName, settings);
+    res.json(result);
     
-    console.log('✅ Mock result:', mockResult);
-    res.json(mockResult);
-    
-    // Commentez temporairement l'appel à la vraie base de données
-    // const result = await RoomModel.createRoom(playerName, settings);
-    // res.json(result);
+    // Supprimez le mock
+    // const mockResult = { ... };
   } catch (error) {
     console.error('❌ Erreur dans /api/rooms/create:', error);
     const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
