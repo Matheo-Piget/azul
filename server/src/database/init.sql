@@ -1,11 +1,5 @@
--- Créer la base de données
-CREATE DATABASE azul_game;
-
--- Se connecter à la base
-\c azul_game;
-
--- Table des salles de jeu
-CREATE TABLE rooms (
+-- Créer les tables si elles n'existent pas
+CREATE TABLE IF NOT EXISTS rooms (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     code VARCHAR(6) UNIQUE NOT NULL,
     host_id UUID NOT NULL,
@@ -16,8 +10,7 @@ CREATE TABLE rooms (
     max_players INTEGER DEFAULT 4
 );
 
--- Table des joueurs
-CREATE TABLE players (
+CREATE TABLE IF NOT EXISTS players (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     room_id UUID REFERENCES rooms(id) ON DELETE CASCADE,
     name VARCHAR(50) NOT NULL,
@@ -28,8 +21,7 @@ CREATE TABLE players (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table de l'état du jeu
-CREATE TABLE game_states (
+CREATE TABLE IF NOT EXISTS game_states (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     room_id UUID UNIQUE REFERENCES rooms(id) ON DELETE CASCADE,
     game_data JSONB NOT NULL,
@@ -39,8 +31,7 @@ CREATE TABLE game_states (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des mouvements (pour l'historique)
-CREATE TABLE game_moves (
+CREATE TABLE IF NOT EXISTS game_moves (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     room_id UUID REFERENCES rooms(id) ON DELETE CASCADE,
     player_id UUID REFERENCES players(id) ON DELETE CASCADE,
@@ -50,7 +41,7 @@ CREATE TABLE game_moves (
 );
 
 -- Index pour les performances
-CREATE INDEX idx_rooms_code ON rooms(code);
-CREATE INDEX idx_players_room ON players(room_id);
-CREATE INDEX idx_game_states_room ON game_states(room_id);
-CREATE INDEX idx_moves_room ON game_moves(room_id);
+CREATE INDEX IF NOT EXISTS idx_rooms_code ON rooms(code);
+CREATE INDEX IF NOT EXISTS idx_players_room ON players(room_id);
+CREATE INDEX IF NOT EXISTS idx_game_states_room ON game_states(room_id);
+CREATE INDEX IF NOT EXISTS idx_moves_room ON game_moves(room_id);

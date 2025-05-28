@@ -11,13 +11,18 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000", // Votre frontend React
+    origin: process.env.NODE_ENV === 'production' 
+      ? ["https://azul91.netlify.app/"] // Remplacez par votre domaine frontend
+      : "http://localhost:3000",
     methods: ["GET", "POST"]
   }
 });
-
 app.use(cors());
 app.use(express.json());
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
 
 // Routes API
 app.post('/api/rooms/create', async (req, res) => {
@@ -88,7 +93,18 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.SERVER_PORT || 3001;
-server.listen(PORT, () => {
-  console.log(`🚀 Serveur démarré sur le port ${PORT}`);
-});
+async function startServer() {
+  try {
+    await setupDatabase();
+    
+    const PORT = process.env.PORT || process.env.SERVER_PORT || 3001;
+    server.listen(PORT, () => {
+      console.log(`🚀 Serveur démarré sur le port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('❌ Erreur lors du démarrage du serveur:', error);
+    process.exit(1);
+  }
+}
+
+startServer();
