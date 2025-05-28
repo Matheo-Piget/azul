@@ -2,8 +2,8 @@ import io, { Socket } from 'socket.io-client';
 
 export class RoomService {
   private socket: Socket | null = null;
-  private serverUrl = 'http://azul-production.up.railway.app';
-
+  private serverUrl = 'https://azul-production.up.railway.app';
+  
   connect() {
     if (!this.socket) {
       this.socket = io(this.serverUrl);

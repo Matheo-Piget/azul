@@ -13,7 +13,7 @@ const server = createServer(app);
 const io = new Server(server, {
   cors: {
     origin: process.env.NODE_ENV === 'production' 
-      ? ["https://azul91.netlify.app/"] // Remplacez par votre domaine frontend
+      ? ["https://azul91.netlify.app"] // Remplacez par votre domaine frontend
       : "http://localhost:3000",
     methods: ["GET", "POST"]
   }
