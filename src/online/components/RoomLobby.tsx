@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useOnlineGame } from '../hooks/useOnlineGame';
 import './RoomLobby.css';
-import OnlineGameBoard from './OnlineGameBoard';
 
 const RoomLobby: React.FC = () => {
   const [mode, setMode] = useState<'menu' | 'create' | 'join' | 'waiting'>('menu');
@@ -16,11 +15,9 @@ const RoomLobby: React.FC = () => {
     isConnected, 
     isLoading, 
     error, 
-    onlineGameState,
     createRoom, 
     joinRoom, 
-    leaveRoom,
-    startOnlineGame
+    leaveRoom 
   } = useOnlineGame();
 
   const handleCreateRoom = async () => {
@@ -42,14 +39,11 @@ const RoomLobby: React.FC = () => {
   };
 
   const handleStartGame = () => {
-    startOnlineGame();
+    // TODO: Démarrer le jeu
+    console.log('Démarrer le jeu avec', players.length, 'joueurs');
   };
 
   const canStartGame = currentPlayer?.is_host && players.length >= 2;
-
-  if (onlineGameState) {
-    return <OnlineGameBoard />;
-  }
 
   // Mode d'attente dans la salle
   if (mode === 'waiting' && isConnected && currentRoom) {
@@ -204,6 +198,7 @@ const RoomLobby: React.FC = () => {
               onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
               placeholder="Ex: ABC123"
               maxLength={6}
+              style={{ textTransform: 'uppercase' }}
               disabled={isLoading}
             />
           </div>

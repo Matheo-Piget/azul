@@ -45,5 +45,3 @@ CREATE INDEX IF NOT EXISTS idx_rooms_code ON rooms(code);
 CREATE INDEX IF NOT EXISTS idx_players_room ON players(room_id);
 CREATE INDEX IF NOT EXISTS idx_game_states_room ON game_states(room_id);
 CREATE INDEX IF NOT EXISTS idx_moves_room ON game_moves(room_id);
-
-ALTER TABLE game_states ADD COLUMN IF NOT EXISTS game_data JSONB;
