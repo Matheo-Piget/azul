@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { roomService } from '../services/RoomService';
 import { OnlineRoom, OnlinePlayer, RoomWithPlayers } from '../types/online';
+import { GameState } from '../../models/types'; // Import ajouté
 
 export const useOnlineGame = () => {
   const [currentRoom, setCurrentRoom] = useState<OnlineRoom | null>(null);
@@ -9,6 +10,25 @@ export const useOnlineGame = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [onlineGameState, setOnlineGameState] = useState<GameState | null>(null);
+
+  const startOnlineGame = useCallback(async () => {
+    if (!currentRoom || !currentPlayer?.is_host) return;
+    
+    const socket = roomService.connect();
+    socket.emit('start-game', { roomId: currentRoom.id });
+  }, [currentRoom, currentPlayer]);
+
+  const sendGameMove = useCallback(async (move: any) => {
+    if (!currentRoom || !currentPlayer) return;
+    
+    const socket = roomService.connect();
+    socket.emit('game-move', {
+      roomId: currentRoom.id,
+      playerId: currentPlayer.id,
+      move
+    });
+  }, [currentRoom, currentPlayer]);
 
   // Créer une salle
   const createRoom = useCallback(async (playerName: string, isPrivate: boolean = false) => {
@@ -90,6 +110,7 @@ export const useOnlineGame = () => {
     setPlayers([]);
     setIsConnected(false);
     setError(null);
+    setOnlineGameState(null);
   }, []);
 
   // Écouter les mises à jour de la salle
@@ -108,6 +129,30 @@ export const useOnlineGame = () => {
     }
   }, [isConnected, currentRoom]);
 
+  useEffect(() => {
+    if (isConnected && currentRoom) {
+      const socket = roomService.connect();
+      
+      socket.on('game-started', (data) => {
+        setOnlineGameState(data.gameState);
+      });
+      
+      socket.on('game-state-updated', (data) => {
+        setOnlineGameState(data.gameState);
+      });
+      
+      socket.on('game-error', (data) => {
+        setError(data.error);
+      });
+      
+      return () => {
+        socket.off('game-started');
+        socket.off('game-state-updated');
+        socket.off('game-error');
+      };
+    }
+  }, [isConnected, currentRoom]);
+
   return {
     currentRoom,
     players,
@@ -115,8 +160,11 @@ export const useOnlineGame = () => {
     isConnected,
     isLoading,
     error,
+    onlineGameState,
     createRoom,
     joinRoom,
-    leaveRoom
+    leaveRoom,
+    startOnlineGame,
+    sendGameMove
   };
 };
