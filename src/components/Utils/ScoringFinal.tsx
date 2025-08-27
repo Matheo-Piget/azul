@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Player, TileColor } from '../../models/types';
 import './ScoringFinal.css';
+import { useGame } from '../../state/GameContext';
 
 interface BonusItem {
   type: string;
@@ -37,6 +38,7 @@ const FinalScoringAnimation: React.FC<FinalScoringAnimationProps> = ({
     index?: number;
     color?: TileColor;
   } | null>(null);
+  const { setIsPaused } = useGame();
 
   // Calculate winner and final standings
   const finalStandings = useMemo(() => {
@@ -308,7 +310,7 @@ const FinalScoringAnimation: React.FC<FinalScoringAnimationProps> = ({
             
             <button 
               className="continue-button"
-              onClick={onComplete}
+              onClick={() => { setIsPaused(false); onComplete(); }}
             >
               Continuer
             </button>

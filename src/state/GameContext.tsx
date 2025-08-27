@@ -111,6 +111,10 @@ interface GameContextType {
   isRoundTransition: boolean;
   setIsRoundTransition: (isTransition: boolean) => void;
 
+  /** Global pause flag to block AI and auto-transitions during overlays */
+  isPaused: boolean;
+  setIsPaused: (paused: boolean) => void;
+
   /**
    * Vérifie si les tuiles sélectionnées doivent obligatoirement aller dans la ligne de sol
    */
@@ -150,6 +154,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({
   const [aiSpeed, setAISpeed] = useState<"fast" | "normal" | "slow">("normal");
   const [isRoundTransitioning, setIsRoundTransitioning] = useState(false);
   const [variant, setVariant] = useState<string>(initialVariant);
+  const [isPaused, setIsPaused] = useState<boolean>(false);
 
   const [aiAnimation, setAiAnimation] = useState<{
     playerId: string;
@@ -433,6 +438,9 @@ export const GameProvider: React.FC<GameProviderProps> = ({
     const currentGameState = gameStateRef.current;
     if (!currentGameState) return;
 
+    // Do nothing if globally paused (e.g., during scoring overlays)
+    if (isPaused) return;
+
     const currentPlayerId = currentGameState.currentPlayer;
     const currentAIPlayers = aiPlayersRef.current;
 
@@ -557,7 +565,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({
         setAiAnimation(null);
       }
     }
-  }, [selectTiles, placeTiles, aiSpeed, variant]);
+  }, [selectTiles, placeTiles, aiSpeed, variant, isPaused]);
 
   /**
    * Effect to trigger AI turns automatically when it's an AI player's turn
@@ -617,6 +625,9 @@ export const GameProvider: React.FC<GameProviderProps> = ({
 
     const currentPlayerId = gameState.currentPlayer;
 
+    // Pause AI if globally paused (overlays)
+    if (isPaused) return;
+
     // Check if current player is AI and game is in drafting phase
     if (aiPlayers[currentPlayerId] && gameState.gamePhase === "drafting") {
       // Delay based on AI speed setting
@@ -632,7 +643,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({
 
       return () => clearTimeout(timer);
     }
-  }, [gameState, aiPlayers, executeAITurn, aiSpeed, gameStartTime, gameId]);
+  }, [gameState, aiPlayers, executeAITurn, aiSpeed, gameStartTime, gameId, isPaused]);
 
   // Initialize the game with 2 players by default if not initialized
   useEffect(() => {
@@ -643,13 +654,16 @@ export const GameProvider: React.FC<GameProviderProps> = ({
 
   useEffect(() => {
     if (!gameState) return;
+    // Skip auto round-end while paused (e.g., while scoring overlay runs)
+    if (isPaused) return;
     if (gameState.gamePhase === "tiling") {
       // Laisse le temps aux animations si besoin, sinon mets 0
-      setTimeout(() => {
+      const t = setTimeout(() => {
         setGameState((prev) => (prev ? handleRoundEnd(prev) : prev));
       }, 500); // 500ms pour laisser place à une éventuelle animation
+      return () => clearTimeout(t);
     }
-  }, [gameState, handleRoundEnd]);
+  }, [gameState, handleRoundEnd, isPaused]);
 
   /**
    * Vérifie si les tuiles sélectionnées doivent obligatoirement aller dans la ligne de sol
@@ -683,6 +697,8 @@ export const GameProvider: React.FC<GameProviderProps> = ({
     setShowFinalScoring,
     isRoundTransition: isRoundTransitioning,
     setIsRoundTransition,
+    isPaused,
+    setIsPaused,
     mustPlaceInFloorLine,
     variant,
     setVariant,

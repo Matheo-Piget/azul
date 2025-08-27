@@ -55,6 +55,8 @@ const GameBoard: React.FC = (): React.ReactElement => {
   const [currentScoringPlayerIndex, setCurrentScoringPlayerIndex] = useState<number | null>(null);
   const { startTutorial } = useTutorial();
   const { showFinalScoring, setShowFinalScoring } = useGame();
+  // Pause control from context
+  const { isPaused, setIsPaused } = useGame();
   const [bonusDetails, setBonusDetails] = useState<
     Record<
       string,
@@ -138,10 +140,12 @@ const GameBoard: React.FC = (): React.ReactElement => {
       });
       setBonusDetails(details);
       setTimeout(() => {
+        // Pause before showing final scoring overlay
+        setIsPaused(true);
         setShowFinalScoring(true);
       }, 500);
     }
-  }, [gameState?.gamePhase, gameState?.players, setShowFinalScoring, gameState]);
+  }, [gameState?.gamePhase, gameState?.players, setShowFinalScoring, gameState, setIsPaused]);
 
   // Build scoring steps for a single player
   const buildStepsForPlayer = (player: Player): AnimationStep[] => {
@@ -159,6 +163,8 @@ const GameBoard: React.FC = (): React.ReactElement => {
   // Start round scoring sequence when entering tiling phase
   useEffect(() => {
     if (gameState?.gamePhase === "tiling" && !showRoundScoring) {
+      // Pause game during round scoring overlay
+      setIsPaused(true);
       const firstIndex = 0;
       setCurrentScoringPlayerIndex(firstIndex);
       if (gameState.players[firstIndex]) {
@@ -535,7 +541,6 @@ const GameBoard: React.FC = (): React.ReactElement => {
           stepDelay={1500}
           endDelay={1200}
           onComplete={() => {
-            // Advance to next player if any
             const nextIndex = currentScoringPlayerIndex + 1;
             if (nextIndex < gameState.players.length) {
               setCurrentScoringPlayerIndex(nextIndex);
@@ -543,6 +548,8 @@ const GameBoard: React.FC = (): React.ReactElement => {
             } else {
               setShowRoundScoring(false);
               setCurrentScoringPlayerIndex(null);
+              // Resume game after round scoring overlay finishes
+              setIsPaused(false);
               if (isRoundTransitioning) {
                 setIsRoundTransitioning(false);
               }
