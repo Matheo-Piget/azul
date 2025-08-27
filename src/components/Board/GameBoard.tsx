@@ -351,22 +351,6 @@ const GameBoard: React.FC = (): React.ReactElement => {
     (p) => p.id === gameState.currentPlayer
   );
 
-  if (showRoundScoring) {
-    return (
-      <RoundScoringAnimation
-        player={gameState.players[0]} // ou la liste, à faire pour chaque joueur
-        steps={scoringSteps}
-        onComplete={() => {
-          setShowRoundScoring(false);
-          if (isRoundTransitioning) {
-            // Move this logic outside or handle it properly
-            setIsRoundTransitioning(false);
-          }
-        }}
-      />
-    );
-  }
-
   if (isRoundTransitioning) {
     return (
       <RoundTransition
@@ -536,6 +520,19 @@ const GameBoard: React.FC = (): React.ReactElement => {
           />
         )}
       </div>
+
+      {showRoundScoring && (
+        <RoundScoringAnimation
+          player={gameState.players[0]}
+          steps={scoringSteps}
+          onComplete={() => {
+            setShowRoundScoring(false);
+            if (isRoundTransitioning) {
+              setIsRoundTransitioning(false);
+            }
+          }}
+        />
+      )}
 
       <footer className="game-footer">
         <div className="game-signature">
