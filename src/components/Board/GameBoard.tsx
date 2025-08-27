@@ -7,7 +7,7 @@ import { useGame } from "../../state/GameContext";
 import "./Gameboard.css";
 import AIPlayerConfig from "../AI/AIPlayerConfig";
 import GameInfo from "../UI/Bag";
-import { TileColor } from "../../models/types";
+import { TileColor, Player } from "../../models/types";
 import AIAnimation from "../AI/AIAnimation";
 import { useTutorial } from "../Tutorial/TutorialSystem";
 import FinalScoringAnimation from "./../Utils/ScoringFinal";
@@ -52,6 +52,7 @@ const GameBoard: React.FC = (): React.ReactElement => {
   const { aiAnimation } = useGame();
   const [scoringSteps, setScoringSteps] = useState<AnimationStep[]>([]);
   const [showRoundScoring, setShowRoundScoring] = useState(false);
+  const [currentScoringPlayerIndex, setCurrentScoringPlayerIndex] = useState<number | null>(null);
   const { startTutorial } = useTutorial();
   const { showFinalScoring, setShowFinalScoring } = useGame();
   const [bonusDetails, setBonusDetails] = useState<
@@ -142,27 +143,32 @@ const GameBoard: React.FC = (): React.ReactElement => {
     }
   }, [gameState?.gamePhase, gameState?.players, setShowFinalScoring, gameState]);
 
-  useEffect(() => {
-    if (gameState?.gamePhase === "tiling") {
-      const steps: AnimationStep[] = [];
-      gameState.players.forEach(player => {
-        player.board.wall.forEach((row, rowIdx) => {
-          row.forEach((space, colIdx) => {
-            if (space.filled) {
-              steps.push({
-                row: rowIdx,
-                col: colIdx,
-                points: 1,
-                color: space.color,
-              });
-            }
-          });
-        });
+  // Build scoring steps for a single player
+  const buildStepsForPlayer = (player: Player): AnimationStep[] => {
+    const steps: AnimationStep[] = [];
+    player.board.wall.forEach((row, rowIdx) => {
+      row.forEach((space, colIdx) => {
+        if (space.filled) {
+          steps.push({ row: rowIdx, col: colIdx, points: 1, color: space.color });
+        }
       });
-      setScoringSteps(steps);
+    });
+    return steps;
+  };
+
+  // Start round scoring sequence when entering tiling phase
+  useEffect(() => {
+    if (gameState?.gamePhase === "tiling" && !showRoundScoring) {
+      const firstIndex = 0;
+      setCurrentScoringPlayerIndex(firstIndex);
+      if (gameState.players[firstIndex]) {
+        setScoringSteps(buildStepsForPlayer(gameState.players[firstIndex]));
+      } else {
+        setScoringSteps([]);
+      }
       setShowRoundScoring(true);
     }
-  }, [gameState?.gamePhase, gameState?.players]);
+  }, [gameState?.gamePhase]);
 
   if (variant && variant !== 'classic') {
     return <div style={{ padding: 40, color: '#e53935', fontWeight: 600 }}>Variante non supportée ici. Utilisez le composant dédié.</div>;
@@ -521,14 +527,25 @@ const GameBoard: React.FC = (): React.ReactElement => {
         )}
       </div>
 
-      {showRoundScoring && (
+      {showRoundScoring && currentScoringPlayerIndex !== null && (
         <RoundScoringAnimation
-          player={gameState.players[0]}
+          key={`round-scoring-${currentScoringPlayerIndex}`}
+          player={gameState.players[currentScoringPlayerIndex]}
           steps={scoringSteps}
+          stepDelay={1500}
+          endDelay={1200}
           onComplete={() => {
-            setShowRoundScoring(false);
-            if (isRoundTransitioning) {
-              setIsRoundTransitioning(false);
+            // Advance to next player if any
+            const nextIndex = currentScoringPlayerIndex + 1;
+            if (nextIndex < gameState.players.length) {
+              setCurrentScoringPlayerIndex(nextIndex);
+              setScoringSteps(buildStepsForPlayer(gameState.players[nextIndex]));
+            } else {
+              setShowRoundScoring(false);
+              setCurrentScoringPlayerIndex(null);
+              if (isRoundTransitioning) {
+                setIsRoundTransitioning(false);
+              }
             }
           }}
         />
